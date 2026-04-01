@@ -7,6 +7,7 @@ import {
   updateTeamSelectionMode,
   processTeamSelectionCommand,
 } from "../broadcaster-session";
+import { startSession, stopSession } from "../socket-server";
 
 export const broadcasterRouter = router({
   /**
@@ -28,6 +29,15 @@ export const broadcasterRouter = router({
         input.teamNames,
         input.teamSelectionMode
       );
+
+      if (result.success && result.sessionId) {
+        try {
+          await startSession(result.sessionId, input.tiktokUsername, input.teamNames);
+        } catch (error) {
+          console.error(`[${result.sessionId}] startSession hatası:`, error);
+          throw new Error(`TikTok bağlantısı başlatılamadı: ${(error as Error).message}`);
+        }
+      }
 
       return result;
     }),
@@ -81,6 +91,7 @@ export const broadcasterRouter = router({
   endSession: publicProcedure
     .input(z.object({ sessionId: z.string() }))
     .mutation(async ({ input }) => {
+      await stopSession(input.sessionId);
       const success = await endBroadcasterSession(input.sessionId);
       return {
         success,
