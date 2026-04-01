@@ -1,7 +1,26 @@
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { getBroadcasterSession } from "./broadcaster-session";
-import { getGameState } from "./game-engine";
+import {
+  initializeGame,
+  getGameState,
+  processGiftEvent,
+  processLikeEvent,
+  isGameComplete,
+  endGame,
+  cleanupGame,
+} from "./game-engine";
+import type { GameState } from "./game-engine";
+import {
+  startTikTokConnection,
+  stopTikTokConnection,
+} from "./tiktok-integration";
+
+type TikTokEvent = {
+  type: "like" | "gift" | "comment" | "connected" | "disconnected" | "error";
+  data: Record<string, unknown>;
+  timestamp: number;
+};
 
 interface GameEvent {
   type: "cardOpened" | "playerAdded" | "gameStarted" | "gameEnded" | "statsUpdated" | "modeChanged";
@@ -177,6 +196,117 @@ class SocketServer {
   public getIO(): SocketIOServer {
     return this.io;
   }
+
+  // Oturum başlat: game-engine'i hazırla, TikTok bağlantısı aç, gameStarted yayınla
+  async startSession(sessionId: string, tiktokUsername: string, teamNames: string[]) {
+    initializeGame(sessionId, teamNames);
+    await startTikTokConnection(sessionId, tiktokUsername, (event) =>
+      this.handleTikTokEvent(sessionId, event)
+    );
+    this.broadcastGameStarted(sessionId, getGameState(sessionId));
+  }
+
+  // Oturum durdur: TikTok bağlantısını kapat, oyunu bitir, yayınla, temizle
+  async stopSession(sessionId: string) {
+    await stopTikTokConnection(sessionId);
+    const result = endGame(sessionId);
+    if (result) {
+      this.broadcastGameEnded(sessionId, {
+        finalScores: result.finalScores,
+        statistics: result.statistics,
+      });
+    }
+    cleanupGame(sessionId);
+  }
+
+  // TikTok event yönlendiricisi
+  private async handleTikTokEvent(sessionId: string, event: TikTokEvent) {
+    const gameState = getGameState(sessionId);
+    if (!gameState) return;
+
+    switch (event.type) {
+      case "gift": {
+        const teamId = this.getLeastFilledTeamId(gameState);
+        const card = await processGiftEvent(
+          sessionId,
+          teamId,
+          event.data.giftName as string,
+          event.data.diamondCount as number,
+          event.data.username as string
+        );
+        if (card) {
+          this.broadcastCardOpened(sessionId, card);
+          this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
+          if (isGameComplete(sessionId)) {
+            await this.stopSession(sessionId);
+            return;
+          }
+        }
+        break;
+      }
+      case "like": {
+        const teamId = this.getLeastFilledTeamId(gameState);
+        const card = await processLikeEvent(
+          sessionId,
+          teamId,
+          event.data.username as string,
+          event.data.likeCount as number
+        );
+        if (card) {
+          this.broadcastCardOpened(sessionId, card);
+          this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
+          if (isGameComplete(sessionId)) {
+            await this.stopSession(sessionId);
+            return;
+          }
+        } else {
+          this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
+        }
+        break;
+      }
+      case "comment": {
+        // Altyapı kurulu; !1-!4 parsing hazır ama UI bağlantısı sonraki sprint
+        const comment = event.data.comment as string;
+        if (/^![1-4]$/.test(comment)) {
+          // TODO: auto-mod aktifse teamId bu komuttan alınacak
+        }
+        break;
+      }
+      case "connected":
+        this.broadcastStatsUpdated(sessionId, { tiktokConnected: true });
+        break;
+      case "disconnected":
+        this.broadcastStatsUpdated(sessionId, {
+          tiktokConnected: false,
+          reason: event.data.reason,
+        });
+        break;
+      case "error":
+        console.error(`[${sessionId}] TikTok hatası:`, event.data);
+        break;
+    }
+  }
+
+  // En az oyuncuya sahip takım indeksini döndürür (round-robin denge)
+  private getLeastFilledTeamId(gameState: GameState): number {
+    return gameState.teams.reduce(
+      (minIdx, team, i, arr) =>
+        team.players.length < arr[minIdx].players.length ? i : minIdx,
+      0
+    );
+  }
+
+  // GameState'i JSON-serializable stats nesnesine dönüştür
+  private serializeStats(sessionId: string) {
+    const state = getGameState(sessionId);
+    if (!state) return {};
+    return {
+      cardsOpened: state.openedCards.length,
+      participants: state.participants.size,
+      totalLikes: state.totalLikes,
+      totalGifts: state.totalGifts,
+    };
+  }
 }
 
 let socketServer: SocketServer | null = null;
@@ -190,6 +320,18 @@ export function initializeSocketServer(httpServer: HTTPServer): SocketServer {
 
 export function getSocketServer(): SocketServer | null {
   return socketServer;
+}
+
+export async function startSession(
+  sessionId: string,
+  tiktokUsername: string,
+  teamNames: string[]
+): Promise<void> {
+  return socketServer?.startSession(sessionId, tiktokUsername, teamNames);
+}
+
+export async function stopSession(sessionId: string): Promise<void> {
+  return socketServer?.stopSession(sessionId);
 }
 
 export type { GameEvent };

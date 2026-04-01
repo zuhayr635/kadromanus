@@ -1,41 +1,100 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+vi.mock("./game-engine", () => ({
+  initializeGame: vi.fn(),
+  getGameState: vi.fn(),
+  processGiftEvent: vi.fn(),
+  processLikeEvent: vi.fn(),
+  isGameComplete: vi.fn().mockReturnValue(false),
+  endGame: vi.fn().mockReturnValue(null),
+  cleanupGame: vi.fn(),
+}));
+
+vi.mock("./tiktok-integration", () => ({
+  startTikTokConnection: vi.fn().mockResolvedValue(undefined),
+  stopTikTokConnection: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from "vitest";
 import { Server as HTTPServer } from "http";
 import { createServer } from "http";
-import { initializeSocketServer, getSocketServer } from "./socket-server";
+import { getSocketServer } from "./socket-server";
 import { io as ioClient, Socket as ClientSocket } from "socket.io-client";
 
 describe("Socket.io Server", () => {
   let httpServer: HTTPServer;
   let socketServer: any;
   let clientSocket: ClientSocket;
+  let sharedHttpServer: HTTPServer | null = null;
 
   beforeEach(async () => {
-    httpServer = createServer();
-    socketServer = initializeSocketServer(httpServer);
-    
-    return new Promise<void>((resolve) => {
-      httpServer.listen(() => {
-        const port = (httpServer.address() as any).port;
-        clientSocket = ioClient(`http://localhost:${port}`, {
-          reconnection: false,
+    // Create shared HTTP server on first test
+    if (!sharedHttpServer) {
+      const { initializeSocketServer } = await import("./socket-server");
+      sharedHttpServer = createServer();
+      socketServer = initializeSocketServer(sharedHttpServer);
+
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("Server init timeout"));
+        }, 5000);
+
+        sharedHttpServer!.listen(0, () => {
+          clearTimeout(timeout);
+          resolve();
         });
-        clientSocket.on("connect", () => resolve());
+
+        sharedHttpServer!.on("error", (err) => {
+          clearTimeout(timeout);
+          reject(err);
+        });
+      });
+    }
+
+    // Create fresh client socket for each test
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("Client connect timeout"));
+      }, 5000);
+
+      const port = (sharedHttpServer!.address() as any).port;
+      clientSocket = ioClient(`http://localhost:${port}`, {
+        reconnection: false,
+        transports: ["websocket"],
+      });
+
+      clientSocket.on("connect", () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+
+      clientSocket.on("connect_error", (err) => {
+        clearTimeout(timeout);
+        reject(new Error(`Socket connection failed: ${err}`));
       });
     });
   });
 
-  afterEach(async () => {
-    return new Promise<void>((resolve) => {
-      if (clientSocket) {
-        clientSocket.disconnect();
+  afterEach(() => {
+    if (clientSocket && clientSocket.connected) {
+      clientSocket.removeAllListeners();
+      clientSocket.disconnect();
+    }
+  });
+
+  afterAll(async () => {
+    if (socketServer) {
+      try {
+        socketServer.getIO().removeAllListeners();
+        socketServer.getIO().disconnectSockets();
+      } catch (e) {
+        // Ignore
       }
-      if (socketServer) {
-        socketServer.getIO().close();
-      }
-      if (httpServer) {
-        httpServer.close(() => resolve());
-      }
-    });
+    }
+
+    if (sharedHttpServer) {
+      return new Promise<void>((resolve) => {
+        sharedHttpServer!.close(() => resolve());
+      });
+    }
   });
 
   it("should connect to socket server", () => {
@@ -191,5 +250,74 @@ describe("Socket.io Server", () => {
     const server = getSocketServer();
     expect(server).not.toBeNull();
     expect(server?.getIO()).toBeDefined();
+  });
+});
+
+describe("SocketServer — Session Lifecycle", () => {
+  it("startSession: initializeGame ve startTikTokConnection çağrılır", async () => {
+    const { initializeGame, getGameState } = await import("./game-engine");
+    const { startTikTokConnection } = await import("./tiktok-integration");
+
+    vi.mocked(initializeGame).mockReturnValue(undefined as any);
+    vi.mocked(getGameState).mockReturnValue({
+      sessionId: "s1",
+      teams: [{ id: 0, name: "T1", players: [], score: 0 }],
+      openedCards: [],
+      totalLikes: 0,
+      totalGifts: 0,
+      participants: new Set<string>(),
+      startedAt: Date.now(),
+    } as any);
+    vi.mocked(startTikTokConnection).mockResolvedValue(undefined);
+
+    const { getSocketServer } = await import("./socket-server");
+    const srv = getSocketServer();
+    if (!srv) throw new Error("socketServer not initialized");
+
+    await srv.startSession("s1", "testuser", ["T1", "T2", "T3", "T4"]);
+
+    expect(initializeGame).toHaveBeenCalledWith("s1", ["T1", "T2", "T3", "T4"]);
+    expect(startTikTokConnection).toHaveBeenCalledWith("s1", "testuser", expect.any(Function));
+  });
+
+  it("stopSession: stopTikTokConnection ve endGame çağrılır", async () => {
+    const { endGame, cleanupGame } = await import("./game-engine");
+    const { stopTikTokConnection } = await import("./tiktok-integration");
+
+    vi.mocked(stopTikTokConnection).mockResolvedValue(undefined);
+    vi.mocked(endGame).mockReturnValue({
+      finalScores: [{ teamName: "T1", score: 10, players: 11 }],
+      statistics: { totalCardsOpened: 44, totalParticipants: 20, durationSeconds: 300 },
+    } as any);
+    vi.mocked(cleanupGame).mockReturnValue(undefined);
+
+    const { getSocketServer } = await import("./socket-server");
+    const srv = getSocketServer();
+    if (!srv) throw new Error("socketServer not initialized");
+
+    await srv.stopSession("s1");
+
+    expect(stopTikTokConnection).toHaveBeenCalledWith("s1");
+    expect(endGame).toHaveBeenCalledWith("s1");
+    expect(cleanupGame).toHaveBeenCalledWith("s1");
+  });
+
+  it("getLeastFilledTeamId: en az oyuncuya sahip takımı döndürür", async () => {
+    const { getSocketServer } = await import("./socket-server");
+    const srv = getSocketServer();
+    if (!srv) throw new Error("socketServer not initialized");
+
+    const gameState = {
+      teams: [
+        { id: 0, name: "T1", players: [1, 2, 3], score: 0 },
+        { id: 1, name: "T2", players: [1], score: 0 },
+        { id: 2, name: "T3", players: [1, 2], score: 0 },
+        { id: 3, name: "T4", players: [1, 2, 3, 4], score: 0 },
+      ],
+    } as any;
+
+    // private metoda erişim
+    const teamId = (srv as any).getLeastFilledTeamId(gameState);
+    expect(teamId).toBe(1); // T2 en az oyuncuya sahip
   });
 });
