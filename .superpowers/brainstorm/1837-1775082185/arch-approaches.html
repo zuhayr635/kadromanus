@@ -1,0 +1,77 @@
+<h2>Real-Time Altyapı — Mimari Yaklaşım</h2>
+<p class="subtitle">TikTok eventi → Oyun motoru → Socket.io → İstemciler akışı için hangi yaklaşım?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Broadcaster-Session Orkestratör</h3>
+      <p>Mevcut <code>broadcaster-session.ts</code> hem TikTok eventlerini hem de Socket.io yayınını yönetir. Tek merkez.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Artılar</h4><ul>
+          <li>Mevcut koda en yakın</li>
+          <li>Oturum bağlamı zaten orada</li>
+          <li>Az yeni dosya</li>
+        </ul></div>
+        <div class="cons"><h4>Eksiler</h4><ul>
+          <li>Dosya büyür (271 satır → 400+)</li>
+          <li>TikTok + Socket.io birbirine karışır</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Yeni Event-Bus Modülü (Önerilen)</h3>
+      <p>Yeni bir <code>game-event-bus.ts</code> modülü TikTok eventlerini dinler, game-engine'i çağırır, Socket.io ile yayar.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Artılar</h4><ul>
+          <li>Tek sorumluluk prensibi</li>
+          <li>Test edilmesi kolay</li>
+          <li>TikTok/Game/Socket bağımsız kalır</li>
+        </ul></div>
+        <div class="cons"><h4>Eksiler</h4><ul>
+          <li>Yeni dosya gerekiyor</li>
+          <li>Biraz daha fazla kurulum</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Socket-Server Hub</h3>
+      <p>Mevcut <code>socket-server.ts</code> hem gelen TikTok eventlerini hem de game-engine çağrılarını yönetir.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Artılar</h4><ul>
+          <li>Tek WebSocket noktası</li>
+          <li>Gerçek zamanlı mantık bir yerde</li>
+        </ul></div>
+        <div class="cons"><h4>Eksiler</h4><ul>
+          <li>Socket-server amacının dışına çıkar</li>
+          <li>Dosya çok şişer</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:2rem">
+  <h3>Veri Akışı (hepsi için aynı)</h3>
+  <div style="font-family:monospace;background:#1a1a2e;color:#e0e0e0;padding:1.5rem;border-radius:8px;line-height:2">
+    TikTok LIVE<br>
+    &nbsp;&nbsp;↓ gift/like eventi<br>
+    tiktok-integration.ts<br>
+    &nbsp;&nbsp;↓ EventEmitter<br>
+    <strong style="color:#ffd700">[Seçilen yaklaşım]</strong><br>
+    &nbsp;&nbsp;↓ openCard() / processLikeEvent()<br>
+    game-engine.ts<br>
+    &nbsp;&nbsp;↓ oyun durumu<br>
+    socket-server.ts<br>
+    &nbsp;&nbsp;↓ io.emit()<br>
+    game-screen.html + broadcaster-panel.tsx
+  </div>
+</div>

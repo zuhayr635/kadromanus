@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:unsplash.com)",
+      "WebFetch(domain:www.amainhobbies.com)",
+      "WebFetch(domain:www.rcplanet.com)",
+      "WebFetch(domain:www.horizonhobby.com)",
+      "WebSearch",
+      "WebFetch(domain:www.towerhobbies.com)",
+      "WebFetch(domain:traxxas.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Skill(update-config)"
+    ]
+  }
+}

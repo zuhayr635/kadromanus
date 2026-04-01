@@ -1,0 +1,108 @@
+<h2>Real-Time Altyapı — Tasarım</h2>
+<p class="subtitle">Onaylamak için incele, sonra terminalde yanıtla</p>
+
+<div class="section">
+  <h3>Mimari Genel Bakış</h3>
+  <div style="font-family:monospace;background:#0d1117;color:#c9d1d9;padding:1.5rem;border-radius:8px;font-size:0.85rem;line-height:1.8">
+    <span style="color:#58a6ff">┌─────────────────────────────────────────────────────┐</span><br>
+    <span style="color:#58a6ff">│</span>  <span style="color:#ffd700">server/_core/index.ts</span>  (HTTP → Socket.io bağlama)    <span style="color:#58a6ff">│</span><br>
+    <span style="color:#58a6ff">└───────────────────────┬─────────────────────────────┘</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#58a6ff">│ init(httpServer)</span><br>
+    <span style="color:#58a6ff">┌──────────────────────▼──────────────────────────────┐</span><br>
+    <span style="color:#58a6ff">│</span>  <span style="color:#ffd700">socket-server.ts</span>  ← MERKEZ HUB                      <span style="color:#58a6ff">│</span><br>
+    <span style="color:#58a6ff">│</span>  Map&lt;sessionId, TikTokConnectionManager&gt;             <span style="color:#58a6ff">│</span><br>
+    <span style="color:#58a6ff">│</span>  Map&lt;sessionId, Socket.io Room&gt;                      <span style="color:#58a6ff">│</span><br>
+    <span style="color:#58a6ff">│</span>                                                       <span style="color:#58a6ff">│</span><br>
+    <span style="color:#58a6ff">│</span>  startSession(sessionId, tiktokUsername, settings)    <span style="color:#58a6ff">│</span><br>
+    <span style="color:#58a6ff">│</span>  stopSession(sessionId)                               <span style="color:#58a6ff">│</span><br>
+    <span style="color:#58a6ff">└───┬──────────────────┬──────────────────┬────────────┘</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3fb950">↓ TikTok eventi</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3fb950">↓ openCard()</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3fb950">↓ io.to(room).emit()</span><br>
+    <span style="color:#3fb950">tiktok-integration</span>&nbsp;&nbsp;<span style="color:#3fb950">game-engine</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3fb950">Socket.io rooms</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#58a6ff">↙</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#58a6ff">↘</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e3b341">game-screen.html</span>&nbsp;&nbsp;<span style="color:#e3b341">BroadcasterPanel</span>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Event Akışı</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:0.9rem">
+    <tr style="background:#161b22;color:#8b949e">
+      <th style="padding:8px;text-align:left;border-bottom:1px solid #30363d">TikTok Eventi</th>
+      <th style="padding:8px;text-align:left;border-bottom:1px solid #30363d">Game Engine</th>
+      <th style="padding:8px;text-align:left;border-bottom:1px solid #30363d">Socket.io Yayını</th>
+    </tr>
+    <tr style="border-bottom:1px solid #21262d">
+      <td style="padding:8px;color:#c9d1d9">gift (hediye)</td>
+      <td style="padding:8px;color:#3fb950">processGiftEvent() → openCard()</td>
+      <td style="padding:8px;color:#58a6ff">game:card-opened</td>
+    </tr>
+    <tr style="border-bottom:1px solid #21262d">
+      <td style="padding:8px;color:#c9d1d9">like (beğeni)</td>
+      <td style="padding:8px;color:#3fb950">processLikeEvent() [100=1 kart]</td>
+      <td style="padding:8px;color:#58a6ff">game:state-update</td>
+    </tr>
+    <tr style="border-bottom:1px solid #21262d">
+      <td style="padding:8px;color:#c9d1d9">comment !1-!4</td>
+      <td style="padding:8px;color:#3fb950">processTeamSelectionCommand()</td>
+      <td style="padding:8px;color:#58a6ff">game:team-selected</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;color:#c9d1d9">oyun bitti (44 kart)</td>
+      <td style="padding:8px;color:#3fb950">endGame() → gameEndWorkflow()</td>
+      <td style="padding:8px;color:#58a6ff">game:completed</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Değiştirilecek / Eklenmesi Gereken Dosyalar</h3>
+  <div class="cards">
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <div class="label" style="color:#f85149">GÜNCELLENİYOR</div>
+        <h3>server/_core/index.ts</h3>
+        <p>Express app'ten <code>http.createServer()</code> ile HTTP sunucusu oluştur → Socket.io'ya ver → <code>initSocketServer(httpServer)</code> çağır</p>
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <div class="label" style="color:#f85149">BÜYÜK GÜNCELLEMEe</div>
+        <h3>server/socket-server.ts</h3>
+        <p>TikTok bağlantı yönetimi ekle. <code>startSession()</code> / <code>stopSession()</code> export et. Gift/like eventlerini yakala, game-engine'i çağır, Socket.io ile yay.</p>
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <div class="label" style="color:#e3b341">KÜÇÜK GÜNCELLEME</div>
+        <h3>server/routers/broadcaster.ts</h3>
+        <p>createSession → <code>startSession()</code> çağır<br>endSession → <code>stopSession()</code> çağır</p>
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <div class="label" style="color:#e3b341">KÜÇÜK GÜNCELLEME</div>
+        <h3>client/src/pages/BroadcasterPanel.tsx</h3>
+        <p><code>socket.io-client</code> import et, sessionId ile odaya katıl, <code>game:card-opened</code> ve <code>game:state-update</code> dinle</p>
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <div class="label" style="color:#3fb950">ZATEN HAZIR</div>
+        <h3>client/public/game-screen-websocket.html</h3>
+        <p>Socket.io client kodu mevcut. Sadece sunucu tarafı eventlerini göndermeye başlayınca çalışacak.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Socket.io Oda Yapısı</h3>
+  <div style="font-family:monospace;background:#0d1117;color:#c9d1d9;padding:1rem;border-radius:8px;font-size:0.85rem">
+    Oda adı: <span style="color:#ffd700">sessionId</span> (16 karakter nanoid)<br><br>
+    client.join(<span style="color:#ffd700">"abc123def456ghi7"</span>)  ← sessionId ile katıl<br>
+    io.to(<span style="color:#ffd700">"abc123def456ghi7"</span>).emit("game:card-opened", data)<br><br>
+    <span style="color:#8b949e">→ Çoklu oturum izolasyonu otomatik sağlanır</span>
+  </div>
+</div>
+
+<p style="margin-top:2rem;color:#8b949e;font-size:0.9rem">Bu tasarım uygun mu? Terminalde onay ver veya değiştirmek istediğin yerleri söyle.</p>

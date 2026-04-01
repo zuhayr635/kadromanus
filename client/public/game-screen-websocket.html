@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kadrokur - Oyun Ekranı (WebSocket)</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      overflow: hidden;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .header {
+      text-align: center;
+      background: rgba(102, 126, 234, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+
+    .connection-status {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .connection-status.connected {
+      background: #10b981;
+      color: white;
+    }
+
+    .connection-status.disconnected {
+      background: #ef4444;
+      color: white;
+    }
+
+    .connection-status.connecting {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .main-content {
+      display: flex;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .teams-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      flex: 1;
+    }
+
+    .team-card {
+      background: rgba(30, 41, 59, 0.8);
+      border: 2px solid rgba(102, 126, 234, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-height: 100%;
+      overflow-y: auto;
+    }
+
+    .team-card.team-1 {
+      border-color: #3b82f6;
+    }
+
+    .team-card.team-2 {
+      border-color: #ef4444;
+    }
+
+    .team-card.team-3 {
+      border-color: #10b981;
+    }
+
+    .team-card.team-4 {
+      border-color: #f59e0b;
+    }
+
+    .team-header {
+      font-size: 18px;
+      font-weight: bold;
+      padding-bottom: 10px;
+      border-bottom: 2px solid currentColor;
+    }
+
+    .team-1 .team-header {
+      color: #3b82f6;
+    }
+
+    .team-2 .team-header {
+      color: #ef4444;
+    }
+
+    .team-3 .team-header {
+      color: #10b981;
+    }
+
+    .team-4 .team-header {
+      color: #f59e0b;
+    }
+
+    .player {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .player-name {
+      font-weight: 500;
+    }
+
+    .player-card-quality {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .quality-bronze {
+      background: #92400e;
+      color: #fef3c7;
+    }
+
+    .quality-silver {
+      background: #374151;
+      color: #f3f4f6;
+    }
+
+    .quality-gold {
+      background: #b45309;
+      color: #fef3c7;
+    }
+
+    .quality-elite {
+      background: #7c2d12;
+      color: #fed7aa;
+    }
+
+    .stats-panel {
+      background: rgba(30, 41, 59, 0.8);
+      border: 2px solid rgba(102, 126, 234, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      width: 250px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .final-scores {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .final-scores.show {
+      display: flex;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .final-scores h2 {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .scores-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+    }
+
+    .score-card {
+      background: rgba(30, 41, 59, 0.9);
+      border: 3px solid;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .score-card.team-1 {
+      border-color: #3b82f6;
+    }
+
+    .score-card.team-2 {
+      border-color: #ef4444;
+    }
+
+    .score-card.team-3 {
+      border-color: #10b981;
+    }
+
+    .score-card.team-4 {
+      border-color: #f59e0b;
+    }
+
+    .score-card h3 {
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+
+    .score-card .score {
+      font-size: 64px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .score-card .players-count {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .empty-state {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎮 Kadrokur - Oyun Ekranı</h1>
+      <div class="connection-status connecting" id="connectionStatus">Bağlanıyor...</div>
+    </div>
+
+    <div class="main-content">
+      <div class="teams-container">
+        <div class="team-card team-1">
+          <div class="team-header">Takım 1</div>
+          <div id="team-1-players" class="empty-state">Oyuncu bekleniyor...</div>
+        </div>
+        <div class="team-card team-2">
+          <div class="team-header">Takım 2</div>
+          <div id="team-2-players" class="empty-state">Oyuncu bekleniyor...</div>
+        </div>
+        <div class="team-card team-3">
+          <div class="team-header">Takım 3</div>
+          <div id="team-3-players" class="empty-state">Oyuncu bekleniyor...</div>
+        </div>
+        <div class="team-card team-4">
+          <div class="team-header">Takım 4</div>
+          <div id="team-4-players" class="empty-state">Oyuncu bekleniyor...</div>
+        </div>
+      </div>
+
+      <div class="stats-panel">
+        <div class="stat-item">
+          <span class="stat-label">Açılan Kartlar</span>
+          <span class="stat-value" id="cardsOpened">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Katılımcılar</span>
+          <span class="stat-value" id="participants">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Toplam Beğeni</span>
+          <span class="stat-value" id="totalLikes">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Toplam Hediye</span>
+          <span class="stat-value" id="totalGifts">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Oyun Süresi</span>
+          <span class="stat-value" id="gameDuration">00:00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="final-scores" id="finalScores">
+    <h2>🏆 Oyun Bitti!</h2>
+    <div class="scores-grid" id="scoresGrid"></div>
+  </div>
+
+  <script>
+    // WebSocket bağlantısı
+    const socket = io(window.location.origin, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
+    });
+
+    let gameState = null;
+    let gameStartTime = null;
+    let gameDurationInterval = null;
+
+    // Bağlantı olayları
+    socket.on("connect", () => {
+      console.log("✅ WebSocket bağlandı");
+      updateConnectionStatus("connected", "Bağlandı");
+      
+      // URL'den sessionId al
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get("sessionId") || "demo-session";
+      
+      socket.emit("joinSession", sessionId);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ WebSocket bağlantısı kesildi");
+      updateConnectionStatus("disconnected", "Bağlantı Kesildi");
+      clearInterval(gameDurationInterval);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Bağlantı hatası:", error);
+      updateConnectionStatus("disconnected", "Hata");
+    });
+
+    // Oyun event'leri
+    socket.on("gameStateUpdate", (state) => {
+      console.log("Oyun durumu güncellendi:", state);
+      gameState = state;
+      updateGameUI(state);
+    });
+
+    socket.on("gameEvent", (event) => {
+      console.log("Oyun event'i:", event.type, event.data);
+      
+      switch (event.type) {
+        case "gameStarted":
+          gameStartTime = Date.now();
+          startGameDurationTimer();
+          break;
+        case "cardOpened":
+          handleCardOpened(event.data);
+          break;
+        case "playerAdded":
+          handlePlayerAdded(event.data);
+          break;
+        case "statsUpdated":
+          handleStatsUpdated(event.data);
+          break;
+        case "gameEnded":
+          handleGameEnded(event.data);
+          break;
+      }
+    });
+
+    function updateConnectionStatus(status, text) {
+      const element = document.getElementById("connectionStatus");
+      element.className = `connection-status ${status}`;
+      element.textContent = text;
+    }
+
+    function updateGameUI(state) {
+      if (!state) return;
+
+      // Takımları güncelle
+      for (let i = 0; i < 4; i++) {
+        const teamPlayers = state.teams?.[i]?.players || [];
+        const container = document.getElementById(`team-${i + 1}-players`);
+        
+        if (teamPlayers.length === 0) {
+          container.innerHTML = '<div class="empty-state">Oyuncu bekleniyor...</div>';
+        } else {
+          container.innerHTML = teamPlayers
+            .map(
+              (player) => `
+            <div class="player">
+              <span class="player-name">${player.name}</span>
+              <span class="player-card-quality quality-${player.cardQuality?.toLowerCase() || 'bronze'}">
+                ${player.cardQuality?.toUpperCase() || 'BRONZ'}
+              </span>
+            </div>
+          `
+            )
+            .join("");
+        }
+      }
+
+      // İstatistikleri güncelle
+      document.getElementById("cardsOpened").textContent = state.cardsOpened || 0;
+      document.getElementById("participants").textContent = state.participants || 0;
+      document.getElementById("totalLikes").textContent = state.totalLikes || 0;
+      document.getElementById("totalGifts").textContent = state.totalGifts || 0;
+    }
+
+    function handleCardOpened(card) {
+      console.log("Kart açıldı:", card);
+      // Animasyon eklenebilir
+    }
+
+    function handlePlayerAdded(data) {
+      console.log("Oyuncu eklendi:", data);
+      updateGameUI(gameState);
+    }
+
+    function handleStatsUpdated(stats) {
+      console.log("İstatistikler güncellendi:", stats);
+      document.getElementById("cardsOpened").textContent = stats.cardsOpened || 0;
+      document.getElementById("participants").textContent = stats.participants || 0;
+      document.getElementById("totalLikes").textContent = stats.totalLikes || 0;
+      document.getElementById("totalGifts").textContent = stats.totalGifts || 0;
+    }
+
+    function handleGameEnded(finalScores) {
+      console.log("Oyun bitti:", finalScores);
+      clearInterval(gameDurationInterval);
+      showFinalScores(finalScores);
+    }
+
+    function startGameDurationTimer() {
+      gameDurationInterval = setInterval(() => {
+        if (gameStartTime) {
+          const duration = Math.floor((Date.now() - gameStartTime) / 1000);
+          const minutes = Math.floor(duration / 60);
+          const seconds = duration % 60;
+          document.getElementById("gameDuration").textContent = 
+            `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+        }
+      }, 1000);
+    }
+
+    function showFinalScores(scores) {
+      const scoresGrid = document.getElementById("scoresGrid");
+      scoresGrid.innerHTML = scores
+        .map(
+          (score, index) => `
+        <div class="score-card team-${index + 1}">
+          <h3>${score.teamName}</h3>
+          <div class="score">${score.score}</div>
+          <div class="players-count">${score.players?.length || 0} oyuncu</div>
+        </div>
+      `
+        )
+        .join("");
+
+      document.getElementById("finalScores").classList.add("show");
+
+      // 10 saniye sonra gizle
+      setTimeout(() => {
+        document.getElementById("finalScores").classList.remove("show");
+      }, 10000);
+    }
+
+    // Sayfa yüklendiğinde
+    window.addEventListener("load", () => {
+      console.log("Oyun ekranı yüklendi");
+    });
+  </script>
+</body>
+</html>

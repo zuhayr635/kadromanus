@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    },
+    "shadcn-ui": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@jpisnice/shadcn-ui-mcp-server"]
+    },
+    "repomix": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "repomix", "--mcp"]
+    },
+    "coolify": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@masonator/coolify-mcp"],
+      "env": {
+        "COOLIFY_BASE_URL": "https://panelc.luanawork.com",
+        "COOLIFY_ACCESS_TOKEN": "3|HPhUiMoAF2f4I2KS6Hb67GUnN8LHb09M5AgiopkBdda46a9e"
+      }
+    }
+  }
+}

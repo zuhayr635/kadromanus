@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1775077306142,
+      "tag": "0000_modern_mandarin",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1775077554910,
+      "tag": "0001_kadrokur_tables",
+      "breakpoints": true
+    }
+  ]
+}

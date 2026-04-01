@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kadrokur - Yayıncı Paneli (WebSocket)</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .connection-status {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .connection-status.connected {
+      background: #10b981;
+      color: white;
+    }
+
+    .connection-status.disconnected {
+      background: #ef4444;
+      color: white;
+    }
+
+    .connection-status.connecting {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #667eea;
+      border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: rgba(102, 126, 234, 0.2);
+      color: #667eea;
+      border: 1px solid #667eea;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(102, 126, 234, 0.3);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat-box {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .mode-toggle button {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid rgba(102, 126, 234, 0.3);
+      background: transparent;
+      color: #94a3b8;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .mode-toggle button.active {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.2);
+      color: #667eea;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      display: none;
+    }
+
+    .message.success {
+      display: block;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #10b981;
+    }
+
+    .message.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .team-inputs {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .quick-links {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .quick-link {
+      flex: 1;
+      min-width: 150px;
+      padding: 10px;
+      background: rgba(102, 126, 234, 0.1);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      border-radius: 6px;
+      text-align: center;
+      text-decoration: none;
+      color: #667eea;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .quick-link:hover {
+      background: rgba(102, 126, 234, 0.2);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎮 Kadrokur - Yayıncı Paneli</h1>
+      <div class="connection-status connecting" id="connectionStatus">Bağlanıyor...</div>
+    </div>
+
+    <div class="content">
+      <!-- Lisans ve Oturum -->
+      <div class="card">
+        <h2>📋 Lisans & Oturum</h2>
+        <div id="successMessage" class="message success"></div>
+        <div id="errorMessage" class="message error"></div>
+
+        <div class="form-group">
+          <label>Lisans Anahtarı</label>
+          <input type="text" id="licenseKey" placeholder="HIRA-XXXXXXXXXX" />
+        </div>
+
+        <div class="form-group">
+          <label>TikTok Kullanıcı Adı</label>
+          <input type="text" id="tiktokUsername" placeholder="@kullanici_adi" />
+        </div>
+
+        <div class="button-group">
+          <button class="btn-primary" id="startSessionBtn" onclick="startSession()">
+            Oturum Başlat
+          </button>
+          <button class="btn-secondary" id="stopSessionBtn" onclick="stopSession()" disabled>
+            Oturum Durdur
+          </button>
+        </div>
+      </div>
+
+      <!-- Takım Ayarları -->
+      <div class="card">
+        <h2>👥 Takım Adları</h2>
+        <div class="team-inputs">
+          <div class="form-group">
+            <label>Takım 1</label>
+            <input type="text" id="team1Name" placeholder="Takım 1" value="Takım 1" />
+          </div>
+          <div class="form-group">
+            <label>Takım 2</label>
+            <input type="text" id="team2Name" placeholder="Takım 2" value="Takım 2" />
+          </div>
+          <div class="form-group">
+            <label>Takım 3</label>
+            <input type="text" id="team3Name" placeholder="Takım 3" value="Takım 3" />
+          </div>
+          <div class="form-group">
+            <label>Takım 4</label>
+            <input type="text" id="team4Name" placeholder="Takım 4" value="Takım 4" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Mod Seçimi -->
+      <div class="card">
+        <h2>🎯 Takım Seçim Modu</h2>
+        <div class="mode-toggle">
+          <button class="active" onclick="setMode('manual')" id="manualModeBtn">
+            Manuel (Buton)
+          </button>
+          <button onclick="setMode('automatic')" id="automaticModeBtn">
+            Otomatik (Chat)
+          </button>
+        </div>
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 10px;">
+          <strong>Manuel:</strong> Panelden takım seçin<br />
+          <strong>Otomatik:</strong> Yorum yazarak !1, !2, !3, !4 komutları kullanın
+        </p>
+      </div>
+
+      <!-- İstatistikler -->
+      <div class="card">
+        <h2>📊 Oyun İstatistikleri</h2>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Açılan Kartlar</div>
+            <div class="stat-value" id="cardsOpened">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Katılımcılar</div>
+            <div class="stat-value" id="participants">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Toplam Beğeni</div>
+            <div class="stat-value" id="totalLikes">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Toplam Hediye</div>
+            <div class="stat-value" id="totalGifts">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hızlı Bağlantılar -->
+      <div class="card full-width">
+        <h2>🔗 Hızlı Bağlantılar</h2>
+        <div class="quick-links">
+          <a href="/game-screen-websocket.html" class="quick-link" target="_blank">
+            🎮 Oyun Ekranı
+          </a>
+          <a href="/license-panel.html" class="quick-link" target="_blank">
+            📋 Lisans Paneli
+          </a>
+          <a href="/admin-dashboard.html" class="quick-link" target="_blank">
+            ⚙️ Admin Paneli
+          </a>
+          <a href="/profile" class="quick-link" target="_blank">
+            👤 Profil
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const socket = io(window.location.origin, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
+    });
+
+    let currentSessionId = null;
+    let currentMode = "manual";
+
+    // Bağlantı olayları
+    socket.on("connect", () => {
+      console.log("✅ WebSocket bağlandı");
+      updateConnectionStatus("connected", "Bağlandı");
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ WebSocket bağlantısı kesildi");
+      updateConnectionStatus("disconnected", "Bağlantı Kesildi");
+      currentSessionId = null;
+      document.getElementById("startSessionBtn").disabled = false;
+      document.getElementById("stopSessionBtn").disabled = true;
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Bağlantı hatası:", error);
+      updateConnectionStatus("disconnected", "Hata");
+    });
+
+    // Oyun event'leri
+    socket.on("gameStateUpdate", (state) => {
+      console.log("Oyun durumu güncellendi:", state);
+      updateStats(state);
+    });
+
+    socket.on("gameEvent", (event) => {
+      console.log("Oyun event'i:", event.type);
+      
+      if (event.type === "statsUpdated") {
+        updateStats(event.data);
+      }
+    });
+
+    function updateConnectionStatus(status, text) {
+      const element = document.getElementById("connectionStatus");
+      element.className = `connection-status ${status}`;
+      element.textContent = text;
+    }
+
+    function updateStats(stats) {
+      document.getElementById("cardsOpened").textContent = stats?.cardsOpened || 0;
+      document.getElementById("participants").textContent = stats?.participants || 0;
+      document.getElementById("totalLikes").textContent = stats?.totalLikes || 0;
+      document.getElementById("totalGifts").textContent = stats?.totalGifts || 0;
+    }
+
+    function showMessage(type, text) {
+      const element = document.getElementById(`${type}Message`);
+      element.textContent = text;
+      element.style.display = "block";
+      setTimeout(() => {
+        element.style.display = "none";
+      }, 5000);
+    }
+
+    async function startSession() {
+      const licenseKey = document.getElementById("licenseKey").value;
+      const tiktokUsername = document.getElementById("tiktokUsername").value;
+
+      if (!licenseKey || !tiktokUsername) {
+        showMessage("error", "Lütfen lisans anahtarı ve TikTok kullanıcı adı girin");
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/trpc/broadcaster.createSession", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            input: {
+              licenseKey,
+              broadcasterName: tiktokUsername,
+              teamNames: [
+                document.getElementById("team1Name").value,
+                document.getElementById("team2Name").value,
+                document.getElementById("team3Name").value,
+                document.getElementById("team4Name").value,
+              ],
+              mode: currentMode,
+            },
+          }),
+        });
+
+        const result = await response.json();
+        const sessionData = result.result?.data;
+
+        if (sessionData?.sessionId) {
+          currentSessionId = sessionData.sessionId;
+          socket.emit("joinSession", sessionData.sessionId);
+
+          showMessage("success", "✅ Oturum başarıyla oluşturuldu!");
+          document.getElementById("startSessionBtn").disabled = true;
+          document.getElementById("stopSessionBtn").disabled = false;
+        } else {
+          showMessage("error", sessionData?.message || "Oturum oluşturulamadı");
+        }
+      } catch (error) {
+        showMessage("error", "Hata: " + error.message);
+      }
+    }
+
+    async function stopSession() {
+      if (!currentSessionId) return;
+
+      try {
+        const response = await fetch("/api/trpc/broadcaster.endSession", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            input: { sessionId: currentSessionId },
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.result?.data?.success) {
+          showMessage("success", "✅ Oturum sonlandırıldı");
+          currentSessionId = null;
+          document.getElementById("startSessionBtn").disabled = false;
+          document.getElementById("stopSessionBtn").disabled = true;
+          socket.emit("leaveSession", currentSessionId);
+        } else {
+          showMessage("error", "Oturum sonlandırılamadı");
+        }
+      } catch (error) {
+        showMessage("error", "Hata: " + error.message);
+      }
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById("manualModeBtn").classList.toggle("active", mode === "manual");
+      document.getElementById("automaticModeBtn").classList.toggle("active", mode === "automatic");
+
+      if (currentSessionId) {
+        socket.emit("modeChanged", { sessionId: currentSessionId, mode });
+      }
+    }
+
+    window.addEventListener("load", () => {
+      console.log("Yayıncı paneli yüklendi");
+    });
+  </script>
+</body>
+</html>
