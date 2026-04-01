@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Gamepad2, Play, Square, Settings, Users, Zap, Trophy, Eye } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
+import { io, Socket } from 'socket.io-client';
 
 export default function BroadcasterPanel() {
   const [licenseKey, setLicenseKey] = useState('');
@@ -17,6 +18,45 @@ export default function BroadcasterPanel() {
     totalLikes: 0,
     totalGifts: 0,
   });
+
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const s = io(window.location.origin);
+    socketRef.current = s;
+    s.emit("joinSession", sessionId);
+
+    s.on("gameEvent", (event: { type: string; sessionId: string; data: any; timestamp: number }) => {
+      if (!socketRef.current) return; // race condition guard
+      if (event.sessionId !== sessionId) return;
+
+      switch (event.type) {
+        case "statsUpdated":
+          if (event.data && typeof event.data.cardsOpened === "number") {
+            setStats({
+              cardsOpened: event.data.cardsOpened,
+              participants: event.data.participants ?? 0,
+              totalLikes: event.data.totalLikes ?? 0,
+              totalGifts: event.data.totalGifts ?? 0,
+            });
+          }
+          break;
+        case "gameEnded":
+          setSessionActive(false);
+          break;
+        default:
+          console.log("[Socket] gameEvent:", event.type, event.data);
+      }
+    });
+
+    return () => {
+      s.emit("leaveSession", sessionId);
+      s.disconnect();
+      socketRef.current = null;
+    };
+  }, [sessionId]);
 
   const createSessionMutation = trpc.broadcaster.createSession.useMutation();
   const endSessionMutation = trpc.broadcaster.endSession.useMutation();
