@@ -127,7 +127,11 @@ export async function takeScreenshot(html: string): Promise<Buffer> {
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+    ],
   });
 
   try {
@@ -146,16 +150,23 @@ export async function screenshotAndSend(
   chatId: string | undefined
 ): Promise<void> {
   if (!chatId) {
-    console.warn("[screenshot] TELEGRAM_GROUP_CHAT_ID not set — skipping screenshot");
+    console.warn(
+      "[screenshot] TELEGRAM_GROUP_CHAT_ID not set — skipping screenshot"
+    );
     return;
   }
 
   if (!isBotInitialized()) {
-    console.warn("[screenshot] Telegram bot not initialized — skipping screenshot");
+    console.warn(
+      "[screenshot] Telegram bot not initialized — skipping screenshot"
+    );
     return;
   }
 
-  const filePath = path.join(os.tmpdir(), `kadrokur-result-${data.sessionId}.png`);
+  const filePath = path.join(
+    os.tmpdir(),
+    `kadrokur-result-${data.sessionId}.png`
+  );
 
   try {
     const html = generateResultsHTML(data);
@@ -163,7 +174,10 @@ export async function screenshotAndSend(
     fs.writeFileSync(filePath, buffer);
 
     const caption = `Kadrokur oyunu bitti! @${data.tiktokUsername} — ${data.statistics.totalCardsOpened} kart, ${data.statistics.totalParticipants} katilimci`;
-    await sendPhoto(chatId, filePath, caption);
+    const success = await sendPhoto(chatId, filePath, caption);
+    if (!success) {
+      throw new Error("sendPhoto returned false");
+    }
     console.log(`[screenshot] Sent to Telegram chat ${chatId}`);
   } catch (error) {
     console.error("[screenshot] Failed:", error);
