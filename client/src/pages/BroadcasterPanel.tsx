@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Play, Square, Settings, Users, Zap, Trophy, Eye } from 'lucide-react';
+import { Shield, Link, AtSign, Play, Square, Users, Zap, Heart, Gift, Clock, Settings, LayoutGrid } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { io, Socket } from 'socket.io-client';
 
@@ -79,12 +78,12 @@ export default function BroadcasterPanel() {
       if (result.success && result.sessionId) {
         setSessionId(result.sessionId);
         setSessionActive(true);
-        alert('✅ Oturum başarıyla başlatıldı!');
+        alert('Oturum başarıyla başlatıldı');
       } else {
-        alert('❌ Hata: ' + result.message);
+        alert('Hata: ' + result.message);
       }
     } catch (error) {
-      alert('❌ Oturum başlatılamadı: ' + (error as Error).message);
+      alert('Oturum başlatılamadı: ' + (error as Error).message);
     }
   };
 
@@ -98,10 +97,10 @@ export default function BroadcasterPanel() {
       if (result.success) {
         setSessionActive(false);
         setSessionId(null);
-        alert('✅ Oturum sona erdirildi');
+        alert('Oturum sona erdirildi');
       }
     } catch (error) {
-      alert('❌ Oturum sonlandırılamadı');
+      alert('Oturum sonlandırılamadı');
     }
   };
 
@@ -116,10 +115,10 @@ export default function BroadcasterPanel() {
 
       if (result.success) {
         setSelectedMode(mode);
-        alert(`✅ Mod ${modeValue === 'manual' ? 'Manuel' : 'Otomatik'} olarak ayarlandı`);
+        alert(`Mod ${modeValue === 'manual' ? 'Manuel' : 'Otomatik'} olarak ayarlandı`);
       }
     } catch (error) {
-      alert('❌ Mod değiştirilemedi');
+      alert('Mod değiştirilemedi');
     }
   };
 
@@ -130,258 +129,233 @@ export default function BroadcasterPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div style={{ minHeight: '100vh', background: '#030a06', padding: '1rem' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Gamepad2 className="w-10 h-10 text-blue-500" />
-            <h1 className="text-4xl font-bold text-white">Yayıncı Paneli</h1>
-          </div>
-          <p className="text-slate-400">TikTok canlı yayınlarında futbol kartları oyunu yönetin</p>
-        </div>
-
-        {/* Status Bar */}
-        <div className="mb-8 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${sessionActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-              <span className="text-white font-semibold">
-                {sessionActive ? '🟢 Oturum Aktif' : '🔴 Oturum Kapalı'}
-              </span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem', borderBottom: '1px solid #14532d', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '36px', height: '36px', background: 'linear-gradient(135deg,#16a34a,#15803d)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 12px #16a34a44' }}>
+              <Shield size={18} color="#fff" />
             </div>
-            {sessionActive && (
-              <span className="text-slate-300 text-sm">
-                Yayıncı: <strong>{tiktokUsername}</strong>
-              </span>
-            )}
+            <div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.08em', color: '#22c55e' }}>KADROKUR</div>
+              <div style={{ fontSize: '0.65rem', color: '#166534', letterSpacing: '0.1em' }}>YAYINCI PANELİ v3</div>
+            </div>
+          </div>
+          {/* Status pill */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '4px 12px', borderRadius: '20px',
+            background: sessionActive ? '#16a34a22' : '#0a1a0f',
+            border: `1px solid ${sessionActive ? '#22c55e' : '#14532d'}`,
+          }}>
+            <div style={{
+              width: '7px', height: '7px', borderRadius: '50%',
+              background: sessionActive ? '#22c55e' : '#4b5563',
+            }} />
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', color: sessionActive ? '#22c55e' : '#4b5563' }}>
+              {sessionActive ? 'CANLI' : 'HAZIR'}
+            </span>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Panel */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Lisans Bilgileri */}
-            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-yellow-500" />
-                  Lisans Bilgileri
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-slate-300 text-sm font-semibold mb-2">
-                    Lisans Anahtarı
-                  </label>
+        {/* ── PRE-SESSION VIEW ── */}
+        {!sessionActive && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+
+            {/* Connection settings */}
+            <div style={{ background: '#0a1a0f', border: '1px solid #14532d', borderRadius: '10px', padding: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: '#4ade80', textTransform: 'uppercase' as const, marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #14532d44' }}>
+                <Link size={13} />
+                Bağlantı
+              </div>
+              <div style={{ marginBottom: '0.85rem' }}>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4ade80', marginBottom: '0.35rem', letterSpacing: '0.04em' }}>Lisans Anahtarı</label>
+                <div style={{ position: 'relative' as const }}>
                   <input
                     type="text"
                     value={licenseKey}
                     onChange={(e) => setLicenseKey(e.target.value)}
                     placeholder="HIRA-XXXXXXXXXXXXX"
-                    disabled={sessionActive}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                    style={{ width: '100%', padding: '0.55rem 0.8rem 0.55rem 2rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.82rem', outline: 'none', fontFamily: 'monospace' }}
                   />
+                  <div style={{ position: 'absolute' as const, left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#166534' }}>
+                    <Zap size={11} />
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block text-slate-300 text-sm font-semibold mb-2">
-                    TikTok Kullanıcı Adı
-                  </label>
+              </div>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4ade80', marginBottom: '0.35rem', letterSpacing: '0.04em' }}>TikTok Kullanıcı Adı</label>
+                <div style={{ position: 'relative' as const }}>
                   <input
                     type="text"
                     value={tiktokUsername}
                     onChange={(e) => setTiktokUsername(e.target.value)}
-                    placeholder="@tiktok_adınız"
-                    disabled={sessionActive}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                    placeholder="@tiktok_adiniz"
+                    style={{ width: '100%', padding: '0.55rem 0.8rem 0.55rem 2rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.82rem', outline: 'none' }}
                   />
+                  <div style={{ position: 'absolute' as const, left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#166534' }}>
+                    <AtSign size={11} />
+                  </div>
                 </div>
+              </div>
+              <button
+                onClick={handleStartSession}
+                style={{ width: '100%', padding: '0.7rem', borderRadius: '7px', border: 'none', background: 'linear-gradient(135deg,#16a34a,#15803d)', color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 14px #16a34a33' }}
+              >
+                <Play size={14} />
+                Oturumu Başlat
+              </button>
+            </div>
 
-                <div className="flex gap-3 pt-4">
-                  {!sessionActive ? (
-                    <Button
-                      onClick={handleStartSession}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Oturum Başlat
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleStopSession}
-                      className="flex-1 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold"
-                    >
-                      <Square className="w-4 h-4 mr-2" />
-                      Oturum Durdur
-                    </Button>
-                  )}
+            {/* Session config */}
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem' }}>
+              {/* Team names */}
+              <div style={{ background: '#0a1a0f', border: '1px solid #14532d', borderRadius: '10px', padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: '#4ade80', textTransform: 'uppercase' as const, marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #14532d44' }}>
+                  <Users size={13} />
+                  Takım Adları
                 </div>
-              </CardContent>
-            </Card>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                  {teamNames.map((name, idx) => (
+                    <div key={idx}>
+                      <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 600, color: '#166534', marginBottom: '0.3rem', letterSpacing: '0.04em' }}>TAKIM {idx + 1}</label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => handleTeamNameChange(idx, e.target.value)}
+                        style={{ width: '100%', padding: '0.45rem 0.7rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.8rem', outline: 'none' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-            {/* Takım Ayarları */}
-            {sessionActive && (
-              <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Users className="w-5 h-5 text-blue-500" />
-                    Takım Adları
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Oyunda gösterilecek takım adlarını özelleştirin
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    {teamNames.map((name, idx) => (
-                      <div key={idx}>
-                        <label className="block text-slate-300 text-sm font-semibold mb-2">
-                          Takım {idx + 1}
-                        </label>
-                        <input
-                          type="text"
-                          value={name}
-                          onChange={(e) => handleTeamNameChange(idx, e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
+              {/* Mode selector */}
+              <div style={{ background: '#0a1a0f', border: '1px solid #14532d', borderRadius: '10px', padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: '#4ade80', textTransform: 'uppercase' as const, marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #14532d44' }}>
+                  <Settings size={13} />
+                  Takım Seçim Modu
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                  <button
+                    onClick={() => setSelectedMode('manual')}
+                    style={{ padding: '0.85rem', borderRadius: '7px', border: `1.5px solid ${selectedMode === 'manual' ? '#22c55e' : '#14532d'}`, background: selectedMode === 'manual' ? '#16a34a0f' : '#030a06', cursor: 'pointer', textAlign: 'left' as const }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: selectedMode === 'manual' ? '#22c55e' : '#4ade80', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      <Users size={12} />
+                      Manuel Mod
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#166534' }}>Panelden takım seçin</div>
+                  </button>
+                  <button
+                    onClick={() => setSelectedMode('auto')}
+                    style={{ padding: '0.85rem', borderRadius: '7px', border: `1.5px solid ${selectedMode === 'auto' ? '#22c55e' : '#14532d'}`, background: selectedMode === 'auto' ? '#16a34a0f' : '#030a06', cursor: 'pointer', textAlign: 'left' as const }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: selectedMode === 'auto' ? '#22c55e' : '#4ade80', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      <Zap size={12} />
+                      Otomatik Mod
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#166534' }}>Chat komutlarıyla (!1, !2)</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ACTIVE SESSION VIEW ── */}
+        {sessionActive && (
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem' }}>
+
+            {/* Stats row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.75rem' }}>
+              {/* Cards opened */}
+              <div style={{ background: '#0a1a0f', border: '1px solid #14532d', borderRadius: '8px', padding: '0.85rem 1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.1em', color: '#166534', textTransform: 'uppercase' as const, marginBottom: '0.4rem' }}>
+                  <LayoutGrid size={10} />
+                  Açılan Kartlar
+                </div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#22c55e' }}>{stats.cardsOpened}</div>
+                <div style={{ marginTop: '0.4rem', height: '3px', background: '#14532d', borderRadius: '2px' }}>
+                  <div style={{ height: '100%', background: '#22c55e', borderRadius: '2px', width: `${Math.min(100, (stats.cardsOpened / 44) * 100)}%` }} />
+                </div>
+              </div>
+              {/* Participants */}
+              <div style={{ background: '#0a1a0f', border: '1px solid #14532d', borderRadius: '8px', padding: '0.85rem 1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.1em', color: '#166534', textTransform: 'uppercase' as const, marginBottom: '0.4rem' }}>
+                  <Users size={10} />
+                  Katılımcı
+                </div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#4ade80' }}>{stats.participants}</div>
+              </div>
+              {/* Likes */}
+              <div style={{ background: '#0a1a0f', border: '1px solid #14532d', borderRadius: '8px', padding: '0.85rem 1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.1em', color: '#166534', textTransform: 'uppercase' as const, marginBottom: '0.4rem' }}>
+                  <Heart size={10} />
+                  Beğeni
+                </div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#4ade80' }}>{stats.totalLikes}</div>
+              </div>
+              {/* Gifts */}
+              <div style={{ background: '#0a1a0f', border: '1px solid #14532d', borderRadius: '8px', padding: '0.85rem 1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.1em', color: '#166534', textTransform: 'uppercase' as const, marginBottom: '0.4rem' }}>
+                  <Gift size={10} />
+                  Hediye
+                </div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fbbf24' }}>{stats.totalGifts}</div>
+              </div>
+            </div>
+
+            {/* Team panels 2x2 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {teamNames.map((name, idx) => (
+                <div key={idx} style={{ background: '#0a1a0f', border: '1px solid #14532d', borderRadius: '8px', padding: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: idx % 2 === 0 ? '#22c55e' : '#4ade80' }} />
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4ade80', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{name}</span>
+                  </div>
+                  {/* 11-slot card grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(11,1fr)', gap: '3px' }}>
+                    {Array.from({ length: 11 }).map((_, slotIdx) => (
+                      <div key={slotIdx} style={{ height: '22px', borderRadius: '3px', background: '#16a34a22', border: '1px dashed #14532d' }} />
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              ))}
+            </div>
 
-            {/* Mod Seçimi */}
-            {sessionActive && (
-              <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-purple-500" />
-                    Takım Seçim Modu
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Manuel veya otomatik takım seçimi yapın
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      onClick={() => handleModeChange('manual')}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        selectedMode === 'manual'
-                          ? 'bg-blue-500/20 border-blue-500'
-                          : 'bg-slate-700/50 border-slate-600 hover:border-slate-500'
-                      }`}
-                    >
-                      <div className="text-white font-semibold mb-1">📋 Manuel Mod</div>
-                      <div className="text-slate-400 text-sm">Panelden takım seçin</div>
-                    </button>
+            {/* Bottom action row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#0a1a0f', border: '1px solid #14532d', borderRadius: '8px', padding: '0.85rem 1rem' }}>
+              {/* Session info */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#166534', fontSize: '0.72rem' }}>
+                <Clock size={12} color="#166534" />
+                <span>Oturum: <span style={{ color: '#4ade80', fontFamily: 'monospace' }}>{tiktokUsername}</span></span>
+              </div>
+              <div style={{ flex: 1 }} />
+              {/* Quick links */}
+              <a href="/game-screen.html" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '5px', color: '#4ade80', fontSize: '0.72rem', fontWeight: 600, textDecoration: 'none' }}>
+                <LayoutGrid size={11} />
+                Oyun Ekranı
+              </a>
+              <a href="/license-panel.html" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '5px', color: '#4ade80', fontSize: '0.72rem', fontWeight: 600, textDecoration: 'none' }}>
+                <Settings size={11} />
+                Lisans Paneli
+              </a>
+              {/* Stop button */}
+              <button
+                onClick={handleStopSession}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', background: '#7f1d1d22', border: '1px solid #dc262644', borderRadius: '6px', color: '#fca5a5', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+              >
+                <Square size={12} />
+                Oturumu Sonlandır
+              </button>
+            </div>
 
-                    <button
-                      onClick={() => handleModeChange('auto')}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        selectedMode === 'auto'
-                          ? 'bg-purple-500/20 border-purple-500'
-                          : 'bg-slate-700/50 border-slate-600 hover:border-slate-500'
-                      }`}
-                    >
-                      <div className="text-white font-semibold mb-1">🤖 Otomatik Mod</div>
-                      <div className="text-slate-400 text-sm">Chat komutlarıyla (!1, !2)</div>
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
+        )}
 
-          {/* Sidebar - İstatistikler ve Kısayollar */}
-          <div className="space-y-6">
-            {/* İstatistikler */}
-            {sessionActive && (
-              <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-amber-500" />
-                    İstatistikler
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="bg-slate-700/30 p-3 rounded-lg">
-                    <div className="text-slate-400 text-sm">Açılan Kartlar</div>
-                    <div className="text-2xl font-bold text-white">{stats.cardsOpened}</div>
-                  </div>
-                  <div className="bg-slate-700/30 p-3 rounded-lg">
-                    <div className="text-slate-400 text-sm">Katılımcılar</div>
-                    <div className="text-2xl font-bold text-white">{stats.participants}</div>
-                  </div>
-                  <div className="bg-slate-700/30 p-3 rounded-lg">
-                    <div className="text-slate-400 text-sm">Toplam Beğeni</div>
-                    <div className="text-2xl font-bold text-white">{stats.totalLikes}</div>
-                  </div>
-                  <div className="bg-slate-700/30 p-3 rounded-lg">
-                    <div className="text-slate-400 text-sm">Toplam Hediye</div>
-                    <div className="text-2xl font-bold text-white">{stats.totalGifts}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Kısayollar */}
-            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-cyan-500" />
-                  Hızlı Erişim
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <a
-                  href="/game-screen.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded-lg text-blue-300 text-center font-semibold transition-all"
-                >
-                  🎮 Oyun Ekranı
-                </a>
-                <a
-                  href="/license-panel.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 rounded-lg text-purple-300 text-center font-semibold transition-all"
-                >
-                  🔑 Lisans Paneli
-                </a>
-                <a
-                  href="/admin-dashboard.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 rounded-lg text-orange-300 text-center font-semibold transition-all"
-                >
-                  ⚙️ Admin Paneli
-                </a>
-              </CardContent>
-            </Card>
-
-            {/* Bilgiler */}
-            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white text-sm">ℹ️ Bilgi</CardTitle>
-              </CardHeader>
-              <CardContent className="text-slate-400 text-sm space-y-2">
-                <p>
-                  <strong>Manuel Mod:</strong> Panelden takım seçin
-                </p>
-                <p>
-                  <strong>Otomatik Mod:</strong> Sohbetde !1, !2, !3, !4 yazın
-                </p>
-                <p>
-                  <strong>OBS:</strong> /game-screen.html'i Browser Source olarak ekleyin
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
       </div>
     </div>
   );
