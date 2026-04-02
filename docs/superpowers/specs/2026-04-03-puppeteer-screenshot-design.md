@@ -46,35 +46,31 @@ If `TELEGRAM_GROUP_CHAT_ID` is not set or bot is not initialized, `screenshotAnd
 puppeteer: ^22.x
 ```
 
-**Add to `Dockerfile` (before `npm install`):**
+**Add to `Dockerfile` production stage (before `COPY package.json`, before non-root user setup):**
+
+Note: Image is `node:22-alpine` — use `apk`, not `apt-get`.
+
 ```dockerfile
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
   chromium \
-  fonts-liberation \
-  libappindicator3-1 \
-  libasound2 \
-  libatk-bridge2.0-0 \
-  libatk1.0-0 \
-  libcups2 \
-  libdbus-1-3 \
-  libgdk-pixbuf2.0-0 \
-  libnspr4 \
-  libnss3 \
-  libxcomposite1 \
-  libxdamage1 \
-  libxrandr2 \
-  xdg-utils \
-  --no-install-recommends && rm -rf /var/lib/apt/lists/*
+  nss \
+  freetype \
+  harfbuzz \
+  ca-certificates \
+  ttf-freefont
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ```
 
 ## Error Handling
 
 - If `TELEGRAM_GROUP_CHAT_ID` is missing → log warning, skip silently
+- If `getBroadcasterSession(sessionId)` returns null → log warning, skip silently
+- If `endGame()` returns null → skip screenshot (no game data)
 - If Puppeteer launch fails → log error, skip silently
 - If Telegram send fails → log error, skip silently
+- Temp file cleanup in `finally` block — runs even if Telegram send fails
 - None of these errors propagate to `stopSession` — game cleanup always completes
 
 ## Testing
