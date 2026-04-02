@@ -15,6 +15,7 @@ import {
   startTikTokConnection,
   stopTikTokConnection,
 } from "./tiktok-integration";
+import { screenshotAndSend } from "./screenshot-service";
 
 type TikTokEvent = {
   type: "like" | "gift" | "comment" | "connected" | "disconnected" | "error";
@@ -210,12 +211,28 @@ class SocketServer {
   async stopSession(sessionId: string) {
     await stopTikTokConnection(sessionId);
     const result = endGame(sessionId);
+
     if (result) {
       this.broadcastGameEnded(sessionId, {
         finalScores: result.finalScores,
         statistics: result.statistics,
       });
+
+      // Fire-and-forget screenshot — does not block cleanup
+      const session = getBroadcasterSession(sessionId);
+      if (session) {
+        void screenshotAndSend(
+          {
+            sessionId,
+            tiktokUsername: session.tiktokUsername,
+            finalScores: result.finalScores,
+            statistics: result.statistics,
+          },
+          process.env.TELEGRAM_GROUP_CHAT_ID
+        );
+      }
     }
+
     cleanupGame(sessionId);
   }
 
