@@ -447,8 +447,8 @@
               (player) => `
             <div class="player">
               <span class="player-name">${player.name}</span>
-              <span class="player-card-quality quality-${player.cardQuality?.toLowerCase() || 'bronze'}">
-                ${player.cardQuality?.toUpperCase() || 'BRONZ'}
+              <span class="player-card-quality quality-${player.quality?.toLowerCase() || 'bronze'}">
+                ${player.quality?.toUpperCase() || 'BRONZ'}
               </span>
             </div>
           `
@@ -508,7 +508,7 @@
         <div class="score-card team-${index + 1}">
           <h3>${score.teamName}</h3>
           <div class="score">${score.score}</div>
-          <div class="players-count">${score.players?.length || 0} oyuncu</div>
+          <div class="players-count">${score.players || 0} oyuncu</div>
         </div>
       `
         )
