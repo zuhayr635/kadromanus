@@ -1,689 +1,346 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kadrokur - Lisans Yönetimi</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kadrokur — Lisans Yönetimi</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#030a06; color:#e2e8f0; min-height:100vh; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-    }
+  .page { max-width:1100px; margin:0 auto; padding:1.5rem; }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+  .header { display:flex; align-items:center; justify-content:space-between; padding-bottom:1rem; border-bottom:1px solid #14532d; margin-bottom:1.5rem; }
+  .header-left { display:flex; align-items:center; gap:0.75rem; }
+  .logo-icon { width:36px; height:36px; background:linear-gradient(135deg,#16a34a,#15803d); border-radius:8px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px #16a34a44; }
+  .logo-text { font-size:1.1rem; font-weight:700; letter-spacing:0.08em; color:#22c55e; }
+  .logo-sub { font-size:0.65rem; color:#166534; letter-spacing:0.1em; margin-top:1px; }
+  .back-btn { display:flex; align-items:center; gap:0.4rem; padding:0.4rem 0.85rem; background:#0a1a0f; border:1px solid #14532d; border-radius:6px; color:#4ade80; font-size:0.75rem; font-weight:600; cursor:pointer; text-decoration:none; }
+  .back-btn:hover { border-color:#22c55e44; }
 
-    .header {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
+  .grid { display:grid; grid-template-columns:320px 1fr; gap:1.25rem; }
 
-    .header h1 {
-      font-size: 32px;
-      color: #333;
-      margin-bottom: 10px;
-    }
+  .panel { background:#0a1a0f; border:1px solid #14532d; border-radius:10px; padding:1.25rem; }
+  .panel-title { display:flex; align-items:center; gap:0.6rem; font-size:0.75rem; font-weight:700; letter-spacing:0.08em; color:#4ade80; text-transform:uppercase; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid #14532d44; }
 
-    .header p {
-      color: #666;
-      font-size: 16px;
-    }
+  .pkg-list { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.25rem; }
+  .pkg-item { padding:0.75rem; border:1.5px solid #14532d; border-radius:7px; cursor:pointer; transition:all 0.15s; }
+  .pkg-item:hover { border-color:#22c55e44; }
+  .pkg-item.selected { border-color:#22c55e; background:#16a34a0f; }
+  .pkg-top { display:flex; justify-content:space-between; align-items:center; }
+  .pkg-name { font-size:0.82rem; font-weight:700; color:#e2e8f0; }
+  .pkg-price { font-size:0.95rem; font-weight:800; color:#22c55e; }
+  .pkg-desc { font-size:0.7rem; color:#166534; margin-top:3px; }
+  .pkg-badges { display:flex; gap:0.3rem; margin-top:0.4rem; flex-wrap:wrap; }
+  .badge { font-size:0.62rem; padding:2px 7px; border-radius:10px; background:#16a34a22; border:1px solid #14532d; color:#4ade80; }
+  .badge.gold { background:#92400e22; border-color:#78350f; color:#fbbf24; }
 
-    .content {
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 30px;
-    }
+  .field { margin-bottom:0.85rem; }
+  label { display:block; font-size:0.72rem; font-weight:600; color:#4ade80; margin-bottom:0.35rem; letter-spacing:0.04em; }
+  input[type=text], input[type=email], input[type=number], input[type=date], select {
+    width:100%; padding:0.55rem 0.8rem; background:#030a06; border:1px solid #14532d;
+    border-radius:6px; color:#e2e8f0; font-size:0.82rem; outline:none; transition:border-color 0.2s;
+  }
+  input:focus, select:focus { border-color:#22c55e; }
+  input::placeholder { color:#166534; }
+  select option { background:#030a06; }
 
-    @media (max-width: 1024px) {
-      .content {
-        grid-template-columns: 1fr;
-      }
-    }
+  .checkbox-row { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem; }
+  .checkbox-row input[type=checkbox] { width:14px; height:14px; accent-color:#22c55e; }
+  .checkbox-row label { margin:0; font-size:0.75rem; color:#4ade80; font-weight:500; letter-spacing:0; }
 
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
+  .btn-primary { width:100%; padding:0.7rem; border-radius:7px; border:none; background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.5rem; box-shadow:0 4px 14px #16a34a33; margin-top:0.5rem; }
+  .btn-primary:hover { opacity:0.9; }
 
-    .card-title {
-      font-size: 20px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+  .lic-list { display:flex; flex-direction:column; gap:0.75rem; }
+  .lic-item { background:#030a06; border:1px solid #14532d; border-radius:8px; padding:1rem; border-left:3px solid #22c55e; }
+  .lic-item.expired { border-left-color:#dc2626; }
+  .lic-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; }
+  .lic-key { font-family:monospace; font-size:0.75rem; color:#4ade80; background:#0a1a0f; border:1px solid #14532d; padding:3px 8px; border-radius:4px; display:flex; align-items:center; gap:0.4rem; }
+  .lic-badge { font-size:0.65rem; font-weight:700; padding:3px 9px; border-radius:10px; }
+  .lic-badge.active { background:#16a34a22; border:1px solid #22c55e44; color:#22c55e; }
+  .lic-badge.expired { background:#7f1d1d22; border:1px solid #dc262644; color:#fca5a5; }
+  .lic-detail-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; }
+  .lic-detail-label { font-size:0.62rem; color:#166534; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:2px; }
+  .lic-detail-val { font-size:0.78rem; color:#cbd5e1; font-weight:500; }
+  .lic-actions { display:flex; gap:0.4rem; margin-top:0.75rem; padding-top:0.6rem; border-top:1px solid #14532d44; }
+  .act-btn { padding:0.3rem 0.7rem; border-radius:5px; font-size:0.7rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.3rem; border:none; }
+  .act-btn.copy { background:#16a34a12; border:1px solid #14532d; color:#4ade80; }
+  .act-btn.extend { background:#16a34a22; border:1px solid #22c55e44; color:#22c55e; }
+  .act-btn.revoke { background:#7f1d1d12; border:1px solid #dc262633; color:#fca5a5; }
+  .act-btn:hover { opacity:0.8; }
 
-    .card-title::before {
-      content: '';
-      width: 4px;
-      height: 24px;
-      background: #667eea;
-      border-radius: 2px;
-    }
-
-    .package-list {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .package-item {
-      padding: 15px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .package-item:hover {
-      border-color: #667eea;
-      background: #f9f9ff;
-    }
-
-    .package-item.active {
-      border-color: #667eea;
-      background: #f0f4ff;
-    }
-
-    .package-name {
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 5px;
-    }
-
-    .package-price {
-      font-size: 18px;
-      color: #667eea;
-      font-weight: bold;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      font-size: 14px;
-      font-weight: 500;
-      color: #555;
-      margin-bottom: 8px;
-    }
-
-    input[type="text"],
-    input[type="email"],
-    input[type="number"],
-    input[type="date"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #e0e0e0;
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: border-color 0.3s;
-    }
-
-    input[type="text"]:focus,
-    input[type="email"]:focus,
-    input[type="number"]:focus,
-    input[type="date"]:focus,
-    select:focus,
-    textarea:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .checkbox-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .checkbox-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-    }
-
-    .checkbox-label {
-      margin: 0;
-      cursor: pointer;
-      font-weight: normal;
-    }
-
-    .button-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-top: 30px;
-    }
-
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      grid-column: 1 / -1;
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-    }
-
-    .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
-    }
-
-    .btn-secondary:hover {
-      background: #e0e0e0;
-    }
-
-    .status-box {
-      padding: 15px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-
-    .status-box.success {
-      background: #d4edda;
-      border: 1px solid #c3e6cb;
-      color: #155724;
-    }
-
-    .status-box.error {
-      background: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-    }
-
-    .status-box.info {
-      background: #d1ecf1;
-      border: 1px solid #bee5eb;
-      color: #0c5460;
-    }
-
-    .license-list {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .license-item {
-      background: #f9f9f9;
-      padding: 15px;
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
-    }
-
-    .license-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .license-key {
-      font-family: monospace;
-      font-size: 12px;
-      color: #666;
-      background: white;
-      padding: 5px 10px;
-      border-radius: 4px;
-    }
-
-    .license-status {
-      font-size: 12px;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: #d4edda;
-      color: #155724;
-    }
-
-    .license-status.expired {
-      background: #f8d7da;
-      color: #721c24;
-    }
-
-    .license-details {
-      font-size: 13px;
-      color: #666;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .detail-label {
-      font-weight: 600;
-    }
-
-    .feature-badge {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: #e3f2fd;
-      color: #1976d2;
-      margin-right: 5px;
-      margin-top: 5px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #e0e0e0;
-    }
-
-    .tab-button {
-      padding: 12px 20px;
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      cursor: pointer;
-      font-weight: 600;
-      color: #666;
-      transition: all 0.3s;
-    }
-
-    .tab-button:hover {
-      color: #333;
-    }
-
-    .tab-button.active {
-      color: #667eea;
-      border-bottom-color: #667eea;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: #666;
-    }
-
-    .spinner {
-      border: 3px solid #f0f0f0;
-      border-top: 3px solid #667eea;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 10px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
+  .stats-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:0.75rem; margin-bottom:1.25rem; }
+  .stat-mini { background:#0a1a0f; border:1px solid #14532d; border-radius:8px; padding:0.75rem 1rem; }
+  .stat-mini-label { font-size:0.62rem; font-weight:700; letter-spacing:0.1em; color:#166534; text-transform:uppercase; margin-bottom:0.25rem; }
+  .stat-mini-val { font-size:1.3rem; font-weight:800; color:#22c55e; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>💳 Kadrokur - Lisans Yönetimi</h1>
-      <p>Paket türlerini, özellikleri ve sürelerini yönetin</p>
+
+<div style="background:#030a06;padding:0.6rem 1.5rem;text-align:center;border-bottom:1px solid #14532d66;font-size:0.72rem;color:#166534;letter-spacing:0.06em">
+  KADROKUR — LİSANS YÖNETİM PANELİ &nbsp;|&nbsp; Admin erişimi gerektirir
+</div>
+
+<div class="page">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-icon">
+        <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div>
+        <div class="logo-text">KADROKUR</div>
+        <div class="logo-sub">LİSANS YÖNETİM PANELİ</div>
+      </div>
     </div>
+    <a class="back-btn" href="/broadcaster">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Yayıncı Paneline Dön
+    </a>
+  </div>
 
-    <div class="content">
-      <!-- Sidebar: Package Selection -->
-      <div class="card">
-        <div class="card-title">📦 Paket Türleri</div>
-        <div class="package-list" id="packageList">
-          <div class="package-item active" data-package="basic">
-            <div class="package-name">Basic</div>
-            <div class="package-price">₺99/ay</div>
-          </div>
-          <div class="package-item" data-package="pro">
-            <div class="package-name">Pro</div>
-            <div class="package-price">₺299/ay</div>
-          </div>
-          <div class="package-item" data-package="premium">
-            <div class="package-name">Premium</div>
-            <div class="package-price">₺599/ay</div>
-          </div>
-          <div class="package-item" data-package="unlimited">
-            <div class="package-name">Unlimited</div>
-            <div class="package-price">₺999/ay</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main Content: License Management -->
-      <div class="card">
-        <div id="statusBox" class="status-box" style="display: none;"></div>
-
-        <div class="tabs">
-          <button class="tab-button active" data-tab="create">Yeni Lisans</button>
-          <button class="tab-button" data-tab="manage">Lisansları Yönet</button>
-          <button class="tab-button" data-tab="features">Özellikleri Ayarla</button>
-        </div>
-
-        <!-- Tab 1: Create License -->
-        <div class="tab-content active" id="createTab">
-          <form id="licenseForm">
-            <div class="form-group">
-              <label>Paket Türü</label>
-              <select id="packageType" required>
-                <option value="">Seçiniz...</option>
-                <option value="basic">Basic</option>
-                <option value="pro">Pro</option>
-                <option value="premium">Premium</option>
-                <option value="unlimited">Unlimited</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Yayıncı Adı</label>
-              <input type="text" id="broadcasterName" placeholder="Yayıncı adını girin" required />
-            </div>
-
-            <div class="form-group">
-              <label>E-mail</label>
-              <input type="email" id="broadcasterEmail" placeholder="E-mail adresini girin" required />
-            </div>
-
-            <div class="form-group">
-              <label>Lisans Süresi (Gün)</label>
-              <input type="number" id="licenseDuration" placeholder="30" value="30" min="1" required />
-            </div>
-
-            <div class="form-group">
-              <label>Maksimum Eş Zamanlı Oturum</label>
-              <input type="number" id="maxSessions" placeholder="1" value="1" min="1" required />
-            </div>
-
-            <div class="form-group">
-              <label>Maksimum Oyuncu Sayısı</label>
-              <input type="number" id="maxPlayers" placeholder="500" value="500" min="1" required />
-            </div>
-
-            <div class="button-group">
-              <button type="submit" class="btn-primary">Lisans Oluştur</button>
-              <button type="reset" class="btn-secondary">Temizle</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Tab 2: Manage Licenses -->
-        <div class="tab-content" id="manageTab">
-          <div id="licenseList" class="license-list">
-            <div class="loading">
-              <div class="spinner"></div>
-              <p>Lisanslar yükleniyor...</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab 3: Feature Settings -->
-        <div class="tab-content" id="featuresTab">
-          <form id="featureForm">
-            <div class="form-group">
-              <label>Paket Seçin</label>
-              <select id="featurePackage" required>
-                <option value="">Seçiniz...</option>
-                <option value="basic">Basic</option>
-                <option value="pro">Pro</option>
-                <option value="premium">Premium</option>
-                <option value="unlimited">Unlimited</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Özellikler</label>
-              <div class="checkbox-group">
-                <div class="checkbox-item">
-                  <input type="checkbox" id="feature_telegram" />
-                  <label class="checkbox-label" for="feature_telegram">Telegram Bot Entegrasyonu</label>
-                </div>
-                <div class="checkbox-item">
-                  <input type="checkbox" id="feature_auto_mode" />
-                  <label class="checkbox-label" for="feature_auto_mode">Otomatik Takım Seçimi</label>
-                </div>
-                <div class="checkbox-item">
-                  <input type="checkbox" id="feature_analytics" />
-                  <label class="checkbox-label" for="feature_analytics">Gelişmiş Analitikler</label>
-                </div>
-                <div class="checkbox-item">
-                  <input type="checkbox" id="feature_custom_teams" />
-                  <label class="checkbox-label" for="feature_custom_teams">Özel Takım Adları</label>
-                </div>
-                <div class="checkbox-item">
-                  <input type="checkbox" id="feature_multi_session" />
-                  <label class="checkbox-label" for="feature_multi_session">Çoklu Oturum Desteği</label>
-                </div>
-                <div class="checkbox-item">
-                  <input type="checkbox" id="feature_api_access" />
-                  <label class="checkbox-label" for="feature_api_access">API Erişimi</label>
-                </div>
-              </div>
-            </div>
-
-            <div class="button-group">
-              <button type="submit" class="btn-primary">Özellikleri Kaydet</button>
-            </div>
-          </form>
-        </div>
-      </div>
+  <div class="stats-strip">
+    <div class="stat-mini" id="stat-total">
+      <div class="stat-mini-label">Toplam Lisans</div>
+      <div class="stat-mini-val" id="val-total">—</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-label">Aktif</div>
+      <div class="stat-mini-val" style="color:#22c55e" id="val-active">—</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-label">Süresi Dolmuş</div>
+      <div class="stat-mini-val" style="color:#fca5a5" id="val-expired">—</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-label">Bu Ay Oluşturulan</div>
+      <div class="stat-mini-val" id="val-thismonth">—</div>
     </div>
   </div>
 
-  <script>
-    const packageList = document.getElementById('packageList');
-    const licenseForm = document.getElementById('licenseForm');
-    const featureForm = document.getElementById('featureForm');
-    const statusBox = document.getElementById('statusBox');
-    const tabs = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
+  <div class="grid">
 
-    let selectedPackage = 'basic';
+    <div style="display:flex;flex-direction:column;gap:1rem">
 
-    // Package selection
-    packageList.addEventListener('click', (e) => {
-      const item = e.target.closest('.package-item');
-      if (!item) return;
+      <div class="panel">
+        <div class="panel-title">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          Paket Sec
+        </div>
+        <div class="pkg-list" id="pkg-list">
+          <div class="pkg-item" data-pkg="starter" onclick="selectPkg(this)">
+            <div class="pkg-top"><div class="pkg-name">Baslangic</div><div class="pkg-price">149 TL</div></div>
+            <div class="pkg-desc">30 gunluk lisans</div>
+            <div class="pkg-badges"><span class="badge">Manuel Mod</span><span class="badge">1 Oturum</span></div>
+          </div>
+          <div class="pkg-item selected" data-pkg="pro" onclick="selectPkg(this)">
+            <div class="pkg-top"><div class="pkg-name">Profesyonel</div><div class="pkg-price">349 TL</div></div>
+            <div class="pkg-desc">90 gunluk lisans — En Populer</div>
+            <div class="pkg-badges"><span class="badge">Manuel + Otomatik</span><span class="badge">Sinirsiz Oturum</span><span class="badge gold">Oncelikli Destek</span></div>
+          </div>
+          <div class="pkg-item" data-pkg="annual" onclick="selectPkg(this)">
+            <div class="pkg-top"><div class="pkg-name">Yillik</div><div class="pkg-price">999 TL</div></div>
+            <div class="pkg-desc">365 gunluk lisans</div>
+            <div class="pkg-badges"><span class="badge">Tum Ozellikler</span><span class="badge gold">VIP Destek</span></div>
+          </div>
+        </div>
+      </div>
 
-      document.querySelectorAll('.package-item').forEach(p => p.classList.remove('active'));
-      item.classList.add('active');
-      selectedPackage = item.dataset.package;
-      document.getElementById('packageType').value = selectedPackage;
-    });
+      <div class="panel">
+        <div class="panel-title">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Lisans Olustur
+        </div>
+        <form id="create-form" onsubmit="handleCreate(event)">
+          <div class="field"><label>Kullanici Adi</label><input type="text" id="f-username" placeholder="@yayinci_adi" required></div>
+          <div class="field"><label>E-posta</label><input type="email" id="f-email" placeholder="ornek@email.com" required></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem">
+            <div class="field"><label>Baslangic Tarihi</label><input type="date" id="f-startdate" required></div>
+            <div class="field"><label>Sure (Gun)</label><input type="number" id="f-duration" value="90" min="1" required></div>
+          </div>
+          <div style="margin-bottom:0.85rem">
+            <label style="margin-bottom:0.5rem">Izinler</label>
+            <div class="checkbox-row"><input type="checkbox" id="perm-manual" checked><label for="perm-manual">Manuel Mod</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="perm-auto" checked><label for="perm-auto">Otomatik Mod</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="perm-admin"><label for="perm-admin">Admin Erisimi</label></div>
+          </div>
+          <div class="field"><label>Not (Istege Bagli)</label><input type="text" id="f-note" placeholder="Siparis notu..."></div>
+          <button type="submit" class="btn-primary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Lisans Olustur
+          </button>
+        </form>
+      </div>
+    </div>
 
-    // Tab switching
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active'));
-        
-        tab.classList.add('active');
-        const tabId = tab.dataset.tab + 'Tab';
-        document.getElementById(tabId).classList.add('active');
-      });
-    });
+    <div class="panel">
+      <div class="panel-title" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:0.6rem">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Lisanslar
+        </div>
+        <input type="text" id="search-input" placeholder="Ara..." style="width:180px;padding:0.3rem 0.6rem;font-size:0.75rem" oninput="filterLicenses(this.value)">
+      </div>
+      <div class="lic-list" id="lic-list">
+        <div style="color:#166534;font-size:0.8rem;padding:1rem;text-align:center">Lisanslar yukleniyor...</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    // License form submission
-    licenseForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+<script>
+  function selectPkg(el) {
+    document.querySelectorAll('.pkg-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+  }
 
-      const data = {
-        packageType: document.getElementById('packageType').value,
-        broadcasterName: document.getElementById('broadcasterName').value,
-        broadcasterEmail: document.getElementById('broadcasterEmail').value,
-        licenseDuration: parseInt(document.getElementById('licenseDuration').value),
-        maxSessions: parseInt(document.getElementById('maxSessions').value),
-        maxPlayers: parseInt(document.getElementById('maxPlayers').value),
-      };
+  document.getElementById('f-startdate').value = new Date().toISOString().split('T')[0];
 
-      try {
-        const response = await fetch('/api/license/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          showStatus('Lisans başarıyla oluşturuldu!', 'success');
-          licenseForm.reset();
-          loadLicenses();
-        } else {
-          showStatus(result.message || 'Lisans oluşturma başarısız', 'error');
-        }
-      } catch (error) {
-        showStatus('Hata: ' + error.message, 'error');
-      }
-    });
-
-    // Feature form submission
-    featureForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const features = {
-        telegram: document.getElementById('feature_telegram').checked,
-        autoMode: document.getElementById('feature_auto_mode').checked,
-        analytics: document.getElementById('feature_analytics').checked,
-        customTeams: document.getElementById('feature_custom_teams').checked,
-        multiSession: document.getElementById('feature_multi_session').checked,
-        apiAccess: document.getElementById('feature_api_access').checked,
-      };
-
-      try {
-        const response = await fetch('/api/license/features', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            packageType: document.getElementById('featurePackage').value,
-            features,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          showStatus('Özellikler başarıyla kaydedildi!', 'success');
-        } else {
-          showStatus(result.message || 'Özellik kaydetme başarısız', 'error');
-        }
-      } catch (error) {
-        showStatus('Hata: ' + error.message, 'error');
-      }
-    });
-
-    function showStatus(message, type) {
-      statusBox.textContent = message;
-      statusBox.className = `status-box ${type}`;
-      statusBox.style.display = 'block';
-
-      setTimeout(() => {
-        statusBox.style.display = 'none';
-      }, 5000);
+  async function loadLicenses() {
+    try {
+      const res = await fetch('/api/licenses');
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      renderLicenses(data.licenses || []);
+      updateStats(data.licenses || []);
+    } catch (e) {
+      document.getElementById('lic-list').innerHTML = '<div style="color:#166534;font-size:0.8rem;padding:1rem;text-align:center">Lisans verisi yuklenemedi.</div>';
     }
+  }
 
-    async function loadLicenses() {
-      try {
-        const response = await fetch('/api/license/list');
-        const licenses = await response.json();
+  function updateStats(licenses) {
+    const now = new Date();
+    const active = licenses.filter(l => new Date(l.expiresAt) > now);
+    const expired = licenses.filter(l => new Date(l.expiresAt) <= now);
+    const thisMonth = licenses.filter(l => {
+      const d = new Date(l.createdAt);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    document.getElementById('val-total').textContent = licenses.length;
+    document.getElementById('val-active').textContent = active.length;
+    document.getElementById('val-expired').textContent = expired.length;
+    document.getElementById('val-thismonth').textContent = thisMonth.length;
+  }
 
-        const licenseList = document.getElementById('licenseList');
-        licenseList.innerHTML = '';
+  let allLicenses = [];
 
-        if (licenses.length === 0) {
-          licenseList.innerHTML = '<p style="color: #666;">Henüz lisans oluşturulmamış</p>';
-          return;
-        }
+  function renderLicenses(licenses) {
+    allLicenses = licenses;
+    _render(licenses);
+  }
 
-        licenses.forEach(license => {
-          const item = document.createElement('div');
-          item.className = 'license-item';
-          item.innerHTML = `
-            <div class="license-header">
-              <div class="license-key">Anahtar: ${license.key}</div>
-              <div class="license-status ${license.isExpired ? 'expired' : ''}">
-                ${license.isExpired ? 'Süresi Doldu' : 'Aktif'}
-              </div>
-            </div>
-            <div class="license-details">
-              <div class="detail-row">
-                <span class="detail-label">Paket:</span>
-                <span>${license.packageType}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Yayıncı:</span>
-                <span>${license.broadcasterName}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Bitiş Tarihi:</span>
-                <span>${new Date(license.expiresAt).toLocaleDateString('tr-TR')}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Max Oturum:</span>
-                <span>${license.maxSessions}</span>
-              </div>
-            </div>
-            <div style="margin-top: 10px;">
-              ${license.features.map(f => `<span class="feature-badge">${f}</span>`).join('')}
-            </div>
-          `;
-          licenseList.appendChild(item);
-        });
-      } catch (error) {
-        console.error('Lisanslar yüklenirken hata:', error);
-      }
+  function filterLicenses(q) {
+    const filtered = allLicenses.filter(l =>
+      l.licenseKey.toLowerCase().includes(q.toLowerCase()) ||
+      (l.username || '').toLowerCase().includes(q.toLowerCase())
+    );
+    _render(filtered);
+  }
+
+  function _render(licenses) {
+    const container = document.getElementById('lic-list');
+    if (!licenses.length) {
+      container.innerHTML = '<div style="color:#166534;font-size:0.8rem;padding:1rem;text-align:center">Lisans bulunamadi.</div>';
+      return;
     }
+    container.innerHTML = licenses.map(l => {
+      const isActive = new Date(l.expiresAt) > new Date();
+      const daysLeft = Math.ceil((new Date(l.expiresAt) - new Date()) / 86400000);
+      const daysColor = daysLeft > 30 ? '#22c55e' : daysLeft > 7 ? '#fbbf24' : '#fca5a5';
+      return `
+        <div class="lic-item${isActive ? '' : ' expired'}">
+          <div class="lic-header">
+            <div class="lic-key">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              ${l.licenseKey}
+            </div>
+            <div class="lic-badge ${isActive ? 'active' : 'expired'}">${isActive ? 'Aktif' : 'Suresi Doldu'}</div>
+          </div>
+          <div class="lic-detail-grid">
+            <div><div class="lic-detail-label">Kullanici</div><div class="lic-detail-val">${l.username || '—'}</div></div>
+            <div><div class="lic-detail-label">Paket</div><div class="lic-detail-val">${l.packageType || '—'}</div></div>
+            <div><div class="lic-detail-label">Bitis</div><div class="lic-detail-val">${l.expiresAt ? l.expiresAt.split('T')[0] : '—'}</div></div>
+            <div><div class="lic-detail-label">Kullanim</div><div class="lic-detail-val">${l.usageCount ?? 0} oturum</div></div>
+            <div><div class="lic-detail-label">Mod</div><div class="lic-detail-val">${l.permissions?.autoMode ? 'Manuel + Oto' : 'Manuel'}</div></div>
+            <div><div class="lic-detail-label">Kalan</div><div class="lic-detail-val" style="color:${daysColor}">${isActive ? daysLeft + ' gun' : '—'}</div></div>
+          </div>
+          <div class="lic-actions">
+            <button class="act-btn copy" onclick="copyKey('${l.licenseKey}')">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Kopyala
+            </button>
+            ${isActive ? `<button class="act-btn extend" onclick="extendLicense('${l.id}')">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><path d="M16 5l2 2-8 8-4 1 1-4z"/></svg>
+              Uzat
+            </button>
+            <button class="act-btn revoke" onclick="revokeLicense('${l.id}')">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+              Iptal Et
+            </button>` : `<button class="act-btn extend" onclick="renewLicense('${l.id}')">Yenile</button>`}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 
-    // Load licenses on page load
-    window.addEventListener('load', loadLicenses);
-  </script>
+  function copyKey(key) {
+    navigator.clipboard.writeText(key).then(() => alert('Lisans anahtari kopyalandi'));
+  }
+
+  async function extendLicense(id) {
+    const days = prompt('Kac gun uzatmak istiyorsunuz?', '30');
+    if (!days) return;
+    try {
+      const res = await fetch(`/api/licenses/${id}/extend`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: parseInt(days) }) });
+      if (res.ok) { alert('Lisans uzatildi'); loadLicenses(); }
+      else alert('Islem basarisiz');
+    } catch { alert('Sunucu hatasi'); }
+  }
+
+  async function revokeLicense(id) {
+    if (!confirm('Bu lisansi iptal etmek istediginizden emin misiniz?')) return;
+    try {
+      const res = await fetch(`/api/licenses/${id}`, { method: 'DELETE' });
+      if (res.ok) { alert('Lisans iptal edildi'); loadLicenses(); }
+      else alert('Islem basarisiz');
+    } catch { alert('Sunucu hatasi'); }
+  }
+
+  async function renewLicense(id) {
+    const days = prompt('Kac gunluk yenileme yapmak istiyorsunuz?', '30');
+    if (!days) return;
+    try {
+      const res = await fetch(`/api/licenses/${id}/renew`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: parseInt(days) }) });
+      if (res.ok) { alert('Lisans yenilendi'); loadLicenses(); }
+      else alert('Islem basarisiz');
+    } catch { alert('Sunucu hatasi'); }
+  }
+
+  async function handleCreate(e) {
+    e.preventDefault();
+    const selectedPkg = document.querySelector('.pkg-item.selected')?.dataset.pkg || 'pro';
+    const body = {
+      username: document.getElementById('f-username').value,
+      email: document.getElementById('f-email').value,
+      startDate: document.getElementById('f-startdate').value,
+      durationDays: parseInt(document.getElementById('f-duration').value),
+      packageType: selectedPkg,
+      note: document.getElementById('f-note').value,
+      permissions: {
+        manualMode: document.getElementById('perm-manual').checked,
+        autoMode: document.getElementById('perm-auto').checked,
+        adminAccess: document.getElementById('perm-admin').checked,
+      }
+    };
+    try {
+      const res = await fetch('/api/licenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (res.ok) { alert('Lisans olusturuldu'); document.getElementById('create-form').reset(); loadLicenses(); }
+      else { const err = await res.json(); alert('Hata: ' + (err.message || 'Bilinmeyen hata')); }
+    } catch { alert('Sunucu hatasi'); }
+  }
+
+  loadLicenses();
+</script>
 </body>
 </html>
