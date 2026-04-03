@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kadrokur — Admin Girişi</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Segoe UI',system-ui,sans-serif;
+    background:#030a06;
+    color:#e2e8f0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .card {
+    background:#0a1a0f;
+    border:1px solid #14532d;
+    border-radius:12px;
+    padding:2rem;
+    width:100%;
+    max-width:360px;
+  }
+  .logo { text-align:center; margin-bottom:1.75rem; }
+  .logo-title { font-size:1.2rem; font-weight:800; letter-spacing:0.1em; color:#22c55e; }
+  .logo-sub { font-size:0.65rem; color:#166534; letter-spacing:0.1em; margin-top:3px; }
+  label { display:block; font-size:0.7rem; font-weight:700; letter-spacing:0.08em; color:#4ade80; text-transform:uppercase; margin-bottom:0.4rem; }
+  input[type="password"] {
+    width:100%;
+    background:#030a06;
+    border:1px solid #14532d;
+    border-radius:6px;
+    color:#e2e8f0;
+    padding:0.6rem 0.75rem;
+    font-size:0.9rem;
+    outline:none;
+    margin-bottom:1.25rem;
+  }
+  input[type="password"]:focus { border-color:#22c55e44; }
+  button[type="submit"] {
+    width:100%;
+    background:linear-gradient(135deg,#16a34a,#15803d);
+    border:none;
+    border-radius:7px;
+    color:#fff;
+    font-size:0.85rem;
+    font-weight:700;
+    letter-spacing:0.05em;
+    padding:0.65rem;
+    cursor:pointer;
+  }
+  button[type="submit"]:hover { opacity:0.9; }
+  .error {
+    display:none;
+    margin-top:0.75rem;
+    padding:0.5rem 0.75rem;
+    background:#7f1d1d22;
+    border:1px solid #7f1d1d;
+    border-radius:6px;
+    color:#fca5a5;
+    font-size:0.78rem;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-title">KADROKUR</div>
+    <div class="logo-sub">ADMIN PANELİ</div>
+  </div>
+  <form id="loginForm">
+    <label for="password">Şifre</label>
+    <input type="password" id="password" name="password" autocomplete="current-password" required>
+    <button type="submit">Giriş Yap</button>
+    <div class="error" id="errorMsg">Hatalı şifre. Lütfen tekrar deneyin.</div>
+  </form>
+</div>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const password = document.getElementById('password').value;
+    const errorMsg = document.getElementById('errorMsg');
+    errorMsg.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        location.href = '/admin-dashboard.html';
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    } catch {
+      errorMsg.textContent = 'Bağlantı hatası. Lütfen tekrar deneyin.';
+      errorMsg.style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>
