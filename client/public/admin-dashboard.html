@@ -334,6 +334,25 @@
       background: #764ba2;
     }
 
+    .header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .button-logout {
+      background: #030a06;
+      color: #22c55e;
+      border: 2px solid #22c55e;
+    }
+
+    .button-logout:hover {
+      background: #22c55e;
+      color: #030a06;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+    }
+
     @media (max-width: 768px) {
       .header h1 {
         font-size: 24px;
@@ -361,8 +380,13 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <h1>🎮 Kadrokur - Admin Paneli</h1>
-      <p>Lisans yönetimi, istatistikler ve sistem kontrolü</p>
+      <div class="header-actions">
+        <div>
+          <h1>🎮 Kadrokur - Admin Paneli</h1>
+          <p>Lisans yönetimi, istatistikler ve sistem kontrolü</p>
+        </div>
+        <button class="button button-logout" onclick="handleLogout()">🚪 Çıkış</button>
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -525,6 +549,30 @@
   </div>
 
   <script>
+    // Auth guard - check if user is authenticated
+    (async () => {
+      const r = await fetch('/api/admin/me');
+      if (!r.ok) location.href = '/admin-login.html';
+    })();
+
+    // Logout handler
+    async function handleLogout() {
+      try {
+        const response = await fetch('/api/admin/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (response.ok) {
+          location.href = '/admin-login.html';
+        } else {
+          alert('Çıkış işlemi başarısız oldu');
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+        alert('Çıkış işlemi sırasında hata oluştu');
+      }
+    }
+
     // Tab switching
     document.querySelectorAll('.tab-button').forEach(button => {
       button.addEventListener('click', () => {
