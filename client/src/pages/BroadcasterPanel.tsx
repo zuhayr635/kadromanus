@@ -117,7 +117,10 @@ export default function BroadcasterPanel() {
       if (result.success && result.sessionId) {
         setSessionId(result.sessionId);
         setSessionActive(true);
-        showNotification('success', 'Başarılı', 'Oturum başarıyla başlatıldı');
+        const gameScreenUrl = `${window.location.origin}/game-screen.html?sessionId=${result.sessionId}`;
+        showNotification('success', 'Başarılı', `Oturum başlatıldı. Oyun ekranını aç: game-screen.html?sessionId=${result.sessionId}`);
+        // Copy URL to clipboard for easier access
+        navigator.clipboard.writeText(gameScreenUrl).catch(() => {});
       } else {
         showNotification('error', 'Hata', result.message || 'Oturum başlatılamadı');
       }
@@ -427,7 +430,7 @@ export default function BroadcasterPanel() {
               </div>
               <div className="bp-spacer" />
               {/* Quick links */}
-              <a href="/game-screen.html" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '5px', color: '#4ade80', fontSize: '0.72rem', fontWeight: 600, textDecoration: 'none' }}>
+              <a href={`/game-screen.html?sessionId=${sessionId}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '5px', color: '#4ade80', fontSize: '0.72rem', fontWeight: 600, textDecoration: 'none' }}>
                 <LayoutGrid size={11} />
                 Oyun Ekranı
               </a>
