@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import {
   getSessionHistory,
@@ -15,7 +15,7 @@ export const adminRouter = router({
   /**
    * Get session history by ID
    */
-  getSessionHistory: publicProcedure
+  getSessionHistory: adminProcedure
     .input(z.object({ sessionId: z.string() }))
     .query(({ input }) => {
       const history = getSessionHistory(input.sessionId);
@@ -25,14 +25,14 @@ export const adminRouter = router({
   /**
    * Get all session history
    */
-  getAllSessions: publicProcedure.query(() => {
+  getAllSessions: adminProcedure.query(() => {
     return getAllSessionHistory();
   }),
 
   /**
    * Get session history by license key
    */
-  getSessionsByLicense: publicProcedure
+  getSessionsByLicense: adminProcedure
     .input(z.object({ licenseKey: z.string() }))
     .query(({ input }) => {
       return getSessionHistoryByLicense(input.licenseKey);
@@ -41,7 +41,7 @@ export const adminRouter = router({
   /**
    * Get session history by broadcaster
    */
-  getSessionsByBroadcaster: publicProcedure
+  getSessionsByBroadcaster: adminProcedure
     .input(z.object({ broadcasterName: z.string() }))
     .query(({ input }) => {
       return getSessionHistoryByBroadcaster(input.broadcasterName);
@@ -50,14 +50,14 @@ export const adminRouter = router({
   /**
    * Get overall statistics
    */
-  getStatistics: publicProcedure.query(() => {
+  getStatistics: adminProcedure.query(() => {
     return getSessionStatistics();
   }),
 
   /**
    * Get top broadcasters
    */
-  getTopBroadcasters: publicProcedure
+  getTopBroadcasters: adminProcedure
     .input(z.object({ limit: z.number().min(1).max(100).optional() }))
     .query(({ input }) => {
       return getTopBroadcasters(input.limit || 10);
@@ -66,7 +66,7 @@ export const adminRouter = router({
   /**
    * Export session data with filters
    */
-  exportData: publicProcedure
+  exportData: adminProcedure
     .input(
       z.object({
         licenseKey: z.string().optional(),
@@ -91,7 +91,7 @@ export const adminRouter = router({
   /**
    * Clear old history
    */
-  clearOldHistory: publicProcedure
+  clearOldHistory: adminProcedure
     .input(z.object({ days: z.number().min(1).optional() }))
     .mutation(({ input }) => {
       const removed = clearOldHistory(input.days || 30);
