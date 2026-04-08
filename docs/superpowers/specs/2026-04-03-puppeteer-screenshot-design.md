@@ -75,7 +75,9 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 ## Testing
 
-No automated tests for this module (Puppeteer in CI is heavy). Manual test path:
+`generateResultsHTML` is a pure function with no Puppeteer dependency — it has unit tests in `server/screenshot-service.test.ts` covering HTML structure, team ordering, duration formatting, and stats output.
+
+The Puppeteer flow (`takeScreenshot`, `screenshotAndSend`) is not unit-tested (Puppeteer in CI is heavy). Manual test path:
 1. Start a session, trigger game end
 2. Verify PNG file appears in /tmp, bot sends it to group
 3. Verify `/tmp` file is deleted after send

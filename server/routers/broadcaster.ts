@@ -7,7 +7,8 @@ import {
   updateTeamSelectionMode,
   processTeamSelectionCommand,
 } from "../broadcaster-session";
-import { startSession, stopSession } from "../socket-server";
+import { startSession, stopSession, assignPendingCard } from "../socket-server";
+import { getLikeThreshold, setLikeThreshold, getDiamondThresholds, setDiamondThresholds } from "../game-engine";
 
 export const broadcasterRouter = router({
   /**
@@ -35,7 +36,10 @@ export const broadcasterRouter = router({
           await startSession(result.sessionId, input.tiktokUsername, input.teamNames);
         } catch (error) {
           console.error(`[${result.sessionId}] startSession hatası:`, error);
-          throw new Error(`TikTok bağlantısı başlatılamadı: ${(error as Error).message}`);
+          // Clean up the session so license slots are not wasted
+          await endBroadcasterSession(result.sessionId);
+          const msg = error instanceof Error ? (error.message || String(error)) : String(error);
+          throw new Error(`TikTok bağlantısı başlatılamadı: ${msg || "Bilinmeyen hata"}`);
         }
       }
 
@@ -97,5 +101,55 @@ export const broadcasterRouter = router({
         success,
         message: success ? "Oturum sonlandırıldı" : "Oturum sonlandırma başarısız",
       };
+    }),
+
+  /**
+   * Assign pending card to a team (team selection step)
+   */
+  assignPendingCard: publicProcedure
+    .input(z.object({ sessionId: z.string(), teamId: z.number().int().min(0) }))
+    .mutation(async ({ input }) => {
+      const success = await assignPendingCard(input.sessionId, input.teamId);
+      return { success, message: success ? "Kart takıma atandı" : "Bekleyen kart bulunamadı" };
+    }),
+
+  /**
+   * Get like threshold (how many likes = 1 bronze card)
+   */
+  getLikeThreshold: publicProcedure.query(() => {
+    return { threshold: getLikeThreshold() };
+  }),
+
+  /**
+   * Set like threshold
+   */
+  setLikeThreshold: publicProcedure
+    .input(z.object({ threshold: z.number().min(1).max(100000) }))
+    .mutation(({ input }) => {
+      setLikeThreshold(input.threshold);
+      return { success: true };
+    }),
+
+  /**
+   * Get diamond (coin) thresholds for card quality
+   */
+  getDiamondThresholds: publicProcedure.query(() => {
+    return getDiamondThresholds();
+  }),
+
+  /**
+   * Set diamond thresholds
+   */
+  setDiamondThresholds: publicProcedure
+    .input(
+      z.object({
+        silver: z.number().int().min(1),
+        gold: z.number().int().min(1),
+        elite: z.number().int().min(1),
+      })
+    )
+    .mutation(({ input }) => {
+      setDiamondThresholds(input);
+      return { success: true };
     }),
 });

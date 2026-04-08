@@ -24,6 +24,7 @@ export const gameRouter = router({
           players: team.players,
         })),
         openedCards: gameState.openedCards,
+        pendingCard: gameState.pendingCard ?? null,
         totalLikes: gameState.totalLikes,
         totalGifts: gameState.totalGifts,
         participants: Array.from(gameState.participants),

@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elite FC Cards 2025</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a1a;font-family:'Rajdhani',sans-serif;color:white;overflow-x:hidden;min-height:100vh}
+
+.bg{position:fixed;inset:0;background:radial-gradient(ellipse at center,#0d2b0d,#020802);z-index:0}
+
+/* LAYOUT */
+.app{position:relative;z-index:1;display:grid;grid-template-columns:1fr 260px;grid-template-rows:56px 1fr;height:100vh}
+
+/* HEADER */
+.hdr{grid-column:1/-1;background:#000;border-bottom:2px solid #FFD700;display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:10px}
+.logo{font-family:'Orbitron',sans-serif;font-size:1rem;color:#FFD700;letter-spacing:2px}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.hstat{text-align:center;font-size:.7rem;color:rgba(255,255,255,.5);min-width:50px}
+.hstat strong{display:block;font-family:'Orbitron',sans-serif;font-size:.9rem;color:#FFD700}
+.btn{padding:6px 12px;border:none;border-radius:14px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:1px;transition:.2s}
+.btn:hover{filter:brightness(1.2);transform:scale(1.04)}
+.btn-panel{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-widget{background:linear-gradient(135deg,#00aa55,#006633);color:#fff}
+.btn-end{background:linear-gradient(135deg,#ff4444,#aa0000);color:#fff}
+
+/* SAHA */
+.field{padding:8px;overflow:hidden}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:8px;height:100%}
+
+/* TAKIM */
+.team{background:rgba(0,0,0,.7);border-radius:10px;border:2px solid rgba(255,255,255,.1);padding:8px;display:flex;flex-direction:column;gap:5px}
+.team-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.08)}
+.team-left{display:flex;align-items:center;gap:6px}
+.team-logo{width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.2)}
+.team-logo-ph{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;border:1px solid rgba(255,255,255,.15)}
+.team-name{font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700}
+.team-right{text-align:right}
+.team-cnt{font-family:'Orbitron',sans-serif;font-size:.56rem;color:rgba(255,255,255,.4)}
+.team-pow{font-family:'Orbitron',sans-serif;font-size:.62rem;color:#FFD700}
+
+/* SLOTLAR */
+.pos-rows{display:flex;flex-direction:column;gap:3px;flex:1}
+.pos-row{display:flex;gap:3px;justify-content:center}
+.slot{width:62px;height:76px;border-radius:6px;border:1px dashed rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:.3s;position:relative}
+.slot.filled{border:1px solid rgba(255,255,255,.2)}
+.slot-lbl{font-size:.42rem;color:rgba(255,255,255,.2);font-weight:700;letter-spacing:1px;margin-bottom:1px}
+.slot-emo{font-size:.8rem;color:rgba(255,255,255,.18)}
+
+/* MİNİ KART */
+.mc{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:5px;padding:2px;gap:1px}
+.mc.r50{background:linear-gradient(145deg,#0a180a,#162816)}
+.mc.r60{background:linear-gradient(145deg,#0e1828,#182840)}
+.mc.r70{background:linear-gradient(145deg,#1e1200,#382200)}
+.mc.r80{background:linear-gradient(145deg,#140020,#240040)}
+.mc.r90{background:linear-gradient(145deg,#140000,#280000)}
+.mc.r99{background:linear-gradient(145deg,#000016,#001422);animation:holo 2s infinite}
+@keyframes holo{0%,100%{box-shadow:0 0 4px #00ffff inset}50%{box-shadow:0 0 4px #ff00ff inset}}
+.mc-rat{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:900;color:#fff;line-height:1}
+.mc-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:.38rem;font-weight:900;color:#fff;border:1px solid rgba(255,255,255,.2)}
+.mc-nm{font-size:.3rem;font-weight:700;color:#fff;text-align:center;line-height:1.1;max-width:58px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mc-pos{font-size:.34rem;color:rgba(255,255,255,.45);font-weight:700}
+
+/* SAĞ PANEL */
+.side{background:rgba(0,0,0,.85);border-left:2px solid rgba(255,215,0,.15);display:flex;flex-direction:column;overflow:hidden}
+.side-block{padding:10px;border-bottom:1px solid rgba(255,255,255,.07)}
+.side-title{font-family:'Orbitron',sans-serif;font-size:.62rem;color:#FFD700;letter-spacing:2px;margin-bottom:8px;text-align:center}
+.inp{width:100%;padding:6px 8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:.85rem;margin-bottom:7px}
+
+/* HEDİYE BUTONLARI */
+.gift-btns{display:flex;flex-direction:column;gap:4px}
+.gbtn{padding:7px 8px;border:none;border-radius:6px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:6px;transition:.2s}
+.gbtn:hover{transform:scale(1.02);filter:brightness(1.15)}
+.gbtn-ico{font-size:.95rem;width:20px;text-align:center}
+.gbtn-lbl{flex:1}
+.gbtn-val{font-family:'Orbitron',sans-serif;font-size:.55rem}
+
+/* BEĞENİ */
+.like-row{display:flex;gap:5px}
+.like-inp{flex:1;padding:5px 7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:#fff;font-family:'Orbitron',sans-serif;font-size:.72rem}
+.like-btn{padding:5px 9px;background:linear-gradient(135deg,#ff4444,#aa0000);border:none;border-radius:5px;color:#fff;font-family:'Orbitron',sans-serif;font-size:.55rem;cursor:pointer}
+
+/* TOP DONORS */
+.top-list{flex:1;overflow-y:auto;padding:8px 10px}
+.top-list::-webkit-scrollbar{width:3px}
+.top-list::-webkit-scrollbar-thumb{background:rgba(255,215,0,.15);border-radius:2px}
+.top-title{font-family:'Orbitron',sans-serif;font-size:.6rem;color:rgba(255,255,255,.35);letter-spacing:2px;margin-bottom:6px}
+.top-item{display:flex;align-items:center;gap:6px;padding:4px 6px;background:rgba(255,255,255,.03);border-radius:4px;margin-bottom:3px}
+.top-rank{font-size:.65rem;min-width:16px}
+.top-name{flex:1;font-size:.68rem;color:#FFD700;font-weight:700}
+.top-amt{font-size:.62rem;color:#00ffff;font-family:'Orbitron',sans-serif}
+
+/* SES */
+.snd-row{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
+.snd-lbl{font-size:.67rem;color:rgba(255,255,255,.45)}
+.snd-tog{padding:3px 10px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:transparent;color:#fff;font-size:.58rem;cursor:pointer;transition:.2s}
+.snd-tog.on{background:#FFD700;color:#000;border-color:#FFD700}
+
+/* OVERLAY */
+.ov{position:fixed;inset:0;z-index:100;display:none;pointer-events:none}
+.ov.active{display:block;pointer-events:all}
+.ov-bg{position:absolute;inset:0;background:rgba(0,0,0,.88)}
+
+/* HEDİYE BİLDİRİMİ */
+.gnotif{position:absolute;top:12%;left:50%;transform:translateX(-50%);text-align:center;z-index:101;display:none;min-width:300px}
+.gnotif-box{background:linear-gradient(145deg,#0f0f22,#080810);border:2px solid #FFD700;border-radius:14px;padding:18px 32px;position:relative;animation:notifIn .5s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 40px rgba(255,215,0,.3)}
+@keyframes notifIn{from{transform:scale(.5) translateY(-30px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.gn-ico{font-size:2.4rem;display:block;margin-bottom:5px}
+.gn-user{font-family:'Orbitron',sans-serif;font-size:1.3rem;color:#FFD700;text-shadow:0 0 10px #FFD700;margin-bottom:3px}
+.gn-act{font-size:.9rem;color:rgba(255,255,255,.8);margin-bottom:3px}
+.gn-val{font-family:'Orbitron',sans-serif;font-size:1.4rem;color:#00ffff;text-shadow:0 0 8px #00ffff}
+
+/* TAKIM SEÇ */
+.tsel{position:absolute;bottom:8%;left:50%;transform:translateX(-50%);text-align:center;z-index:101;width:88%;max-width:640px;display:none}
+.tsel-ttl{font-family:'Orbitron',sans-serif;font-size:.85rem;color:#fff;letter-spacing:3px;margin-bottom:10px;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.6}}
+.tsel-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tsel-btn{padding:10px 6px;border-radius:8px;border:2px solid;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.76rem;background:rgba(0,0,0,.85);transition:.2s;animation:btnIn .4s ease backwards;color:#fff}
+.tsel-btn:nth-child(1){animation-delay:.1s}
+.tsel-btn:nth-child(2){animation-delay:.2s}
+.tsel-btn:nth-child(3){animation-delay:.3s}
+.tsel-btn:nth-child(4){animation-delay:.4s}
+@keyframes btnIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.tsel-btn:hover:not(.full){transform:translateY(-3px) scale(1.03);filter:brightness(1.3)}
+.tsel-btn.full{opacity:.3;cursor:not-allowed;filter:grayscale(1)}
+.tsel-logo{width:30px;height:30px;border-radius:50%;object-fit:cover;margin:0 auto 3px;display:block}
+.tsel-logo-ph{font-size:1.4rem;display:block;margin-bottom:3px}
+.tsel-name{display:block;font-size:.78rem}
+.tsel-info{display:block;font-size:.52rem;opacity:.55;font-family:'Orbitron',sans-serif}
+.tsel-pow{display:block;font-size:.52rem;color:#FFD700;font-family:'Orbitron',sans-serif}
+
+/* KART AÇILIŞ */
+.card-rev{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:102;display:none;flex-direction:column;align-items:center;gap:12px}
+.card-rev.on{display:flex}
+.rv-wrap{width:180px;height:292px;perspective:1000px}
+.rv-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:cardIn .8s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes cardIn{0%{transform:rotateY(180deg) scale(.5);opacity:0}50%{transform:rotateY(90deg) scale(1.1);opacity:.5}100%{transform:rotateY(0deg) scale(1);opacity:1}}
+.rv-front{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:2px}
+
+.rv-front.r50{background:linear-gradient(145deg,#0a180a,#162816);border:2px solid #44bb44;box-shadow:0 0 18px rgba(68,187,68,.4),0 10px 30px rgba(0,0,0,.85)}
+.rv-front.r60{background:linear-gradient(145deg,#0e1828,#182840);border:2px solid #4488ff;box-shadow:0 0 22px rgba(68,136,255,.5),0 10px 30px rgba(0,0,0,.85)}
+.rv-front.r70{background:linear-gradient(145deg,#1e1200,#382200);border:2px solid #FFD700;box-shadow:0 0 28px rgba(255,215,0,.6),0 10px 30px rgba(0,0,0,.85)}
+.rv-front.r80{background:linear-gradient(145deg,#140020,#240040);border:2px solid #cc44ff;box-shadow:0 0 38px rgba(204,68,255,.7),0 10px 30px rgba(0,0,0,.85)}
+.rv-front.r90{background:linear-gradient(145deg,#140000,#280000);border:2px solid #ff4444;box-shadow:0 0 48px rgba(255,68,68,.8),0 10px 30px rgba(0,0,0,.85)}
+.rv-front.r99{background:linear-gradient(145deg,#000016,#001422);border:2px solid #00ffff;animation:tg 2s infinite}
+@keyframes tg{0%,100%{box-shadow:0 0 22px #00ffff,0 0 44px #ff00ff,0 10px 30px rgba(0,0,0,.85)}50%{box-shadow:0 0 22px #ff00ff,0 0 44px #FFD700,0 10px 30px rgba(0,0,0,.85)}}
+
+.rv-hdr{width:100%;display:flex;justify-content:space-between;font-size:.52rem;color:rgba(255,255,255,.6)}
+.rv-rat{font-family:'Orbitron',sans-serif;font-size:2.2rem;font-weight:900;color:#fff;line-height:1}
+.rv-av{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,.25)}
+.rv-name{font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;color:#fff;text-align:center;max-width:155px}
+.rv-sub{font-size:.52rem;color:rgba(255,255,255,.62);text-align:center}
+.rv-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:100%}
+.rv-stat{background:rgba(255,255,255,.07);border-radius:3px;padding:2px;text-align:center}
+.rv-sv{font-family:'Orbitron',sans-serif;font-size:.72rem;font-weight:700;color:#fff;display:block}
+.rv-sn{font-size:.4rem;color:rgba(255,255,255,.52);letter-spacing:1px}
+.rv-club{font-size:.5rem;color:rgba(255,255,255,.5)}
+.rv-foot{font-family:'Orbitron',sans-serif;font-size:.44rem;color:rgba(255,255,255,.25);letter-spacing:2px}
+
+.upg{position:absolute;top:-8px;right:-8px;background:#00ff88;color:#000;font-family:'Orbitron',sans-serif;font-size:.46rem;font-weight:900;padding:3px 6px;border-radius:12px;animation:upg .5s infinite alternate}
+@keyframes upg{from{transform:scale(1)}to{transform:scale(1.1)}}
+
+.rv-btn{padding:10px 28px;border:none;border-radius:20px;background:linear-gradient(135deg,#FFD700,#ff8c00);color:#000;font-family:'Orbitron',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;animation:bglow 1s infinite alternate}
+@keyframes bglow{from{box-shadow:0 0 7px rgba(255,215,0,.4)}to{box-shadow:0 0 20px rgba(255,215,0,.9)}}
+.rv-btn:hover{transform:scale(1.04)}
+
+/* EPİK */
+.epic{position:fixed;inset:0;z-index:99;pointer-events:none;display:none}
+.epic.on{display:block}
+.rays{position:absolute;top:50%;left:50%;width:0;height:0}
+.ray{position:absolute;width:2px;height:240px;transform-origin:top center}
+
+/* KONFETİ */
+.cnf-w{position:fixed;inset:0;z-index:199;pointer-events:none}
+.cnf{position:absolute;top:-10px;animation:cfx linear forwards}
+@keyframes cfx{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* UÇAN KART */
+.fly{position:fixed;width:42px;height:58px;border-radius:5px;z-index:200;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:.8rem}
+
+/* OYUN SONU */
+.go-ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.96);display:none;align-items:center;justify-content:center}
+.go-ov.on{display:flex}
+.go-box{text-align:center;max-width:700px;width:95%;animation:goIn .8s cubic-bezier(.34,1.56,.64,1)}
+@keyframes goIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.go-title{font-family:'Orbitron',sans-serif;font-size:1.8rem;color:#FFD700;text-shadow:0 0 20px #FFD700;letter-spacing:3px;margin-bottom:4px}
+.go-sub{font-size:.82rem;color:rgba(255,255,255,.42);margin-bottom:16px;letter-spacing:2px}
+.winner-box{background:rgba(255,215,0,.08);border:3px solid #FFD700;border-radius:12px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden}
+.wbox-shine{position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);animation:ws 2s infinite}
+@keyframes ws{0%{left:-100%}100%{left:200%}}
+.w-crown{font-size:1.8rem;display:block;margin-bottom:4px;animation:wc .5s infinite alternate}
+@keyframes wc{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+.w-lbl{font-size:.68rem;color:rgba(255,255,255,.42);letter-spacing:3px;margin-bottom:2px}
+.w-nm{font-family:'Orbitron',sans-serif;font-size:1.5rem;color:#FFD700;text-shadow:0 0 10px #FFD700;margin-bottom:2px}
+.w-pw{font-family:'Orbitron',sans-serif;font-size:.9rem;color:#00ffff}
+.ranks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+.rk{background:rgba(255,255,255,.04);border-radius:7px;padding:8px 5px;border:1px solid rgba(255,255,255,.07)}
+.rk.r1{border-color:#FFD700;background:rgba(255,215,0,.07)}
+.rk.r2{border-color:#C0C0C0;background:rgba(192,192,192,.05)}
+.rk.r3{border-color:#CD7F32;background:rgba(205,127,50,.05)}
+.rk-em{font-size:.9rem;display:block;margin-bottom:2px}
+.rk-logo{width:22px;height:22px;border-radius:50%;object-fit:cover;margin:0 auto 2px;display:block}
+.rk-logo-ph{font-size:1.1rem;display:block;margin-bottom:2px}
+.rk-nm{font-family:'Orbitron',sans-serif;font-size:.58rem;margin-bottom:2px}
+.rk-pw{font-size:.7rem;color:#00ffff;font-weight:700}
+.rk-cnt{font-size:.54rem;color:rgba(255,255,255,.36);margin-top:1px}
+.best-title{font-family:'Orbitron',sans-serif;font-size:.68rem;color:rgba(255,255,255,.42);letter-spacing:2px;margin-bottom:6px}
+.best-grid{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.bi{background:rgba(255,255,255,.04);border-radius:6px;padding:6px 7px;text-align:center;border:1px solid rgba(255,255,255,.07);min-width:75px}
+.bi-r{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:900;color:#FFD700}
+.bi-n{font-size:.6rem;color:#fff;font-weight:700;margin:2px 0}
+.bi-t{font-size:.52rem;color:rgba(255,255,255,.4)}
+.go-btns{display:flex;gap:8px;justify-content:center}
+.go-btn{padding:10px 26px;border-radius:18px;font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;cursor:pointer;transition:.2s}
+.go-btn:hover{transform:scale(1.04)}
+.go-btn.restart{background:linear-gradient(135deg,#FFD700,#ff8c00);border:none;color:#000}
+.go-btn.share{background:transparent;border:2px solid rgba(255,255,255,.25);color:#fff}
+
+/* WİDGET */
+.widget-ov{position:fixed;inset:0;z-index:800;background:#0a0a1a;display:none;flex-direction:column}
+.widget-ov.on{display:flex}
+.widget-hdr{background:#000;border-bottom:2px solid #FFD700;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.widget-hdr-title{font-family:'Orbitron',sans-serif;font-size:.8rem;color:#FFD700;letter-spacing:2px}
+.widget-hdr-right{display:flex;gap:8px;align-items:center}
+.widget-dir-sel{padding:4px 8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,215,0,.3);border-radius:6px;color:#FFD700;font-family:'Orbitron',sans-serif;font-size:.58rem;cursor:pointer}
+.widget-close{padding:4px 12px;background:rgba(255,68,68,.25);border:1px solid #ff4444;color:#ff4444;border-radius:7px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:.58rem;transition:.2s}
+.widget-close:hover{background:#ff4444;color:#fff}
+
+.widget-body{display:flex;flex:1;overflow:hidden}
+
+.widget-teams{flex:1;padding:8px;display:grid;gap:6px;overflow:hidden}
+.widget-teams.dir-h{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.widget-teams.dir-v{grid-template-columns:repeat(4,1fr)}
+
+.wteam{background:rgba(0,0,0,.72);border-radius:9px;border:2px solid rgba(255,255,255,.1);padding:7px;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.wteam-hdr{display:flex;align-items:center;gap:5px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.07)}
+.wteam-logo{width:22px;height:22px;border-radius:50%;object-fit:cover}
+.wteam-logo-ph{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem}
+.wteam-name{font-family:'Orbitron',sans-serif;font-size:.6rem;font-weight:700;flex:1}
+.wteam-pow{font-family:'Orbitron',sans-serif;font-size:.52rem;color:#FFD700}
+.wslots{display:flex;flex-direction:column;gap:2px;flex:1}
+.wpos-row{display:flex;gap:2px;justify-content:center}
+.wslot{width:56px;height:66px;border-radius:5px;border:1px dashed rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:.3s}
+.wslot.filled{border:1px solid rgba(255,255,255,.18)}
+.wslot .mc-rat{font-size:.78rem}
+.wslot .mc-av{width:22px;height:22px;font-size:.34rem}
+.wslot .mc-nm{font-size:.27rem;max-width:52px}
+.wslot .mc-pos{font-size:.3rem}
+.wslot-empty{font-size:.38rem;color:rgba(255,255,255,.18)}
+
+.widget-live{width:260px;background:rgba(0,0,0,.88);border-left:2px solid rgba(255,215,0,.12);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.wlive-hdr{font-family:'Orbitron',sans-serif;font-size:.6rem;color:#FFD700;letter-spacing:2px;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.07)}
+.wlive-body{flex:1;overflow-y:auto;padding:7px}
+.wlive-body::-webkit-scrollbar{width:3px}
+.wlive-body::-webkit-scrollbar-thumb{background:rgba(255,215,0,.12);border-radius:2px}
+.wlive-item{padding:7px 8px;background:rgba(255,255,255,.04);border-radius:6px;margin-bottom:5px;border-left:2px solid #FFD700;animation:wlIn .3s ease}
+@keyframes wlIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+.wli-user{font-family:'Orbitron',sans-serif;font-size:.68rem;color:#FFD700;font-weight:700}
+.wli-act{font-size:.65rem;color:rgba(255,255,255,.72);margin:1px 0}
+.wli-card{font-size:.67rem;color:#00ffff;font-weight:700}
+
+/* widget içi animasyon */
+.wanim-notif{position:absolute;top:8%;left:50%;transform:translateX(-50%);z-index:820;display:none;text-align:center;min-width:260px}
+.wanim-notif .gnotif-box{padding:14px 24px}
+.wanim-notif .gn-ico{font-size:1.8rem}
+.wanim-notif .gn-user{font-size:1rem}
+.wanim-notif .gn-val{font-size:1.1rem}
+
+.wanim-tsel{position:absolute;bottom:7%;left:50%;transform:translateX(-50%);z-index:820;display:none;text-align:center;width:78%}
+.wanim-tsel .tsel-ttl{font-size:.76rem}
+.wanim-tsel .tsel-grid{grid-template-columns:repeat(4,1fr);gap:5px}
+.wanim-tsel .tsel-btn{padding:8px 4px;font-size:.7rem}
+
+.wanim-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:820;display:none;flex-direction:column;align-items:center;gap:9px}
+.wanim-card.on{display:flex}
+.wanim-card .rv-wrap{width:155px;height:252px}
+.wanim-card .rv-btn{font-size:.65rem;padding:8px 20px}
+
+/* KONTROL PANELİ */
+.cp-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:none;align-items:flex-start;justify-content:flex-end}
+.cp-ov.on{display:flex}
+.cp{width:460px;height:100vh;background:#0c0c1c;border-left:2px solid rgba(255,215,0,.18);overflow-y:auto;display:flex;flex-direction:column}
+.cp::-webkit-scrollbar{width:4px}
+.cp::-webkit-scrollbar-thumb{background:rgba(255,215,0,.12);border-radius:2px}
+.cp-hdr{padding:12px 14px;background:rgba(0,0,0,.6);border-bottom:2px solid rgba(255,215,0,.18);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1}
+.cp-title{font-family:'Orbitron',sans-serif;font-size:.8rem;color:#FFD700;letter-spacing:2px}
+.cp-cls{width:24px;height:24px;border-radius:50%;background:rgba(255,68,68,.22);border:1px solid #ff4444;color:#ff4444;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:.2s}
+.cp-cls:hover{background:#ff4444;color:#fff}
+.cp-body{padding:12px;display:flex;flex-direction:column;gap:8px}
+.ps{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:10px}
+.ps-ttl{font-family:'Orbitron',sans-serif;font-size:.64rem;color:#FFD700;letter-spacing:2px;margin-bottom:8px;display:flex;align-items:center;gap:4px}
+.ps-row{display:flex;gap:5px;align-items:center;margin-bottom:5px}
+.ps-lbl{font-size:.68rem;color:rgba(255,255,255,.5);min-width:62px}
+.ps-inp{flex:1;padding:5px 7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:.78rem}
+.ps-inp:focus{outline:none;border-color:rgba(255,215,0,.35)}
+.ps-col{width:30px;height:24px;border-radius:4px;border:1px solid rgba(255,255,255,.14);cursor:pointer;background:transparent;padding:2px}
+.ps-sel{flex:1;padding:5px 7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:.75rem}
+.ps-sel option{background:#1a1a2e}
+.pb{padding:5px 11px;border:none;border-radius:5px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:.56rem;font-weight:700;transition:.2s}
+.pb:hover{transform:scale(1.03)}
+.pb-g{background:linear-gradient(135deg,#FFD700,#ff8c00);color:#000}
+.pb-r{background:linear-gradient(135deg,#ff4444,#aa0000);color:#fff}
+.pb-b{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.sv-row{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.sv-lbl{font-size:.64rem;color:rgba(255,255,255,.44);min-width:72px}
+.sv-sl{flex:1;accent-color:#FFD700}
+.sv-val{font-size:.58rem;color:#FFD700;min-width:20px;text-align:right}
+.tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.tog-lbl{font-size:.68rem;color:rgba(255,255,255,.52)}
+.tog{width:36px;height:19px;border-radius:10px;background:rgba(255,255,255,.1);border:none;cursor:pointer;position:relative;transition:.3s}
+.tog::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.3s}
+.tog.on{background:#FFD700}
+.tog.on::after{left:20px;background:#000}
+.url-box{background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.16);border-radius:6px;padding:7px}
+.url-txt{font-size:.58rem;color:#FFD700;word-break:break-all;margin-bottom:5px;font-family:'Orbitron',sans-serif}
+.gcfg-item{background:rgba(255,255,255,.04);border-radius:5px;padding:7px;margin-bottom:5px;border:1px solid rgba(255,255,255,.06)}
+.gcfg-top{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.gcfg-prev{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:rgba(255,255,255,.06);flex-shrink:0}
+.gcfg-fields{flex:1;display:flex;flex-direction:column;gap:3px}
+.gcfg-inp{width:100%;padding:4px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:4px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:.74rem}
+
+@media(max-width:900px){
+.app{grid-template-columns:1fr}
+.teams{grid-template-columns:1fr 1fr}
+.tsel-grid,.widget-teams.dir-h{grid-template-columns:repeat(2,1fr)}
+.cp{width:100vw}
+.widget-live{width:200px}
+}
+</style>
+</head>
+<body>
+<div class="bg" id="bg"></div>
+<div class="cnf-w" id="cnfW"></div>
+<div class="epic" id="epic"><div class="rays" id="rays"></div></div>
+
+<!-- WİDGET -->
+<div class="widget-ov" id="widgetOv">
+  <div class="widget-hdr">
+    <div class="widget-hdr-title">📺 ELİTE FC CARDS 2025 — CANLI</div>
+    <div class="widget-hdr-right">
+      <select class="widget-dir-sel" id="wDirSel" onchange="rebuildWidget()">
+        <option value="h">Yatay (2×2)</option>
+        <option value="v">Dikey (4 sütun)</option>
+      </select>
+      <button class="widget-close" onclick="closeWidget()">✕ KAPAT</button>
+    </div>
+  </div>
+  <div class="widget-body">
+    <div class="widget-teams dir-h" id="wTeams"></div>
+    <div class="widget-live">
+      <div class="wlive-hdr">⚡ CANLI AKTİVİTE</div>
+      <div class="wlive-body" id="wFeed">
+        <div class="wlive-item"><span class="wli-act">Oyun başladı 🎮</span></div>
+      </div>
+    </div>
+  </div>
+  <!-- widget animasyon katmanı -->
+  <div style="position:absolute;inset:0;pointer-events:none;z-index:810" id="wAnimLayer">
+    <div class="wanim-notif" id="wNotif">
+      <div class="gnotif-box">
+        <span class="gn-ico" id="wNIco">🎁</span>
+        <div class="gn-user" id="wNUser">@user</div>
+        <div class="gn-act" id="wNAct">hediye gönderdi!</div>
+        <div class="gn-val" id="wNVal">500 JETON</div>
+      </div>
+    </div>
+    <div class="wanim-tsel" id="wTSel">
+      <div class="tsel-ttl">⚡ TAKIM SEÇ ⚡</div>
+      <div class="tsel-grid" id="wTSelGrid"></div>
+    </div>
+    <div class="wanim-card" id="wCardRev">
+      <div class="rv-wrap">
+        <div class="rv-inner" id="wRvInner" style="animation:none">
+          <div class="rv-front" id="wRvFront"></div>
+        </div>
+      </div>
+      <button class="rv-btn" onclick="placeCard()">⚡ TAKIMA EKLE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANA UYGULAMA -->
+<div class="app">
+  <div class="hdr">
+    <div class="logo">⚡ ELİTE FC 2025</div>
+    <div class="hdr-right">
+      <div class="hstat">KART<strong id="hCards">0</strong></div>
+      <div class="hstat">HEDİYE<strong id="hGifts">0</strong></div>
+      <div class="hstat">ROUND<strong id="hRound">1</strong></div>
+      <button class="btn btn-panel" onclick="openPanel()">⚙️ PANEL</button>
+      <button class="btn btn-widget" onclick="openWidget()">📺 WİDGET</button>
+      <button class="btn btn-end" onclick="endGame()">🏆 BİTİR</button>
+    </div>
+  </div>
+  <div class="field">
+    <div class="teams" id="teamsEl"></div>
+  </div>
+  <div class="side">
+    <div class="side-block">
+      <div class="side-title">🎁 HEDİYE SİMÜLATÖRÜ</div>
+      <input class="inp" id="userInp" value="@test_user" placeholder="@kullanici">
+      <div class="gift-btns" id="giftBtns"></div>
+    </div>
+    <div class="snd-row">
+      <span class="snd-lbl">🔊 Ses</span>
+      <button class="snd-tog on" id="sndTog" onclick="toggleSnd()">AÇIK</button>
+    </div>
+    <div class="side-block">
+      <div class="side-title">❤️ BEĞENİ SİMÜLATÖRÜ</div>
+      <div class="like-row">
+        <input type="number" class="like-inp" id="likeInp" value="1000" min="1">
+        <button class="like-btn" onclick="triggerLike()">❤️ GÖNDER</button>
+      </div>
+    </div>
+    <div class="top-list" id="topList">
+      <div class="top-title">🏅 EN ÇOK KATKI</div>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="ov" id="ov">
+  <div class="ov-bg"></div>
+  <div class="gnotif" id="gNotif">
+    <div class="gnotif-box">
+      <span class="gn-ico" id="gNIco">🎁</span>
+      <div class="gn-user" id="gNUser">@user</div>
+      <div class="gn-act" id="gNAct">hediye gönderdi!</div>
+      <div class="gn-val" id="gNVal">500 JETON</div>
+    </div>
+  </div>
+  <div class="tsel" id="tSelEl">
+    <div class="tsel-ttl">⚡ TAKIM SEÇ ⚡</div>
+    <div class="tsel-grid" id="tSelGrid"></div>
+  </div>
+  <div class="card-rev" id="cardRevEl">
+    <div class="rv-wrap">
+      <div class="rv-inner" id="rvInner">
+        <div class="rv-front" id="rvFront"></div>
+      </div>
+    </div>
+    <button class="rv-btn" onclick="placeCard()">⚡ TAKIMA EKLE</button>
+  </div>
+</div>
+
+<!-- OYUN SONU -->
+<div class="go-ov" id="goOv">
+  <div class="go-box">
+    <div class="go-title">🏆 OYUN SONA ERDİ</div>
+    <div class="go-sub">FİNAL SONUÇLARI</div>
+    <div class="winner-box">
+      <div class="wbox-shine"></div>
+      <span class="w-crown">👑</span>
+      <div class="w-lbl">KAZANAN</div>
+      <div class="w-nm" id="wNm">-</div>
+      <div class="w-pw" id="wPw">⚡ 0</div>
+    </div>
+    <div class="ranks" id="ranksEl"></div>
+    <div class="best-title">⭐ EN İYİ 5 KART</div>
+    <div class="best-grid" id="bestEl"></div>
+    <div class="go-btns">
+      <button class="go-btn restart" onclick="restartGame()">🔄 YENİDEN OYNA</button>
+      <button class="go-btn share" onclick="shareRes()">📤 PAYLAŞ</button>
+    </div>
+  </div>
+</div>
+
+<!-- KONTROL PANELİ -->
+<div class="cp-ov" id="cpOv">
+  <div class="cp">
+    <div class="cp-hdr">
+      <div class="cp-title">⚙️ KONTROL PANELİ</div>
+      <div class="cp-cls" onclick="closePanel()">✕</div>
+    </div>
+    <div class="cp-body">
+
+      <div class="ps">
+        <div class="ps-ttl">🏟️ TAKIM AYARLARI</div>
+        <div id="teamCfg"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">
+          <button class="pb pb-g" onclick="applyTeams()">✅ UYGULA</button>
+        </div>
+      </div>
+
+      <div class="ps">
+        <div class="ps-ttl">🎁 HEDİYE AYARLARI</div>
+        <div id="giftCfg"></div>
+      </div>
+
+      <div class="ps">
+        <div class="ps-ttl">❤️ BEĞENİ → KART</div>
+        <div style="font-size:.62rem;color:rgba(255,255,255,.3);margin-bottom:6px">Beğeni sayısı → puan aralığı</div>
+        <div id="likeMapEl"></div>
+        <div style="display:flex;gap:5px;justify-content:flex-end;margin-top:5px">
+          <button class="pb pb-b" onclick="addLikeRow()">+ EKLE</button>
+          <button class="pb pb-g" onclick="applyLikeMap()">✅ KAYDET</button>
+        </div>
+      </div>
+
+      <div class="ps">
+        <div class="ps-ttl">🖼️ ARKA PLAN</div>
+        <div class="ps-row">
+          <span class="ps-lbl">Renk 1</span>
+          <input class="ps-col" type="color" id="bgC1" value="#0d2b0d" oninput="applyBg()">
+          <span style="font-size:.7rem;color:rgba(255,255,255,.4);margin:0 3px">→</span>
+          <input class="ps-col" type="color" id="bgC2" value="#020802" oninput="applyBg()">
+        </div>
+        <div class="ps-row">
+          <span class="ps-lbl">Görsel URL</span>
+          <input class="ps-inp" id="bgUrl" placeholder="https://...">
+        </div>
+        <div style="display:flex;gap:5px;justify-content:flex-end;margin-top:5px">
+          <button class="pb pb-g" onclick="applyBgImg()">🖼️ UYGULA</button>
+          <button class="pb pb-r" onclick="resetBg()">↩ SIFIRLA</button>
+        </div>
+      </div>
+
+      <div class="ps">
+        <div class="ps-ttl">🎵 SES</div>
+        <div class="sv-row"><span class="sv-lbl">Genel</span><input type="range" class="sv-sl" min="0" max="100" value="70" oninput="setVol('master',this.value)"><span class="sv-val" id="vM">70</span></div>
+        <div class="sv-row"><span class="sv-lbl">Hediye</span><input type="range" class="sv-sl" min="0" max="100" value="80" oninput="setVol('gift',this.value)"><span class="sv-val" id="vG">80</span></div>
+        <div class="sv-row"><span class="sv-lbl">Kart</span><input type="range" class="sv-sl" min="0" max="100" value="70" oninput="setVol('card',this.value)"><span class="sv-val" id="vC">70</span></div>
+        <div class="sv-row"><span class="sv-lbl">Nadir</span><input type="range" class="sv-sl" min="0" max="100" value="90" oninput="setVol('rare',this.value)"><span class="sv-val" id="vR">90</span></div>
+        <div class="sv-row"><span class="sv-lbl">Efsane</span><input type="range" class="sv-sl" min="0" max="100" value="100" oninput="setVol('leg',this.value)"><span class="sv-val" id="vL">100</span></div>
+        <div class="sv-row"><span class="sv-lbl">Kazanan</span><input type="range" class="sv-sl" min="0" max="100" value="100" oninput="setVol('win',this.value)"><span class="sv-val" id="vW">100</span></div>
+      </div>
+
+      <div class="ps">
+        <div class="ps-ttl">✨ EFEKTLER</div>
+        <div class="tog-row"><span class="tog-lbl">Konfeti</span><button class="tog on" id="togCnf" onclick="togFeat('confetti',this)"></button></div>
+        <div class="tog-row"><span class="tog-lbl">Upgrade Bildirimi</span><button class="tog on" id="togUpg" onclick="togFeat('upgrade',this)"></button></div>
+      </div>
+
+      <div class="ps">
+        <div class="ps-ttl">📺 WİDGET</div>
+        <div class="ps-row">
+          <span class="ps-lbl">Yön</span>
+          <select class="ps-sel" onchange="document.getElementById('wDirSel').value=this.value;rebuildWidget()">
+            <option value="h">Yatay (2×2)</option>
+            <option value="v">Dikey (4 sütun)</option>
+          </select>
+        </div>
+        <div class="url-box" style="margin-top:7px">
+          <div class="url-txt" id="obsUrl">-</div>
+          <div style="display:flex;gap:5px">
+            <button class="pb pb-g" onclick="copyUrl()">📋 KOPYALA</button>
+            <button class="pb pb-b" onclick="openWidget()">📺 AÇ</button>
+          </div>
+        </div>
+        <div style="font-size:.56rem;color:rgba(255,255,255,.26);margin-top:4px">OBS → Tarayıcı Kaynağı → 1920×1080</div>
+      </div>
+
+      <div class="ps">
+        <div class="ps-ttl">📱 TİKTOK</div>
+        <div class="ps-row">
+          <span class="ps-lbl">Kullanıcı</span>
+          <input class="ps-inp" id="ttUser" placeholder="@tiktok_adin">
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:5px">
+          <button class="pb pb-g" onclick="connectTT()">🔗 BAĞLAN</button>
+        </div>
+        <div id="ttStatus" style="font-size:.58rem;color:rgba(255,255,255,.3);margin-top:4px;text-align:center">⚠️ Simülasyon modu aktif</div>
+      </div>
+
+      <div class="ps">
+        <div class="ps-ttl">🏅 TOP DONOR</div>
+        <div class="ps-row">
+          <span class="ps-lbl">Kaç kişi</span>
+          <select class="ps-sel" id="topCnt" onchange="renderTop()">
+            <option value="3">Top 3</option>
+            <option value="5" selected>Top 5</option>
+            <option value="10">Top 10</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// KULÜP RENKLERİ (avatar için)
+// ═══════════════════════════════════════════
+const CCLR = {
+  'Real Madrid':'#FEBE10','Barcelona':'#004D98','Man City':'#6CABDD',
+  'Liverpool':'#C8102E','Bayern':'#DC052D','PSG':'#003170',
+  'Inter':'#010E80','AC Milan':'#FB090B','Arsenal':'#EF0107',
+  'Chelsea':'#034694','Man United':'#DA291C','Juventus':'#555555',
+  'Atletico':'#CB3524','Dortmund':'#FDE100','Leverkusen':'#E32221',
+  'Napoli':'#12A0D7','Roma':'#8E1F2F','Lazio':'#87D8F7',
+  'Galatasaray':'#E52133','Fenerbahce':'#003399','Besiktas':'#444444',
+  'Trabzonspor':'#862633','Fiorentina':'#6611BB','Atalanta':'#1C5FA8',
+  'Newcastle':'#241F20','Aston Villa':'#95BFE5','Tottenham':'#132257',
+  'Al-Nassr':'#FFC72C','Al-Ittihad':'#000000','Inter Miami':'#F7B5CD',
+  'RB Leipzig':'#DD0741','Benfica':'#CC0000','Sporting':'#006600',
+  'Ajax':'#CC0000','Brentford':'#FF2222','Wolves':'#FDB913',
+  'Crystal Palace':'#1B458F','Fulham':'#CC0000','Everton':'#003399',
+  'West Ham':'#7A263A','Brighton':'#0057B8','Bournemouth':'#CC0000'
+};
+
+function clubColor(club) {
+  if (!club) return '#1a2a4a';
+  for (const [k, v] of Object.entries(CCLR)) {
+    if (club.includes(k)) return v;
+  }
+  return '#1a2a4a';
+}
+
+function initials(name) {
+  return name.split(' ').map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+}
+
+function avatarStyle(player, size) {
+  const bg = clubColor(player.club);
+  const fs = Math.round(size * 0.35);
+  return `width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,${bg},#1a1a3a);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:${fs}px;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,.22);flex-shrink:0`;
+}
+
+// ═══════════════════════════════════════════
+// OYUNCU VERİTABANI
+// ═══════════════════════════════════════════
+const P = (n,c,nat,r,pac,sho,pas,dri,def,phy,pos) => ({name:n,club:c,nation:nat,rating:r,pac,sho,pas,dri,def,phy,position:pos});
+
+const DB = {
+GK:[
+  P('COURTOIS','Real Madrid','🇧🇪',91,82,45,78,80,92,89,'GK'),
+  P('ALİSSON','Liverpool','🇧🇷',90,79,40,76,78,91,87,'GK'),
+  P('EDERSON','Man City','🇧🇷',89,83,42,82,79,89,85,'GK'),
+  P('TER STEGEN','Barcelona','🇩🇪',88,78,38,80,77,88,82,'GK'),
+  P('MAİGNAN','AC Milan','🇫🇷',87,80,36,74,73,87,84,'GK'),
+  P('OBLAK','Atletico','🇸🇮',85,76,34,73,72,85,81,'GK'),
+  P('ONANA','Man United','🇨🇲',84,72,32,72,70,84,80,'GK'),
+  P('SOMMER','Inter','🇨🇭',84,74,33,72,71,84,80,'GK'),
+  P('RAYA','Arsenal','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,70,30,70,68,83,78,'GK'),
+  P('TRAPP','Frankfurt','🇩🇪',83,72,31,70,69,83,79,'GK'),
+  P('VİCARİO','Tottenham','🇮🇹',82,71,30,70,69,82,78,'GK'),
+  P('GULACSI','RB Leipzig','🇭🇺',82,71,30,69,68,82,77,'GK'),
+  P('HRADECKY','Leverkusen','🇫🇮',81,70,29,68,67,81,77,'GK'),
+  P('NETO','Bournemouth','🇧🇷',81,69,29,68,67,81,76,'GK'),
+  P('LUNIN','Real Madrid','🇺🇦',82,72,30,69,68,82,77,'GK'),
+  P('SCHMIDT','Benfica','🇩🇪',82,71,30,69,68,82,77,'GK'),
+  P('VLACHODIMOS','Newcastle','🇬🇷',79,67,28,66,65,79,75,'GK'),
+  P('FLEKKEN','Brentford','🇩🇪',80,68,28,67,66,80,76,'GK'),
+  P('BUTLAND','Crystal Palace','🏴󠁧󠁢󠁥󠁮󠁧󠁿',80,68,28,67,66,80,75,'GK'),
+  P('MENDYf','Chelsea','🇫🇷',78,65,26,64,63,78,73,'GK'),
+  P('FORSTER','Tottenham','🏴󠁧󠁢󠁥󠁮󠁧󠁿',75,62,23,61,60,75,71,'GK'),
+  P('KELLEHER','Liverpool','🇮🇪',76,64,25,63,62,76,72,'GK'),
+  P('HENDERSON','Ajax','🏴󠁧󠁢󠁥󠁮󠁧󠁿',74,61,22,60,59,74,70,'GK'),
+  P('RYAN','Real Sociedad','🇦🇺',72,59,20,58,57,72,68,'GK'),
+  P('MURIC','Burnley','🇽🇰',71,58,19,57,56,71,67,'GK'),
+  P('CAKIR','Galatasaray','🇹🇷',76,63,24,62,61,76,72,'GK'),
+  P('BATMAN','Trabzonspor','🇹🇷',74,61,22,60,59,74,70,'GK'),
+  P('ERGUDER','Besiktas','🇹🇷',72,59,20,58,57,72,68,'GK'),
+  P('ISLAM','Fenerbahce','🇹🇷',75,62,23,61,60,75,71,'GK'),
+  P('OZKAN','Sivasspor','🇹🇷',65,53,14,52,51,65,61,'GK'),
+  P('JOHNSON GK','Watford','🏴󠁧󠁢󠁥󠁮󠁧󠁿',68,56,17,55,54,68,64,'GK'),
+  P('BALOGUN','Monaco','🇳🇬',66,54,15,53,52,66,62,'GK'),
+  P('PEKTEMEK K','Ankaragucu','🇹🇷',63,51,12,50,49,63,59,'GK'),
+  P('KAYA GK','Adanaspor','🇹🇷',62,50,11,49,48,62,58,'GK'),
+  P('DEMIR GK','Erzurumspor','🇹🇷',58,47,9,46,45,58,54,'GK'),
+  P('YILMAZ GK','Altay','🇹🇷',55,44,7,43,42,55,51,'GK'),
+  P('OZMEN','Kayserispor','🇹🇷',60,49,10,48,47,60,56,'GK'),
+],
+CB:[
+  P('VAN DIJK','Liverpool','🇳🇱',89,78,60,82,76,92,90,'CB'),
+  P('RÜDIGER','Real Madrid','🇩🇪',87,80,52,75,72,90,91,'CB'),
+  P('DIAS','Man City','🇵🇹',88,79,50,76,74,91,87,'CB'),
+  P('SALİBA','Arsenal','🇫🇷',86,85,46,74,76,88,83,'CB'),
+  P('MİLİTAO','Real Madrid','🇧🇷',86,84,48,72,74,88,84,'CB'),
+  P('GVARDIOL','Man City','🇭🇷',85,82,44,76,74,86,84,'CB'),
+  P('KONATE','Liverpool','🇫🇷',86,83,46,74,72,88,87,'CB'),
+  P('BASTONI','Inter','🇮🇹',87,78,50,84,76,88,82,'CB'),
+  P('KIM MIN-JAE','Bayern','🇰🇷',86,82,48,75,72,88,87,'CB'),
+  P('UPAMECANO','Bayern','🇫🇷',85,83,47,75,73,86,84,'CB'),
+  P('PAVARD','Inter','🇫🇷',84,80,46,74,72,84,81,'CB'),
+  P('SCHLOTTERBECK','Dortmund','🇩🇪',83,78,43,72,70,85,82,'CB'),
+  P('TAPSOBA','Leverkusen','🇧🇫',84,81,45,73,71,85,83,'CB'),
+  P('HINCAPIE','Leverkusen','🇪🇨',82,80,42,74,70,83,80,'CB'),
+  P('ACERBI','Inter','🇮🇹',83,72,44,70,68,86,82,'CB'),
+  P('TOMORI','AC Milan','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,84,44,72,70,84,82,'CB'),
+  P('BREMER','Juventus','🇧🇷',84,80,46,73,70,85,84,'CB'),
+  P('AKANJI','Man City','🇨🇭',85,82,45,75,72,86,83,'CB'),
+  P('DANSO','Lens','🇦🇹',82,79,41,71,69,84,83,'CB'),
+  P('DEMİRAL','Al-Ahli','🇹🇷',82,76,42,68,70,84,83,'CB'),
+  P('SÖYÜNCÜ','Atletico','🇹🇷',81,77,40,68,69,83,80,'CB'),
+  P('LAPORTE','Al-Nassr','🇪🇸',82,79,44,75,72,83,80,'CB'),
+  P('SULE','Dortmund','🇩🇪',80,77,40,70,68,82,84,'CB'),
+  P('LINDELOF','Man United','🇸🇪',78,74,40,70,68,80,76,'CB'),
+  P('KABAK','Nottm Forest','🇹🇷',78,74,38,64,65,80,79,'CB'),
+  P('BARDAKCI','Galatasaray','🇹🇷',76,72,37,64,64,78,77,'CB'),
+  P('NELSSON','Galatasaray','🇩🇰',79,76,40,68,66,81,80,'CB'),
+  P('BAILLY','Besiktas','🇨🇮',73,72,35,63,62,75,76,'CB'),
+  P('INCI','Galatasaray','🇹🇷',74,70,35,62,62,76,75,'CB'),
+  P('GUNES','Fenerbahce','🇹🇷',73,69,34,61,61,75,74,'CB'),
+  P('DJIKU','Strasbourg','🇬🇭',78,75,39,67,65,80,79,'CB'),
+  P('OZKACAR','Lyon','🇹🇷',74,70,35,62,62,76,75,'CB'),
+  P('TOSIN','Fulham','🇳🇬',75,73,37,63,62,77,76,'CB'),
+  P('ERARSLAN','Antalyaspor','🇹🇷',62,59,25,52,51,64,63,'CB'),
+  P('YAVUZ','Gaziantep','🇹🇷',63,60,26,53,52,65,64,'CB'),
+  P('GUVEN','Hatayspor','🇹🇷',61,58,24,51,50,63,62,'CB'),
+  P('OMERAGIC','Servette','🇨🇭',57,54,20,47,46,59,58,'CB'),
+  P('CEYLAN','Adana Demirspor','🇹🇷',54,51,17,44,43,56,55,'CB'),
+  P('POLAT CB','Elazigspor','🇹🇷',52,49,15,42,41,54,53,'CB'),
+],
+LB:[
+  P('ROBERTSON','Liverpool','🏴󠁧󠁢󠁥󠁮󠁧󠁿',86,87,65,84,82,83,80,'LB'),
+  P('THEO HERNANDEZ','AC Milan','🇫🇷',85,90,66,78,83,76,78,'LB'),
+  P('ALPHONSO DAVIES','Bayern','🇨🇦',84,92,62,80,82,75,74,'LB'),
+  P('GRİMALDO','Leverkusen','🇪🇸',85,88,66,82,84,76,74,'LB'),
+  P('DAVID RAUM','RB Leipzig','🇩🇪',83,86,60,80,80,78,76,'LB'),
+  P('MENDY LB','Real Madrid','🇫🇷',82,86,58,76,78,78,76,'LB'),
+  P('FERDI KADIOGLU','Fenerbahce','🇳🇱',83,86,60,80,82,74,74,'LB'),
+  P('GOSENS','Union Berlin','🇩🇪',80,84,58,76,78,74,76,'LB'),
+  P('REGUILON','Atletico','🇪🇸',79,83,56,74,76,72,74,'LB'),
+  P('TIERNEY','Real Sociedad','🏴󠁧󠁢󠁥󠁮󠁧󠁿',78,82,54,74,76,72,74,'LB'),
+  P('GAYA','Valencia','🇪🇸',80,84,58,78,80,74,72,'LB'),
+  P('THOMAS PARTEY','Arsenal','🇬🇭',79,82,57,76,78,74,76,'LB'),
+  P('ANGELINO','Roma','🇪🇸',77,82,54,74,76,70,72,'LB'),
+  P('MITCHELL','Crystal Palace','🏴󠁧󠁢󠁥󠁮󠁧󠁿',80,84,55,76,78,74,74,'LB'),
+  P('TSIMIKAS','Liverpool','🇬🇷',78,82,56,72,74,66,72,'LB'),
+  P('KACAR','Galatasaray','🇹🇷',70,74,46,66,68,64,68,'LB'),
+  P('BENGUE','Besiktas','🇫🇷',72,76,48,68,70,66,70,'LB'),
+  P('UCAR','Trabzonspor','🇹🇷',71,75,47,67,69,65,69,'LB'),
+  P('GORGON','Auxerre','🇫🇷',67,71,43,63,65,61,65,'LB'),
+  P('DEMIR LB','Sivasspor','🇹🇷',63,67,39,59,61,57,61,'LB'),
+  P('YILDIRIM LB','Altay','🇹🇷',58,62,34,54,56,52,56,'LB'),
+  P('NINO LB','Erzurumspor','🇹🇷',55,59,31,51,53,49,53,'LB'),
+],
+RB:[
+  P('TRENT ARNOLD','Liverpool','🏴󠁧󠁢󠁥󠁮󠁧󠁿',87,88,72,84,86,82,76,'RB'),
+  P('CARVAJAL','Real Madrid','🇪🇸',85,84,62,80,80,82,78,'RB'),
+  P('HAKİMİ','PSG','🇲🇦',87,90,68,80,84,76,76,'RB'),
+  P('CANCELO','Barcelona','🇵🇹',85,88,65,82,84,82,79,'RB'),
+  P('DUMFRIES','Inter','🇳🇱',82,85,58,74,78,76,80,'RB'),
+  P('ÇELİK','Roma','🇹🇷',80,82,45,70,72,78,74,'RB'),
+  P('MAZRAOUI','Man United','🇲🇦',80,82,50,74,76,76,76,'RB'),
+  P('LIVRAMENTO','Newcastle','🏴󠁧󠁢󠁥󠁮󠁧󠁿',80,84,54,76,78,74,74,'RB'),
+  P('DALOT','Man United','🇵🇹',80,82,54,76,78,74,72,'RB'),
+  P('DEST','PSV','🇺🇸',79,86,52,78,82,70,70,'RB'),
+  P('BELLERIN','Sporting','🇪🇸',78,82,48,72,74,72,70,'RB'),
+  P('HENRICHS','RB Leipzig','🇩🇪',79,82,52,74,76,72,72,'RB'),
+  P('FLORENZI','AC Milan','🇮🇹',76,78,48,70,70,70,68,'RB'),
+  P('DEMIR TR','Besiktas','🇹🇷',71,75,43,65,67,65,67,'RB'),
+  P('KARACA','Trabzonspor','🇹🇷',70,74,42,64,66,64,66,'RB'),
+  P('YILMAZ RB','Ankaragucu','🇹🇷',65,69,37,59,61,59,61,'RB'),
+  P('OZDEMIR','Adanaspor','🇹🇷',60,64,32,54,56,54,56,'RB'),
+  P('SARIKAYA','Sivasspor','🇹🇷',57,61,29,51,53,51,53,'RB'),
+  P('OZCAN','Erzurumspor','🇹🇷',54,58,26,48,50,48,50,'RB'),
+],
+CM:[
+  P('DE BRUYNE','Man City','🇧🇪',91,77,86,97,91,64,78,'CM'),
+  P('RODRİ','Man City','🇪🇸',91,72,76,90,84,86,84,'CM'),
+  P('BELLINGHAM','Real Madrid','🏴󠁧󠁢󠁥󠁮󠁧󠁿',91,80,88,84,90,72,85,'CM'),
+  P('PEDRİ','Barcelona','🇪🇸',89,79,80,88,90,68,66,'CM'),
+  P('MODRIC','Real Madrid','🇭🇷',87,75,76,91,90,68,68,'CM'),
+  P('KROOS','Real Madrid','🇩🇪',88,60,80,95,86,70,74,'CM'),
+  P('KIMMICH','Bayern','🇩🇪',88,76,78,92,84,82,78,'CM'),
+  P('BARELLA','Inter','🇮🇹',87,80,78,86,86,74,82,'CM'),
+  P('VALVERDE','Real Madrid','🇺🇾',87,86,82,80,84,74,87,'CM'),
+  P('ÇALHANOĞLU','Inter','🇹🇷',86,72,80,88,82,78,76,'CM'),
+  P('CAMAVINGA','Real Madrid','🇫🇷',85,84,72,80,84,76,80,'CM'),
+  P('VITINHA','PSG','🇵🇹',85,79,76,88,86,68,72,'CM'),
+  P('ZUBIMENDI','Arsenal','🇪🇸',84,74,72,86,82,78,78,'CM'),
+  P('GORETZKA','Bayern','🇩🇪',84,80,76,80,80,74,86,'CM'),
+  P('GÜNDOĞAN','Barcelona','🇩🇪',84,70,76,88,82,74,74,'CM'),
+  P('THURAM','Inter','🇫🇷',82,80,74,76,80,70,82,'CM'),
+  P('TIELEMANS','Aston Villa','🇧🇪',80,76,72,84,80,68,74,'CM'),
+  P('SABITZER','Dortmund','🇦🇹',82,80,76,78,80,70,78,'CM'),
+  P('VEIGA','Chelsea','🇵🇹',82,78,74,82,82,68,74,'CM'),
+  P('YILDIZ','Juventus','🇹🇷',82,78,80,80,86,46,66,'CM'),
+  P('GÜLER','Real Madrid','🇹🇷',80,80,76,76,84,40,63,'CM'),
+  P('KAHVECI','Fenerbahce','🇹🇷',80,76,76,80,80,54,70,'CM'),
+  P('TUFAN','Fenerbahce','🇹🇷',76,73,73,75,76,50,70,'CM'),
+  P('HASSAN','Galatasaray','🇲🇦',74,70,66,72,72,62,68,'CM'),
+  P('FRED','Fenerbahce','🇧🇷',78,74,68,78,76,68,76,'CM'),
+  P('YAZICI','Lille','🇹🇷',78,74,74,78,78,50,68,'CM'),
+  P('BAJCETIC','RB Salzburg','🇪🇸',77,74,68,76,76,64,72,'CM'),
+  P('NKUNKU','Chelsea','🇫🇷',82,82,78,80,82,56,74,'CM'),
+  P('AYHAN','Karagumruk','🇹🇷',74,70,64,72,72,64,70,'CM'),
+  P('PRAET','Torino','🇧🇪',74,71,65,73,73,63,71,'CM'),
+  P('KONE','Lyon','🇫🇷',74,72,64,72,74,62,70,'CM'),
+  P('BILLING','Bournemouth','🇩🇰',72,68,62,68,68,60,70,'CM'),
+  P('KAPLAN CM','Besiktas','🇹🇷',71,67,61,69,69,61,67,'CM'),
+  P('SENOL','Kayserispor','🇹🇷',64,61,54,62,62,54,62,'CM'),
+  P('ALP','Ankaragucu','🇹🇷',62,59,52,60,60,52,60,'CM'),
+  P('KILIC','Adana Demirspor','🇹🇷',57,54,47,55,55,47,55,'CM'),
+  P('BOSTAN','Altay','🇹🇷',54,51,44,52,52,44,52,'CM'),
+  P('UZUN','Bandirmaspor','🇹🇷',52,49,42,50,50,42,50,'CM'),
+],
+CAM:[
+  P('MESSI','Inter Miami','🇦🇷',90,68,88,92,95,32,65,'CAM'),
+  P('BERNARDO SILVA','Man City','🇵🇹',88,80,80,88,88,64,72,'CAM'),
+  P('PEDRI CAM','Barcelona','🇪🇸',89,79,80,88,90,68,66,'CAM'),
+  P('THIAGO','Liverpool','🇪🇸',83,72,72,88,84,66,72,'CAM'),
+  P('MADDISON','Tottenham','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,74,76,84,84,58,68,'CAM'),
+  P('HAVERTZ','Arsenal','🇩🇪',83,78,78,80,82,62,76,'CAM'),
+  P('DYBALA','Roma','🇦🇷',84,78,82,82,88,42,70,'CAM'),
+  P('PULISIC','AC Milan','🇺🇸',82,84,78,80,84,52,72,'CAM'),
+  P('MOUNT','Man United','🏴󠁧󠁢󠁥󠁮󠁧󠁿',82,78,76,82,84,62,72,'CAM'),
+  P('ISCO','Real Betis','🇪🇸',82,72,76,88,86,48,66,'CAM'),
+  P('SZYMANSKI','Fiorentina','🇵🇱',80,76,74,80,80,60,72,'CAM'),
+  P('OMUR','Trabzonspor','🇹🇷',74,70,70,72,74,44,64,'CAM'),
+  P('COLAK CAM','Rangers','🇹🇷',75,72,72,73,75,40,66,'CAM'),
+  P('BELHANDA','Karagumruk','🇲🇦',72,70,68,74,74,46,64,'CAM'),
+  P('UYSAL','Gaziantep','🇹🇷',65,62,60,64,64,40,57,'CAM'),
+  P('ARSLAN CAM','Erzurumspor','🇹🇷',57,54,52,56,56,36,50,'CAM'),
+],
+LM:[
+  P('VİNİCİUS JR','Real Madrid','🇧🇷',92,95,86,79,95,32,77,'LM'),
+  P('SALAH','Liverpool','🇪🇬',91,92,90,82,91,44,76,'LM'),
+  P('LEAO','AC Milan','🇵🇹',87,91,82,76,90,32,74,'LM'),
+  P('SANE','Bayern','🇩🇪',86,93,82,80,90,38,76,'LM'),
+  P('DIAZ LUIS','Liverpool','🇨🇴',85,88,80,76,88,40,74,'LM'),
+  P('RASHFORD','Man United','🏴󠁧󠁢󠁥󠁮󠁧󠁿',84,91,82,74,87,38,80,'LM'),
+  P('COMAN','Bayern','🇫🇷',84,88,80,76,86,36,72,'LM'),
+  P('NERES','Benfica','🇧🇷',84,90,80,76,87,32,70,'LM'),
+  P('GORDON','Newcastle','🏴󠁧󠁢󠁥󠁮󠁧󠁿',82,88,78,74,85,36,74,'LM'),
+  P('AKTÜRKOGLU','Galatasaray','🇹🇷',81,87,78,70,82,30,72,'LM'),
+  P('POLITANO','Napoli','🇮🇹',83,84,80,78,84,38,72,'LM'),
+  P('DIATTA','Monaco','🇸🇳',78,84,72,70,80,32,68,'LM'),
+  P('IHEANACHO','Karagumruk','🇳🇬',74,78,72,68,76,30,68,'LM'),
+  P('ZIYAD','Hatayspor','🇲🇦',70,74,66,64,72,26,62,'LM'),
+  P('KAMARA LM','Amiens','🇫🇷',66,70,62,60,68,24,58,'LM'),
+  P('SAHAN','Altinordu','🇹🇷',62,66,58,56,64,22,54,'LM'),
+  P('KAYA LM','Boluspor','🇹🇷',55,59,51,49,57,18,47,'LM'),
+],
+RM:[
+  P('MBAPPE RM','Real Madrid','🇫🇷',95,99,93,82,96,42,82,'RM'),
+  P('MUSIALA','Bayern','🇩🇪',87,83,80,82,88,50,72,'RM'),
+  P('GNABRY','Bayern','🇩🇪',83,90,80,78,86,40,74,'RM'),
+  P('LOOKMAN','Atalanta','🇳🇬',84,86,82,78,86,38,72,'RM'),
+  P('CHUKWUEZE','AC Milan','🇳🇬',83,90,80,76,86,34,72,'RM'),
+  P('DOKU','Man City','🇧🇪',83,92,78,74,87,30,70,'RM'),
+  P('KULUSEVSKI','Tottenham','🇸🇪',84,84,80,80,84,54,78,'RM'),
+  P('ADEYEMI','Dortmund','🇩🇪',82,92,78,72,84,36,74,'RM'),
+  P('TETE','Fenerbahce','🇧🇷',81,88,78,72,85,32,70,'RM'),
+  P('ZAHA','Galatasaray','🇨🇮',80,87,76,74,84,30,70,'RM'),
+  P('SAINT-MAXIMIN','Al-Ahli','🇫🇷',82,92,76,72,84,28,68,'RM'),
+  P('RODRIGUEZ','Everton','🇨🇴',82,82,78,80,82,44,72,'RM'),
+  P('MILOT','Karagumruk','🇽🇰',74,80,70,68,76,32,66,'RM'),
+  P('BARIS Y.','Trabzonspor','🇹🇷',72,78,68,66,74,28,64,'RM'),
+  P('EMRE RM','Altay','🇹🇷',64,70,60,58,66,24,56,'RM'),
+  P('SULEYMAN','Kastamonuspor','🇹🇷',61,67,57,55,63,21,53,'RM'),
+  P('KAYA RM','Bandirmaspor','🇹🇷',55,61,51,49,57,18,47,'RM'),
+],
+ST:[
+  P('MBAPPE','Real Madrid','🇫🇷',95,99,93,82,96,42,82,'ST'),
+  P('HAALAND','Man City','🇳🇴',94,89,97,68,85,44,94,'ST'),
+  P('KANE','Bayern','🏴󠁧󠁢󠁥󠁮󠁧󠁿',91,70,93,83,86,46,82,'ST'),
+  P('LEWANDOWSKI','Barcelona','🇵🇱',90,78,95,80,86,42,82,'ST'),
+  P('VİNİCİUS ST','Real Madrid','🇧🇷',92,95,86,79,95,32,77,'ST'),
+  P('BENZEMA','Al-Ittihad','🇫🇷',88,78,92,82,90,38,80,'ST'),
+  P('OSİMHEN','Napoli','🇳🇬',88,92,88,70,84,34,88,'ST'),
+  P('VLAHOVIC','Juventus','🇷🇸',86,76,88,76,82,38,84,'ST'),
+  P('GUIRASSY','Dortmund','🇬🇳',83,80,84,70,80,36,82,'ST'),
+  P('LUKAKU','Roma','🇧🇪',84,74,86,70,82,34,88,'ST'),
+  P('MORATA','Atletico','🇪🇸',82,76,84,74,82,38,80,'ST'),
+  P('IMMOBILE','Lazio','🇮🇹',83,74,88,72,82,34,80,'ST'),
+  P('RICHARLISON','Tottenham','🇧🇷',82,80,82,74,82,40,80,'ST'),
+  P('FERRAN TORRES','Barcelona','🇪🇸',81,86,80,76,82,40,74,'ST'),
+  P('İCARDİ','Galatasaray','🇦🇷',83,72,88,68,80,28,80,'ST'),
+  P('GIMENEZ','Feyenoord','🇲🇽',83,78,84,72,80,36,82,'ST'),
+  P('DYBALA ST','Roma','🇦🇷',84,78,82,82,88,42,70,'ST'),
+  P('RASHFORD ST','Man United','🏴󠁧󠁢󠁥󠁮󠁧󠁿',84,91,82,74,87,38,80,'ST'),
+  P('AKTÜRKOGLU ST','Galatasaray','🇹🇷',80,87,78,70,82,30,72,'ST'),
+  P('TOSUN','Besiktas','🇹🇷',78,74,80,67,76,30,76,'ST'),
+  P('MICHY B.','Fenerbahce','🇧🇪',78,72,80,68,78,30,78,'ST'),
+  P('WILLIAN JOSE','Fenerbahce','🇧🇷',79,72,80,70,78,30,78,'ST'),
+  P('BALOTELLI','Adana Demirspor','🇮🇹',76,72,78,65,74,28,74,'ST'),
+  P('YILMAZ F.','Trabzonspor','🇹🇷',79,80,80,68,79,28,76,'ST'),
+  P('GOMIS','Al-Hilal','🇫🇷',77,72,78,66,76,28,76,'ST'),
+  P('PEKTEMEK','Besiktas','🇹🇷',74,68,76,62,72,24,72,'ST'),
+  P('TOSUN B.','Trabzonspor','🇹🇷',73,68,74,61,71,24,71,'ST'),
+  P('BOUPENDZA','Hatayspor','🇬🇦',74,72,76,62,74,28,76,'ST'),
+  P('KARIS','Goztepe','🇹🇷',73,68,74,62,72,24,72,'ST'),
+  P('DIAGNE','Rizespor','🇸🇳',72,68,74,60,72,26,74,'ST'),
+  P('EL KABIR','Kasimpasa','🇲🇦',72,70,72,62,70,26,70,'ST'),
+  P('YESILYURT','Kayserispor','🇹🇷',71,66,72,60,70,22,70,'ST'),
+  P('PODOLSKI','Antalyaspor','🇩🇪',72,68,74,62,70,26,72,'ST'),
+  P('GHOOCHAN','Antalyaspor','🇮🇷',71,66,72,60,70,24,70,'ST'),
+  P('EKICI','Bochum','🇩🇪',73,72,72,64,72,28,70,'ST'),
+  P('ERCAN','Erzincanspor','🇹🇷',64,62,66,54,62,20,62,'ST'),
+  P('DEMIRKOL','Altinordu','🇹🇷',62,60,64,52,60,18,60,'ST'),
+  P('AKDAG','Sivasspor','🇹🇷',63,61,65,53,61,19,61,'ST'),
+  P('CELIL','Adanaspor','🇹🇷',66,63,68,56,64,22,64,'ST'),
+  P('YIGIT ST','Bandirmaspor','🇹🇷',61,59,63,51,59,17,59,'ST'),
+  P('POLAT ST','Elazigspor','🇹🇷',57,55,59,47,55,15,55,'ST'),
+  P('CETIN ST','Kastamonuspor','🇹🇷',54,52,56,44,52,12,52,'ST'),
+  P('TURK ST','Zonguldakspor','🇹🇷',52,50,54,42,50,10,50,'ST'),
+]
+};
+
+const POS_MAP = {GK:'GK',RB:'RB',CB1:'CB',CB2:'CB',LB:'LB',CM1:'CM',CM2:'CM',CAM:'CAM',LM:'LM',RM:'RM',ST1:'ST',ST2:'ST'};
+
+const POSITIONS = [
+  {key:'GK', label:'KALECİ',  row:0, emoji:'🧤'},
+  {key:'RB', label:'SAĞ DEF', row:1, emoji:'🛡️'},
+  {key:'CB1',label:'STOPER',  row:1, emoji:'🛡️'},
+  {key:'CB2',label:'STOPER',  row:1, emoji:'🛡️'},
+  {key:'LB', label:'SOL DEF', row:1, emoji:'🛡️'},
+  {key:'CM1',label:'ORTA',    row:2, emoji:'⚙️'},
+  {key:'CAM',label:'OFANSİF', row:2, emoji:'⚙️'},
+  {key:'CM2',label:'ORTA',    row:2, emoji:'⚙️'},
+  {key:'LM', label:'SOL KNT', row:3, emoji:'⚡'},
+  {key:'ST1',label:'FORVET',  row:3, emoji:'⚽'},
+  {key:'ST2',label:'FORVET',  row:3, emoji:'⚽'}
+];
+
+function rcls(r){return r>=90?'r99':r>=80?'r90':r>=70?'r80':r>=60?'r60':'r50';}
+function rlbl(r){return r>=90?'EFSANE':r>=80?'ELİT':r>=70?'ALTIN':r>=60?'STANDART':'BRONZE';}
+
+function getPlayers(posKey,minR,maxR){
+  const pt=POS_MAP[posKey];
+  const db=DB[pt]||DB.CM;
+  let pool=db.filter(p=>p.rating>=minR&&p.rating<maxR);
+  if(!pool.length) pool=db.filter(p=>p.rating>=minR-10&&p.rating<=maxR+10);
+  if(!pool.length) pool=db;
+  return pool;
+}
+
+// ═══════════════════════════════════════════
+// OYUN DURUMU
+// ═══════════════════════════════════════════
+let GS = {
+  teams:[
+    {name:'ATEŞ FC',  color:'#ff5555',logo:'',players:{}},
+    {name:'LAZER FC', color:'#5599ff',logo:'',players:{}},
+    {name:'ORMAN FC', color:'#55ff55',logo:'',players:{}},
+    {name:'ALTIN FC', color:'#ffcc33',logo:'',players:{}}
+  ],
+  gifts:[
+    {id:0,label:'Gül',    emoji:'🌹',img:'',jeton:50,  style:'background:linear-gradient(135deg,#ff6b6b,#ee0979);color:white'},
+    {id:1,label:'Taç',    emoji:'👑',img:'',jeton:200, style:'background:linear-gradient(135deg,#FFD700,#ff8c00);color:black'},
+    {id:2,label:'Galaksi',emoji:'🌌',img:'',jeton:500, style:'background:linear-gradient(135deg,#667eea,#764ba2);color:white'},
+    {id:3,label:'Elmas',  emoji:'💎',img:'',jeton:1000,style:'background:linear-gradient(135deg,#a8edea,#fed6e3);color:black'}
+  ],
+  likeMap:[
+    {likes:50,   minR:50,maxR:60},
+    {likes:500,  minR:60,maxR:70},
+    {likes:1000, minR:70,maxR:80},
+    {likes:5000, minR:80,maxR:90},
+    {likes:10000,minR:90,maxR:100}
+  ],
+  jetonMap:[
+    {jeton:10, minR:60,maxR:70},
+    {jeton:30, minR:70,maxR:80},
+    {jeton:50, minR:80,maxR:90},
+    {jeton:100,minR:90,maxR:100}
+  ],
+  currentGift:null,currentCard:null,
+  currentTeam:null,totalCards:0,totalGifts:0,round:1,
+  busy:false,topDonors:[]
+};
+
+let CFG={snd:true,vol:{master:70,gift:80,card:70,rare:90,leg:100,win:100},confetti:true,upgrade:true};
+let AC=null;
+
+// ═══════════════════════════════════════════
+// SES
+// ═══════════════════════════════════════════
+function getAC(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();return AC;}
+function playSound(type){
+  if(!CFG.snd)return;
+  try{
+    const ctx=getAC();
+    const mv=CFG.vol.master/100;
+    const vm={gift:'gift',cardReveal:'card',rare:'rare',legendary:'leg',place:'card',winner:'win'};
+    const vol=(CFG.vol[vm[type]||'card']/100)*mv*0.25;
+    const t=(f,d,w='sine',dl=0)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type=w;o.frequency.value=f;o.connect(g);g.connect(ctx.destination);
+      g.gain.setValueAtTime(0,ctx.currentTime+dl);
+      g.gain.linearRampToValueAtTime(vol,ctx.currentTime+dl+.02);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dl+d);
+      o.start(ctx.currentTime+dl);o.stop(ctx.currentTime+dl+d);
+    };
+    if(type==='gift'){t(523,.15);t(659,.15,'sine',.15);t(784,.25,'sine',.3);}
+    else if(type==='cardReveal'){t(440,.1);t(550,.1,'sine',.1);t(660,.2,'sine',.2);}
+    else if(type==='rare'){[523,659,784,1047].forEach((f,i)=>t(f,.3,'triangle',i*.1));}
+    else if(type==='legendary'){[261,329,392,523,659,784].forEach((f,i)=>t(f,.35,'square',i*.08));}
+    else if(type==='place'){t(660,.1);t(330,.2,'sine',.1);}
+    else if(type==='winner'){[523,659,784,1047,1319,1568].forEach((f,i)=>t(f,.4,'square',i*.15));}
+  }catch(e){}
+}
+function toggleSnd(){
+  CFG.snd=!CFG.snd;
+  const b=document.getElementById('sndTog');
+  b.textContent=CFG.snd?'AÇIK':'KAPALI';
+  b.className='snd-tog '+(CFG.snd?'on':'');
+}
+
+// ═══════════════════════════════════════════
+// YARDIMCI
+// ═══════════════════════════════════════════
+function hexA(h,a){
+  const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function calcPow(ti){
+  const pl=Object.values(GS.teams[ti].players);
+  if(!pl.length)return 0;
+  return Math.round(pl.reduce((s,p)=>s+p.rating,0)/pl.length);
+}
+function getNextPos(ti){return POSITIONS.find(p=>!GS.teams[ti].players[p.key])||null;}
+
+// ═══════════════════════════════════════════
+// BAŞLAT
+// ═══════════════════════════════════════════
+function init(){
+  buildTeams();
+  buildGiftBtns();
+  buildTeamCfgUI();
+  buildGiftCfgUI();
+  buildLikeMapUI();
+  renderTop();
+  document.getElementById('obsUrl').textContent=location.href;
+}
+
+// ═══════════════════════════════════════════
+// TAKIM
+// ═══════════════════════════════════════════
+function buildTeams(){
+  const el=document.getElementById('teamsEl');el.innerHTML='';
+  GS.teams.forEach((t,ti)=>{
+    const d=document.createElement('div');
+    d.className='team';d.id='team'+ti;
+    d.style.borderColor=hexA(t.color,.35);
+    const lEl=t.logo?`<img class="team-logo" src="${t.logo}" alt="">`:`<div class="team-logo-ph" style="border-color:${t.color};color:${t.color}">?</div>`;
+    const rows=[[],[],[],[]];
+    POSITIONS.forEach(p=>rows[p.row].push(p));
+    const sHtml=rows.map(row=>`<div class="pos-row">${row.map(pos=>slotHtml(ti,pos)).join('')}</div>`).join('');
+    d.innerHTML=`<div class="team-top"><div class="team-left">${lEl}<div class="team-name" style="color:${t.color}" id="tn${ti}">${t.name}</div></div><div class="team-right"><div class="team-cnt" id="tc${ti}">0/11</div><div class="team-pow" id="tp${ti}">⚡ 0</div></div></div><div class="pos-rows">${sHtml}</div>`;
+    el.appendChild(d);
+  });
+}
+
+function slotHtml(ti,pos){
+  const pl=GS.teams[ti].players[pos.key];
+  if(pl) return filledSlotHtml(ti,pos.key,pl);
+  return `<div class="slot" id="sl${ti}${pos.key}"><span class="slot-lbl">${pos.key}</span><span class="slot-emo">${pos.emoji}</span></div>`;
+}
+
+function filledSlotHtml(ti,posKey,pl){
+  const rc=rcls(pl.rating);
+  const bg=clubColor(pl.club);
+  const ini=initials(pl.name);
+  return `<div class="slot filled" id="sl${ti}${posKey}"><div class="mc ${rc}"><div class="mc-rat">${pl.rating}</div><div class="mc-av" style="background:linear-gradient(135deg,${bg},#1a1a3a)">${ini}</div><div class="mc-nm">${pl.name}</div><div class="mc-pos">${posKey}</div></div></div>`;
+}
+
+function updateSlot(ti,posKey,pl){
+  const sl=document.getElementById(`sl${ti}${posKey}`);
+  if(!sl)return;
+  sl.outerHTML=filledSlotHtml(ti,posKey,pl);
+  const newSl=document.getElementById(`sl${ti}${posKey}`);
+  if(newSl){newSl.style.transform='scale(1.2)';setTimeout(()=>{newSl.style.transition='transform .3s';newSl.style.transform='scale(1)';},50);}
+}
+
+function updateTeamMeta(ti){
+  const cnt=Object.keys(GS.teams[ti].players).length;
+  const cntEl=document.getElementById(`tc${ti}`);
+  const powEl=document.getElementById(`tp${ti}`);
+  if(cntEl)cntEl.textContent=`${cnt}/11`;
+  if(powEl)powEl.textContent=`⚡ ${calcPow(ti)}`;
+}
+
+// ═══════════════════════════════════════════
+// HEDİYE BUTONLARI
+// ═══════════════════════════════════════════
+function buildGiftBtns(){
+  const w=document.getElementById('giftBtns');w.innerHTML='';
+  GS.gifts.forEach(g=>{
+    const b=document.createElement('button');
+    b.className='gbtn';b.style.cssText=g.style;
+    b.onclick=()=>triggerGift(g);
+    const ico=g.img?`<img src="${g.img}" style="width:20px;height:20px;border-radius:3px;object-fit:cover">`:`<span class="gbtn-ico">${g.emoji}</span>`;
+    b.innerHTML=`${ico}<span class="gbtn-lbl">${g.label}</span><span class="gbtn-val">${g.jeton} J</span>`;
+    w.appendChild(b);
+  });
+}
+
+// ═══════════════════════════════════════════
+// HEDİYE TETİKLE
+// ═══════════════════════════════════════════
+function triggerGift(gift){
+  if(GS.busy)return;
+  GS.busy=true;
+  const user=document.getElementById('userInp').value||'@misafir';
+  GS.totalGifts++;
+  document.getElementById('hGifts').textContent=GS.totalGifts;
+  GS.currentGift={...gift,username:user};
+  updateTopDonor(user,gift.jeton);
+  playSound('gift');
+  showNotif(user,gift);
+  setTimeout(()=>{hideNotif();showTSel();},2200);
+  document.getElementById('ov').classList.add('active');
+}
+
+function showNotif(user,gift){
+  document.getElementById('gNIco').textContent=gift.emoji;
+  document.getElementById('gNUser').textContent=user;
+  document.getElementById('gNAct').textContent=`${gift.label} hediyesi gönderdi!`;
+  document.getElementById('gNVal').textContent=`${gift.jeton.toLocaleString()} JETON`;
+  document.getElementById('gNotif').style.display='block';
+  document.getElementById('tSelEl').style.display='none';
+  document.getElementById('cardRevEl').classList.remove('on');
+
+  // Widget de göster
+  document.getElementById('wNIco').textContent=gift.emoji;
+  document.getElementById('wNUser').textContent=user;
+  document.getElementById('wNAct').textContent=`${gift.label} hediyesi gönderdi!`;
+  document.getElementById('wNVal').textContent=`${gift.jeton.toLocaleString()} JETON`;
+  document.getElementById('wNotif').style.display='block';
+  document.getElementById('wTSel').style.display='none';
+  document.getElementById('wCardRev').classList.remove('on');
+
+  addFeed(user,`${gift.label} gönderdi (${gift.jeton} jeton)`,'');
+}
+
+function hideNotif(){
+  document.getElementById('gNotif').style.display='none';
+  document.getElementById('wNotif').style.display='none';
+}
+
+// ═══════════════════════════════════════════
+// BEĞENİ
+// ═══════════════════════════════════════════
+function triggerLike(){
+  const likes=parseInt(document.getElementById('likeInp').value)||0;
+  if(GS.busy)return;
+  const match=[...GS.likeMap].reverse().find(m=>likes>=m.likes);
+  if(!match){alert(`En az ${GS.likeMap[0].likes} beğeni gerekli!`);return;}
+  GS.busy=true;
+  const user=document.getElementById('userInp').value||'@izleyici';
+  GS.totalGifts++;
+  document.getElementById('hGifts').textContent=GS.totalGifts;
+  GS.currentGift={label:`${likes} Beğeni`,emoji:'❤️',img:'',jeton:likes,username:user,minR:match.minR,maxR:match.maxR,isLike:true};
+  updateTopDonor(user,10);
+  playSound('gift');
+  showNotif(user,GS.currentGift);
+  setTimeout(()=>{hideNotif();showTSel();},2200);
+  document.getElementById('ov').classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// TAKIM SEÇ
+// ═══════════════════════════════════════════
+function showTSel(){
+  document.getElementById('tSelEl').style.display='block';
+  document.getElementById('wTSel').style.display='block';
+  buildTSelGrid('tSelGrid',false);
+  buildTSelGrid('wTSelGrid',true);
+}
+
+function buildTSelGrid(gridId,small){
+  const grid=document.getElementById(gridId);grid.innerHTML='';
+  GS.teams.forEach((t,ti)=>{
+    const cnt=Object.keys(t.players).length;
+    const full=cnt>=11;
+    const next=getNextPos(ti);
+    const pow=calcPow(ti);
+    const b=document.createElement('button');
+    b.className='tsel-btn'+(full?' full':'');
+    b.style.borderColor=t.color;b.style.color=t.color;
+    const lEl=t.logo?`<img class="tsel-logo" src="${t.logo}" alt="" style="width:${small?'26':'30'}px;height:${small?'26':'30'}px;border-radius:50%;object-fit:cover;margin:0 auto 3px;display:block">`:
+      `<span class="tsel-logo-ph" style="font-size:${small?'1.2':'1.4'}rem">${ti===0?'🔴':ti===1?'🔵':ti===2?'🟢':'🟡'}</span>`;
+    b.innerHTML=`${lEl}<span class="tsel-name">${t.name}</span><span class="tsel-info">${cnt}/11</span><span class="tsel-pow">⚡${pow}</span>${next?`<span class="tsel-info" style="color:#00ff88">${next.key}</span>`:''}`;
+    if(!full)b.onclick=()=>selectTeam(ti);
+    grid.appendChild(b);
+  });
+}
+
+// ═══════════════════════════════════════════
+// TAKIM SEÇ → OYUNCU BELİRLE
+// ═══════════════════════════════════════════
+function selectTeam(ti){
+  GS.currentTeam=ti;
+  document.getElementById('tSelEl').style.display='none';
+  document.getElementById('wTSel').style.display='none';
+  const pos=getNextPos(ti);
+  if(!pos){hideOverlay();return;}
+
+  let minR,maxR;
+  if(GS.currentGift.isLike){minR=GS.currentGift.minR;maxR=GS.currentGift.maxR;}
+  else{
+    const j=GS.currentGift.jeton;
+    const jm=[...GS.jetonMap].reverse().find(m=>j>=m.jeton);
+    if(jm){minR=jm.minR;maxR=jm.maxR;}else{minR=50;maxR=60;}
+  }
+
+  const pool=getPlayers(pos.key,minR,maxR);
+  const player={...pool[Math.floor(Math.random()*pool.length)]};
+  const existing=GS.teams[ti].players[pos.key];
+  const isUp=existing&&player.rating>existing.rating;
+  GS.currentCard={player,pos,isUp};
+
+  const rc=rcls(player.rating);
+  if(rc==='r99'||rc==='r90'){
+    playSound('legendary');showEpic(rc==='r99'?'tanri':'efsane');spawnCnf(rc==='r99'?'tanri':'efsane');
+    setTimeout(()=>showCard(player,pos,rc,isUp,ti),800);
+  } else if(rc==='r80'){
+    playSound('rare');setTimeout(()=>showCard(player,pos,rc,isUp,ti),200);
+  } else {
+    playSound('cardReveal');showCard(player,pos,rc,isUp,ti);
+  }
+}
+
+// ═══════════════════════════════════════════
+// KART GÖSTERİMİ
+// ═══════════════════════════════════════════
+function cardHTML(player,pos,rc,isUp,ti,avSize){
+  const bg=clubColor(player.club);
+  const ini=initials(player.name);
+  return `
+    ${isUp&&CFG.upgrade?'<div class="upg">⬆️ UPGRADE!</div>':''}
+    <div class="rv-hdr"><span>${rlbl(player.rating)}</span><span>EA FC 2025</span></div>
+    <div class="rv-rat">${player.rating}</div>
+    <div class="rv-av" style="width:${avSize}px;height:${avSize}px;background:linear-gradient(135deg,${bg},#1a1a3a);font-size:${Math.round(avSize*.35)}px">${ini}</div>
+    <div class="rv-name">${player.name}</div>
+    <div class="rv-sub">${player.nation} | ${player.club}</div>
+    <div class="rv-sub" style="color:rgba(255,255,255,.45)">${pos.label}</div>
+    <div class="rv-stats">
+      <div class="rv-stat"><span class="rv-sv">${player.pac}</span><span class="rv-sn">HIZ</span></div>
+      <div class="rv-stat"><span class="rv-sv">${player.sho}</span><span class="rv-sn">ŞUT</span></div>
+      <div class="rv-stat"><span class="rv-sv">${player.pas}</span><span class="rv-sn">PAS</span></div>
+      <div class="rv-stat"><span class="rv-sv">${player.dri}</span><span class="rv-sn">DRİ</span></div>
+      <div class="rv-stat"><span class="rv-sv">${player.def}</span><span class="rv-sn">DEF</span></div>
+      <div class="rv-stat"><span class="rv-sv">${player.phy}</span><span class="rv-sn">FİZ</span></div>
+    </div>
+    <div class="rv-club">🏟️ ${GS.teams[ti].name}</div>
+    <div class="rv-foot">⚡ ELITE FC CARDS 2025</div>
+  `;
+}
+
+function showCard(player,pos,rc,isUp,ti){
+  // Ana ekran
+  const f=document.getElementById('rvFront');
+  const inn=document.getElementById('rvInner');
+  f.className=`rv-front ${rc}`;
+  f.innerHTML=cardHTML(player,pos,rc,isUp,ti,64);
+  inn.style.animation='none';inn.offsetHeight;
+  inn.style.animation='cardIn .8s cubic-bezier(.34,1.56,.64,1) forwards';
+  document.getElementById('cardRevEl').classList.add('on');
+
+  // Widget ekranı
+  const wf=document.getElementById('wRvFront');
+  const winn=document.getElementById('wRvInner');
+  wf.className=`rv-front ${rc}`;
+  wf.innerHTML=cardHTML(player,pos,rc,isUp,ti,52);
+  winn.style.animation='none';winn.offsetHeight;
+  winn.style.animation='cardIn .8s cubic-bezier(.34,1.56,.64,1) forwards';
+  document.getElementById('wCardRev').classList.add('on');
+}
+
+// ═══════════════════════════════════════════
+// KARTI YERLEŞTIR
+// ═══════════════════════════════════════════
+function placeCard(){
+  const {player,pos,isUp}=GS.currentCard;
+  const ti=GS.currentTeam;
+
+  flyCard(ti,pos.key,player.rating,()=>{
+    GS.teams[ti].players[pos.key]=player;
+    GS.totalCards++;
+    document.getElementById('hCards').textContent=GS.totalCards;
+    updateSlot(ti,pos.key,player);
+    updateTeamMeta(ti);
+    updateWidgetSlot(ti,pos.key,player);
+    playSound('place');
+    GS.round++;
+    document.getElementById('hRound').textContent=GS.round;
+
+    addFeed(GS.currentGift.username,`${GS.teams[ti].name} | ${pos.key}`,`${player.name} (${player.rating}) ${rlbl(player.rating)}`);
+
+    document.getElementById('cardRevEl').classList.remove('on');
+    document.getElementById('wCardRev').classList.remove('on');
+    document.getElementById('epic').classList.remove('on');
+    hideOverlay();
+
+    if(GS.teams.every((_,i)=>Object.keys(GS.teams[i].players).length>=11))setTimeout(endGame,800);
+  });
+}
+
+function flyCard(ti,posKey,rating,cb){
+  const rf=document.getElementById('rvFront');
+  const sl=document.getElementById(`sl${ti}${posKey}`);
+  if(!sl){cb();return;}
+  const r1=rf.getBoundingClientRect(),r2=sl.getBoundingClientRect();
+  const rc=rcls(rating);
+  const bgM={r50:'#162816',r60:'#182840',r70:'#382200',r80:'#240040',r90:'#280000',r99:'#001422'};
+  const glM={r50:'#44bb44',r60:'#4488ff',r70:'#FFD700',r80:'#cc44ff',r90:'#ff4444',r99:'#00ffff'};
+  const fly=document.createElement('div');fly.className='fly';
+  fly.style.cssText=`left:${r1.left+r1.width/2-21}px;top:${r1.top+r1.height/2-29}px;background:${bgM[rc]};box-shadow:0 0 10px ${glM[rc]}`;
+  fly.textContent='⚡';document.body.appendChild(fly);
+  setTimeout(()=>{
+    fly.style.transition='all .6s cubic-bezier(.34,1.56,.64,1)';
+    fly.style.left=(r2.left+r2.width/2-21)+'px';
+    fly.style.top=(r2.top+r2.height/2-29)+'px';
+    fly.style.transform='scale(.2)';fly.style.opacity='.3';
+  },50);
+  setTimeout(()=>{fly.remove();cb();},720);
+}
+
+function hideOverlay(){document.getElementById('ov').classList.remove('active');GS.busy=false;}
+
+// ═══════════════════════════════════════════
+// EPİK & KONFETİ
+// ═══════════════════════════════════════════
+function showEpic(type){
+  const ef=document.getElementById('epic'),rays=document.getElementById('rays');
+  ef.classList.add('on');rays.innerHTML='';
+  const col=type==='tanri'?'#00ffff':'#FFD700';
+  for(let i=0;i<12;i++){
+    const r=document.createElement('div');r.className='ray';
+    r.style.cssText=`background:linear-gradient(to bottom,${col}99,transparent);transform:rotate(${i*30}deg);height:240px;opacity:.65`;
+    rays.appendChild(r);
+  }
+  setTimeout(()=>ef.classList.remove('on'),2000);
+}
+
+function spawnCnf(type){
+  if(!CFG.confetti)return;
+  const w=document.getElementById('cnfW');
+  const cols=type==='tanri'?['#00ffff','#ff00ff','#FFD700','#00ff88']:['#ff4444','#FFD700','#ff8c00','#fff'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div');p.className='cnf';
+    const s=4+Math.random()*8;
+    p.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%cols.length]};width:${s}px;height:${s}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.8}s`;
+    w.appendChild(p);setTimeout(()=>p.remove(),4000);
+  }
+}
+
+// ═══════════════════════════════════════════
+// WİDGET
+// ═══════════════════════════════════════════
+function openWidget(){rebuildWidget();document.getElementById('widgetOv').classList.add('on');}
+function closeWidget(){document.getElementById('widgetOv').classList.remove('on');}
+
+function rebuildWidget(){
+  const dir=document.getElementById('wDirSel').value;
+  const wt=document.getElementById('wTeams');
+  wt.className=`widget-teams dir-${dir}`;
+  wt.innerHTML='';
+  GS.teams.forEach((t,ti)=>{
+    const d=document.createElement('div');
+    d.className='wteam';d.id=`wt${ti}`;
+    d.style.borderColor=hexA(t.color,.3);
+    const lEl=t.logo?`<img class="wteam-logo" src="${t.logo}" alt="">`:`<div class="wteam-logo-ph" style="color:${t.color}">?</div>`;
+    const rows=[[],[],[],[]];
+    POSITIONS.forEach(p=>rows[p.row].push(p));
+    const sHtml=rows.map(row=>`<div class="wpos-row">${row.map(pos=>{
+      const pl=t.players[pos.key];
+      return pl?wFilledSlot(ti,pos.key,pl):`<div class="wslot" id="ws${ti}${pos.key}"><span class="wslot-empty">${pos.key}</span></div>`;
+    }).join('')}</div>`).join('');
+    d.innerHTML=`<div class="wteam-hdr">${lEl}<span class="wteam-name" style="color:${t.color}">${t.name}</span><span class="wteam-pow">⚡${calcPow(ti)}</span></div><div class="wslots">${sHtml}</div>`;
+    wt.appendChild(d);
+  });
+}
+
+function wFilledSlot(ti,posKey,pl){
+  const rc=rcls(pl.rating);
+  const bg=clubColor(pl.club);
+  const ini=initials(pl.name);
+  return `<div class="wslot filled" id="ws${ti}${posKey}"><div class="mc ${rc}"><div class="mc-rat">${pl.rating}</div><div class="mc-av" style="background:linear-gradient(135deg,${bg},#1a1a3a);width:22px;height:22px;font-size:.34rem">${ini}</div><div class="mc-nm">${pl.name}</div><div class="mc-pos">${posKey}</div></div></div>`;
+}
+
+function updateWidgetSlot(ti,posKey,pl){
+  const old=document.getElementById(`ws${ti}${posKey}`);
+  if(!old)return;
+  old.outerHTML=wFilledSlot(ti,posKey,pl);
+  const newEl=document.getElementById(`ws${ti}${posKey}`);
+  if(newEl){newEl.style.transform='scale(1.15)';setTimeout(()=>{newEl.style.transition='transform .3s';newEl.style.transform='scale(1)';},50);}
+  const wt=document.getElementById(`wt${ti}`);
+  if(wt){const pw=wt.querySelector('.wteam-pow');if(pw)pw.textContent=`⚡${calcPow(ti)}`;}
+}
+
+function addFeed(user,act,card){
+  const feed=document.getElementById('wFeed');if(!feed)return;
+  const el=document.createElement('div');el.className='wlive-item';
+  el.innerHTML=`<div class="wli-user">${user}</div><div class="wli-act">${act}</div>${card?`<div class="wli-card">⭐ ${card}</div>`:''}`;
+  feed.insertBefore(el,feed.firstChild);
+  while(feed.children.length>25)feed.removeChild(feed.lastChild);
+}
+
+// ═══════════════════════════════════════════
+// OYUN SONU
+// ═══════════════════════════════════════════
+function endGame(){
+  const sorted=GS.teams.map((t,ti)=>({ti,t,pow:calcPow(ti),cnt:Object.keys(t.players).length})).sort((a,b)=>b.pow-a.pow);
+  const w=sorted[0];
+  document.getElementById('wNm').textContent=w.t.name;
+  document.getElementById('wPw').textContent=`⚡ ORT. PUAN: ${w.pow}`;
+
+  const rEl=document.getElementById('ranksEl');rEl.innerHTML='';
+  ['🥇','🥈','🥉','4️⃣'].forEach((em,i)=>{
+    const tp=sorted[i];
+    const d=document.createElement('div');d.className=`rk r${i+1}`;
+    const lEl=tp.t.logo?`<img class="rk-logo" src="${tp.t.logo}" alt="">`:`<span class="rk-logo-ph">${em}</span>`;
+    d.innerHTML=`<span class="rk-em">${em}</span>${lEl}<div class="rk-nm" style="color:${tp.t.color}">${tp.t.name}</div><div class="rk-pw">⚡${tp.pow}</div><div class="rk-cnt">${tp.cnt}/11</div>`;
+    rEl.appendChild(d);
+  });
+
+  const allP=[];GS.teams.forEach((t,ti)=>Object.values(t.players).forEach(p=>allP.push({...p,ti})));
+  allP.sort((a,b)=>b.rating-a.rating);
+  const bEl=document.getElementById('bestEl');bEl.innerHTML='';
+  allP.slice(0,5).forEach(p=>{
+    const d=document.createElement('div');d.className='bi';
+    d.innerHTML=`<div class="bi-r">${p.rating}</div><div class="bi-n">${p.name}</div><div class="bi-t">${GS.teams[p.ti].name}</div>`;
+    bEl.appendChild(d);
+  });
+
+  playSound('winner');spawnCnf('efsane');setTimeout(()=>spawnCnf('tanri'),400);
+  document.getElementById('goOv').classList.add('on');
+}
+
+function restartGame(){
+  GS.teams.forEach(t=>{t.players={};});
+  GS.totalCards=0;GS.totalGifts=0;GS.round=1;GS.busy=false;GS.topDonors=[];
+  document.getElementById('hCards').textContent='0';
+  document.getElementById('hGifts').textContent='0';
+  document.getElementById('hRound').textContent='1';
+  document.getElementById('goOv').classList.remove('on');
+  buildTeams();renderTop();rebuildWidget();
+  document.getElementById('wFeed').innerHTML='<div class="wlive-item"><span class="wli-act">Oyun yeniden başladı! 🎮</span></div>';
+}
+
+function shareRes(){
+  const s=GS.teams.map((t,ti)=>({t,p:calcPow(ti)})).sort((a,b)=>b.p-a.p);
+  const txt='🏆 ELITE FC CARDS 2025\n\n'+s.map((x,i)=>`${['🥇','🥈','🥉','4️⃣'][i]} ${x.t.name}: ⚡${x.p}`).join('\n')+'\n\n#EliteFCCards2025';
+  if(navigator.share)navigator.share({title:'Elite FC Cards 2025',text:txt});
+  else navigator.clipboard.writeText(txt).then(()=>alert('Kopyalandı!'));
+}
+
+// ═══════════════════════════════════════════
+// TOP DONOR
+// ═══════════════════════════════════════════
+function updateTopDonor(user,val){
+  const ex=GS.topDonors.find(d=>d.name===user);
+  if(ex)ex.total+=val;else GS.topDonors.push({name:user,total:val});
+  GS.topDonors.sort((a,b)=>b.total-a.total);
+  renderTop();
+}
+
+function renderTop(){
+  const wrap=document.getElementById('topList');
+  const cnt=parseInt(document.getElementById('topCnt')?.value||5);
+  wrap.innerHTML='<div class="top-title">🏅 EN ÇOK KATKI</div>';
+  const top=GS.topDonors.slice(0,cnt);
+  if(!top.length){wrap.innerHTML+='<div style="font-size:.62rem;color:rgba(255,255,255,.25);text-align:center;padding:8px">Henüz yok</div>';return;}
+  const em=['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+  top.forEach((d,i)=>{
+    const el=document.createElement('div');el.className='top-item';
+    el.innerHTML=`<span class="top-rank">${em[i]}</span><span class="top-name">${d.name}</span><span class="top-amt">${d.total.toLocaleString()}</span>`;
+    wrap.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════
+// KONTROL PANELİ
+// ═══════════════════════════════════════════
+function openPanel(){document.getElementById('cpOv').classList.add('on');}
+function closePanel(){document.getElementById('cpOv').classList.remove('on');}
+
+function buildTeamCfgUI(){
+  const w=document.getElementById('teamCfg');w.innerHTML='';
+  GS.teams.forEach((t,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='margin-bottom:8px;background:rgba(255,255,255,.03);border-radius:6px;padding:8px;border:1px solid rgba(255,255,255,.06)';
+    row.innerHTML=`
+      <div class="ps-row">
+        <span class="ps-lbl">Takım ${i+1}</span>
+        <input class="ps-inp" id="tcN${i}" value="${t.name}">
+        <input class="ps-col" type="color" id="tcC${i}" value="${t.color}" oninput="liveColor(${i},this.value)">
+      </div>
+      <div class="ps-row">
+        <span class="ps-lbl">Logo</span>
+        <div style="display:flex;align-items:center;gap:6px;flex:1">
+          <div id="tcP${i}" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.07);border:1px dashed rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:.85rem">
+            ${t.logo?`<img src="${t.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'🏟️'}
+          </div>
+          <input type="file" accept="image/*" style="flex:1;font-size:.65rem;color:rgba(255,255,255,.45)" onchange="logoUpload(${i},this)">
+        </div>
+      </div>
+    `;
+    w.appendChild(row);
+  });
+}
+
+function liveColor(i,v){
+  GS.teams[i].color=v;
+  const nm=document.getElementById(`tn${i}`),bx=document.getElementById(`team${i}`);
+  if(nm)nm.style.color=v;
+  if(bx)bx.style.borderColor=hexA(v,.35);
+}
+
+function logoUpload(i,inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    GS.teams[i].logo=e.target.result;
+    document.getElementById(`tcP${i}`).innerHTML=`<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  };
+  r.readAsDataURL(f);
+}
+
+function applyTeams(){
+  GS.teams.forEach((t,i)=>{
+    const v=document.getElementById(`tcN${i}`)?.value;
+    if(v)t.name=v;
+  });
+  buildTeams();rebuildWidget();closePanel();
+}
+
+function buildGiftCfgUI(){
+  const w=document.getElementById('giftCfg');w.innerHTML='';
+  GS.gifts.forEach((g,i)=>{
+    const d=document.createElement('div');d.className='gcfg-item';
+    d.innerHTML=`
+      <div class="gcfg-top">
+        <div class="gcfg-prev" id="gP${i}">${g.emoji}</div>
+        <div class="gcfg-fields">
+          <input class="gcfg-inp" id="gN${i}" value="${g.label}" placeholder="Hediye adı" oninput="GS.gifts[${i}].label=this.value;buildGiftBtns()">
+          <input class="gcfg-inp" type="number" id="gJ${i}" value="${g.jeton}" placeholder="Jeton" oninput="GS.gifts[${i}].jeton=parseInt(this.value)||0;buildGiftBtns()">
+        </div>
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.64rem;color:rgba(255,255,255,.38)">Emoji:</span>
+        <input style="width:42px;padding:3px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:#fff;font-size:.9rem;text-align:center" value="${g.emoji}" maxlength="2" oninput="updEmoji(${i},this.value)">
+        <span style="font-size:.64rem;color:rgba(255,255,255,.38)">Görsel:</span>
+        <input type="file" accept="image/*" style="font-size:.62rem;color:rgba(255,255,255,.42);flex:1" onchange="updGiftImg(${i},this)">
+      </div>
+    `;
+    w.appendChild(d);
+  });
+}
+
+function updEmoji(i,v){GS.gifts[i].emoji=v;GS.gifts[i].img='';document.getElementById(`gP${i}`).textContent=v;buildGiftBtns();}
+function updGiftImg(i,inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    GS.gifts[i].img=e.target.result;
+    document.getElementById(`gP${i}`).innerHTML=`<img src="${e.target.result}" style="width:30px;height:30px;border-radius:5px;object-fit:cover">`;
+    buildGiftBtns();
+  };
+  r.readAsDataURL(f);
+}
+
+function buildLikeMapUI(){
+  const w=document.getElementById('likeMapEl');w.innerHTML='';
+  const ranges=[{l:'50-60',min:50,max:60},{l:'60-70',min:60,max:70},{l:'70-80',min:70,max:80},{l:'80-90',min:80,max:90},{l:'90-99',min:90,max:100}];
+  GS.likeMap.forEach((item,idx)=>{
+    const row=document.createElement('div');row.className='ps-row';
+    row.innerHTML=`
+      <input class="ps-inp" type="number" id="lL${idx}" value="${item.likes}" style="width:72px;min-width:72px">
+      <span style="font-size:.66rem;color:rgba(255,255,255,.4);white-space:nowrap">beğeni →</span>
+      <select class="ps-sel" id="lR${idx}">
+        ${ranges.map(r=>`<option value="${r.min}-${r.max}" ${item.minR===r.min?'selected':''}>${r.l} puan</option>`).join('')}
+      </select>
+      <button class="pb pb-r" style="padding:3px 7px" onclick="rmLikeRow(${idx})">✕</button>
+    `;
+    w.appendChild(row);
+  });
+}
+
+function addLikeRow(){GS.likeMap.push({likes:2000,minR:70,maxR:80});buildLikeMapUI();}
+function rmLikeRow(idx){GS.likeMap.splice(idx,1);buildLikeMapUI();}
+function applyLikeMap(){
+  GS.likeMap=[];let i=0;
+  while(document.getElementById(`lL${i}`)){
+    const likes=parseInt(document.getElementById(`lL${i}`).value)||0;
+    const rv=document.getElementById(`lR${i}`).value.split('-');
+    GS.likeMap.push({likes,minR:parseInt(rv[0]),maxR:parseInt(rv[1])});i++;
+  }
+  GS.likeMap.sort((a,b)=>a.likes-b.likes);
+  alert('✅ Beğeni haritası kaydedildi!');
+}
+
+function applyBg(){
+  const c1=document.getElementById('bgC1').value,c2=document.getElementById('bgC2').value;
+  document.getElementById('bg').style.background=`radial-gradient(ellipse at center,${c1},${c2})`;
+}
+function applyBgImg(){
+  const url=document.getElementById('bgUrl').value;if(!url)return;
+  const bg=document.getElementById('bg');
+  bg.style.backgroundImage=`url(${url})`;bg.style.backgroundSize='cover';bg.style.backgroundPosition='center';
+}
+function resetBg(){
+  const bg=document.getElementById('bg');
+  bg.style.background='radial-gradient(ellipse at center,#0d2b0d,#020802)';
+  bg.style.backgroundImage='';
+  document.getElementById('bgUrl').value='';
+}
+
+function setVol(key,val){
+  CFG.vol[key]=parseInt(val);
+  const map={master:'M',gift:'G',card:'C',rare:'R',leg:'L',win:'W'};
+  const el=document.getElementById('v'+(map[key]||'M'));
+  if(el)el.textContent=val;
+}
+
+function togFeat(key,btn){
+  CFG[key]=!CFG[key];
+  btn.className='tog '+(CFG[key]?'on':'');
+}
+
+function connectTT(){
+  const u=document.getElementById('ttUser').value;
+  if(!u){alert('Kullanıcı adı girin!');return;}
+  document.getElementById('ttStatus').innerHTML=`✅ <span style="color:#FFD700">${u}</span> simülasyon aktif`;
+}
+
+function copyUrl(){navigator.clipboard.writeText(location.href).then(()=>alert('URL kopyalandı!'));}
+
+init();
+</script>
+</body>
+</html>

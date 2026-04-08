@@ -19,6 +19,11 @@ export default function BroadcasterPanel() {
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isStartingSession, setIsStartingSession] = useState(false);
+  const [pendingCard, setPendingCard] = useState<{
+    username: string;
+    quality: string;
+    teams: { id: number; name: string }[];
+  } | null>(null);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
     title: string;
@@ -61,8 +66,19 @@ export default function BroadcasterPanel() {
             });
           }
           break;
+        case "pendingCard":
+          setPendingCard({
+            username: event.data.pending.username,
+            quality: event.data.pending.quality,
+            teams: event.data.teams,
+          });
+          break;
+        case "cardRevealed":
+          setPendingCard(null);
+          break;
         case "gameEnded":
           setSessionActive(false);
+          setPendingCard(null);
           break;
         default:
           console.log("[Socket] gameEvent:", event.type, event.data);
@@ -81,6 +97,27 @@ export default function BroadcasterPanel() {
   const updateModeMutation = trpc.broadcaster.updateMode.useMutation();
   const setLikeThresholdMutation = trpc.broadcaster.setLikeThreshold.useMutation();
   const setDiamondThresholdsMutation = trpc.broadcaster.setDiamondThresholds.useMutation();
+  const assignPendingCardMutation = trpc.broadcaster.assignPendingCard.useMutation();
+
+  // Poll game state every second while session is active to catch pendingCard
+  const gameStateQuery = trpc.game.getState.useQuery(
+    { sessionId: sessionId ?? '' },
+    { enabled: !!sessionId && sessionActive, refetchInterval: 1000 }
+  );
+  useEffect(() => {
+    if (!gameStateQuery.data) return;
+    const gs = gameStateQuery.data as any;
+    if (gs.pendingCard) {
+      setPendingCard({
+        username: gs.pendingCard.username,
+        quality: gs.pendingCard.quality,
+        teams: gs.teams.map((t: any) => ({ id: t.id, name: t.name })),
+      });
+    } else {
+      setPendingCard(null);
+    }
+  }, [gameStateQuery.data]);
+
   const likeThresholdQuery = trpc.broadcaster.getLikeThreshold.useQuery(undefined, { enabled: settingsOpen });
   const diamondThresholdsQuery = trpc.broadcaster.getDiamondThresholds.useQuery(undefined, { enabled: settingsOpen });
 
@@ -189,6 +226,16 @@ export default function BroadcasterPanel() {
     const newNames = [...teamNames];
     newNames[index] = value;
     setTeamNames(newNames);
+  };
+
+  const handleAssignTeam = async (teamId: number) => {
+    if (!sessionId || !pendingCard) return;
+    try {
+      await assignPendingCardMutation.mutateAsync({ sessionId, teamId });
+      setPendingCard(null);
+    } catch (error) {
+      showNotification('error', 'Hata', 'Takım ataması başarısız');
+    }
   };
 
   return (
@@ -363,6 +410,36 @@ export default function BroadcasterPanel() {
         {/* ── ACTIVE SESSION VIEW ── */}
         {sessionActive && (
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem' }}>
+
+            {/* ── PENDING CARD: team selection ── */}
+            {pendingCard && (
+              <div style={{ background: 'linear-gradient(135deg,#1a0a0a,#1a0f0a)', border: '1px solid #f59e0b88', borderRadius: '10px', padding: '1.25rem', animation: 'slideIn 0.3s ease-out' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', color: '#f59e0b', textTransform: 'uppercase' as const, marginBottom: '0.85rem' }}>
+                  <Zap size={13} />
+                  Kart Bekliyor — Takım Seç
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ padding: '6px 14px', border: `1px solid ${pendingCard.quality === 'elite' ? '#e879f9' : pendingCard.quality === 'gold' ? '#D4AF37' : pendingCard.quality === 'silver' ? '#c0c0c0' : '#cd7f32'}`, borderRadius: '4px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', color: pendingCard.quality === 'elite' ? '#e879f9' : pendingCard.quality === 'gold' ? '#D4AF37' : pendingCard.quality === 'silver' ? '#c0c0c0' : '#cd7f32' }}>
+                    {pendingCard.quality.toUpperCase()}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600 }}>
+                    @{pendingCard.username}
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '0.5rem' }}>
+                  {pendingCard.teams.map((team) => (
+                    <button
+                      key={team.id}
+                      onClick={() => handleAssignTeam(team.id)}
+                      disabled={assignPendingCardMutation.isPending}
+                      style={{ padding: '0.65rem 0.75rem', background: '#0a1a0f', border: '1px solid #22c55e44', borderRadius: '7px', color: '#4ade80', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' as const, opacity: assignPendingCardMutation.isPending ? 0.5 : 1 }}
+                    >
+                      {team.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Stats row */}
             <div className="bp-stats-grid">

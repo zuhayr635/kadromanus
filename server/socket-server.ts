@@ -6,11 +6,12 @@ import {
   getGameState,
   processGiftEvent,
   processLikeEvent,
+  confirmPendingCard,
   isGameComplete,
   endGame,
   cleanupGame,
 } from "./game-engine";
-import type { GameState } from "./game-engine";
+import type { GameState, PendingCard } from "./game-engine";
 import {
   startTikTokConnection,
   stopTikTokConnection,
@@ -24,7 +25,7 @@ type TikTokEvent = {
 };
 
 interface GameEvent {
-  type: "cardOpened" | "playerAdded" | "gameStarted" | "gameEnded" | "statsUpdated" | "modeChanged";
+  type: "cardOpened" | "playerAdded" | "gameStarted" | "gameEnded" | "statsUpdated" | "modeChanged" | "pendingCard" | "cardRevealed";
   sessionId: string;
   data: any;
   timestamp: number;
@@ -187,6 +188,44 @@ class SocketServer {
     });
   }
 
+  // Bekleyen kart event'i (takım seçimi bekleniyor)
+  public broadcastPendingCard(sessionId: string, pending: PendingCard, teams: { id: number; name: string }[]) {
+    this.broadcastGameEvent({
+      type: "pendingCard",
+      sessionId,
+      data: { pending, teams },
+      timestamp: Date.now(),
+    });
+  }
+
+  // Kart açıldı event'i (takım seçimi yapıldı)
+  public broadcastCardRevealed(sessionId: string, card: any, teamName: string) {
+    this.broadcastGameEvent({
+      type: "cardRevealed",
+      sessionId,
+      data: { card, teamName },
+      timestamp: Date.now(),
+    });
+  }
+
+  // Bekleyen kartı onayla: takıma ata, cardRevealed yayınla
+  public async assignPendingCard(sessionId: string, teamId: number): Promise<boolean> {
+    const gameState = getGameState(sessionId);
+    if (!gameState) return false;
+
+    const card = await confirmPendingCard(sessionId, teamId);
+    if (!card) return false;
+
+    const teamName = gameState.teams[teamId]?.name ?? "";
+    this.broadcastCardRevealed(sessionId, card, teamName);
+    this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
+
+    if (isGameComplete(sessionId)) {
+      await this.stopSession(sessionId);
+    }
+    return true;
+  }
+
   // Oturumdaki istemci sayısı
   public getSessionClientCount(sessionId: string): number {
     const sockets = this.sessionSockets.get(sessionId);
@@ -243,42 +282,28 @@ class SocketServer {
 
     switch (event.type) {
       case "gift": {
-        const teamId = this.getLeastFilledTeamId(gameState);
-        const card = await processGiftEvent(
+        const pending = await processGiftEvent(
           sessionId,
-          teamId,
           event.data.giftName as string,
           event.data.diamondCount as number,
           event.data.username as string
         );
-        if (card) {
-          this.broadcastCardOpened(sessionId, card);
-          this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
-          if (isGameComplete(sessionId)) {
-            await this.stopSession(sessionId);
-            return;
-          }
+        if (pending) {
+          this.broadcastPendingCard(sessionId, pending, gameState.teams.map(t => ({ id: t.id, name: t.name })));
         }
+        this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
         break;
       }
       case "like": {
-        const teamId = this.getLeastFilledTeamId(gameState);
-        const card = await processLikeEvent(
+        const pending = await processLikeEvent(
           sessionId,
-          teamId,
           event.data.username as string,
           event.data.likeCount as number
         );
-        if (card) {
-          this.broadcastCardOpened(sessionId, card);
-          this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
-          if (isGameComplete(sessionId)) {
-            await this.stopSession(sessionId);
-            return;
-          }
-        } else {
-          this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
+        if (pending) {
+          this.broadcastPendingCard(sessionId, pending, gameState.teams.map(t => ({ id: t.id, name: t.name })));
         }
+        this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
         break;
       }
       case "comment": {
@@ -349,6 +374,10 @@ export async function startSession(
 
 export async function stopSession(sessionId: string): Promise<void> {
   return socketServer?.stopSession(sessionId);
+}
+
+export async function assignPendingCard(sessionId: string, teamId: number): Promise<boolean> {
+  return socketServer?.assignPendingCard(sessionId, teamId) ?? false;
 }
 
 export type { GameEvent };

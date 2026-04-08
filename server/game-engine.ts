@@ -6,6 +6,7 @@ export interface GameState {
   sessionId: string;
   teams: Team[];
   openedCards: OpenedCard[];
+  pendingCard: PendingCard | null;
   totalLikes: number;
   totalGifts: number;
   participants: Set<string>;
@@ -26,6 +27,10 @@ export interface TeamPlayer {
   position: string;
   quality: CardQuality;
   openedBy: string;
+  overall?: number;
+  faceImageUrl?: string;
+  nation?: string;
+  team?: string;
 }
 
 export interface OpenedCard {
@@ -36,10 +41,34 @@ export interface OpenedCard {
   timestamp: number;
 }
 
+export interface PendingCard {
+  username: string;
+  quality: CardQuality;
+  player: { id: number; name: string; position: string; overall?: number; faceImageUrl?: string; nation?: string; team?: string };
+  timestamp: number;
+}
+
 export type CardQuality = "bronze" | "silver" | "gold" | "elite";
 export type TierLevel = "1" | "2" | "3";
 
 const gameStates = new Map<string, GameState>();
+
+let likeThreshold = 100;
+export function getLikeThreshold(): number { return likeThreshold; }
+export function setLikeThreshold(n: number): void { likeThreshold = Math.max(1, n); }
+
+// Diamond (coin) thresholds per card quality. Anything below silverMin → bronze.
+let diamondThresholds = { silver: 10, gold: 50, elite: 200 };
+export function getDiamondThresholds() { return { ...diamondThresholds }; }
+export function setDiamondThresholds(t: { silver: number; gold: number; elite: number }) {
+  diamondThresholds = { silver: Math.max(1, t.silver), gold: Math.max(1, t.gold), elite: Math.max(1, t.elite) };
+}
+function qualityFromDiamonds(diamonds: number): CardQuality {
+  if (diamonds >= diamondThresholds.elite) return "elite";
+  if (diamonds >= diamondThresholds.gold) return "gold";
+  if (diamonds >= diamondThresholds.silver) return "silver";
+  return "bronze";
+}
 
 /**
  * Initialize a new game session
@@ -59,6 +88,7 @@ export function initializeGame(
     sessionId,
     teams,
     openedCards: [],
+    pendingCard: null,
     totalLikes: 0,
     totalGifts: 0,
     participants: new Set(),
@@ -109,21 +139,25 @@ export async function getGiftTier(
 
 /**
  * Get random player from database
+ * Returns null if no players available - no fallback to fake data
  */
 export async function getRandomPlayer(): Promise<any | null> {
   const db = await getDb();
-  if (!db) return null;
 
   try {
-    const allPlayers = await db.select().from(players);
-    if (allPlayers.length === 0) return null;
-
-    const randomIndex = Math.floor(Math.random() * allPlayers.length);
-    return allPlayers[randomIndex];
+    if (db) {
+      const allPlayers = await db.select().from(players);
+      if (allPlayers.length > 0) {
+        const randomIndex = Math.floor(Math.random() * allPlayers.length);
+        return allPlayers[randomIndex];
+      }
+    }
   } catch (error) {
     console.error("Oyuncu seçme hatası:", error);
   }
 
+  // No fallback - must have real players in database
+  console.error("⚠️ Veritabanında oyuncu bulunamadı! Lütfen seed scriptini çalıştırın.");
   return null;
 }
 
@@ -162,6 +196,10 @@ export async function openCard(
     position: player.position,
     quality,
     openedBy,
+    overall: player.overall,
+    faceImageUrl: player.faceImageUrl,
+    nation: player.nation,
+    team: player.team,
   };
 
   // Add player to team
@@ -196,55 +234,104 @@ export async function openCard(
 }
 
 /**
- * Process like event and potentially open a card
+ * Process like event — creates a pending card when threshold is reached.
+ * Team assignment happens later via confirmPendingCard.
  */
 export async function processLikeEvent(
   sessionId: string,
-  teamId: number,
   username: string,
   likeCount: number
-): Promise<OpenedCard | null> {
+): Promise<PendingCard | null> {
   const gameState = gameStates.get(sessionId);
   if (!gameState) return null;
 
   gameState.totalLikes += likeCount;
+  gameState.participants.add(username);
 
-  // Every 100 likes = 1 card (configurable)
-  const cardsToOpen = Math.floor(gameState.totalLikes / 100);
-  const previousCards = gameState.openedCards.length;
+  // Already waiting for team selection — don't create another pending card
+  if (gameState.pendingCard) return null;
 
-  if (cardsToOpen > previousCards) {
-    // Open a bronze card for likes
-    return await openCard(sessionId, teamId, "bronze", username);
+  // likeThreshold likes = 1 card (configurable via setLikeThreshold)
+  const cardsToOpen = Math.floor(gameState.totalLikes / likeThreshold);
+  const existingCards = gameState.openedCards.length;
+
+  if (cardsToOpen > existingCards) {
+    const player = await getRandomPlayer();
+    if (!player) return null;
+    const pending: PendingCard = {
+      username,
+      quality: "bronze",
+      player: { id: player.id, name: player.name, position: player.position, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team },
+      timestamp: Date.now(),
+    };
+    gameState.pendingCard = pending;
+    console.log(`[${sessionId}] Beğeni eşiği: bekleyen kart oluşturuldu (${username})`);
+    return pending;
   }
 
   return null;
 }
 
 /**
- * Process gift event and open corresponding card
+ * Process gift event — creates a pending card based on diamond count.
+ * Team assignment happens later via confirmPendingCard.
  */
 export async function processGiftEvent(
   sessionId: string,
-  teamId: number,
   giftName: string,
   diamondCount: number,
   username: string
-): Promise<OpenedCard | null> {
+): Promise<PendingCard | null> {
   const gameState = gameStates.get(sessionId);
   if (!gameState) return null;
 
   gameState.totalGifts += diamondCount;
+  gameState.participants.add(username);
 
-  // Get gift tier
-  const giftTier = await getGiftTier(giftName);
-  if (!giftTier) {
-    // Default to bronze if gift not found
-    console.warn(`[${sessionId}] Hediye tier bulunamadı: ${giftName}`);
-    return await openCard(sessionId, teamId, "bronze", username);
-  }
+  // Already waiting for team selection — don't queue another pending card
+  if (gameState.pendingCard) return null;
 
-  return await openCard(sessionId, teamId, giftTier.quality, username);
+  const quality = qualityFromDiamonds(diamondCount);
+  const player = await getRandomPlayer();
+  if (!player) return null;
+
+  const pending: PendingCard = {
+    username,
+    quality,
+    player: { id: player.id, name: player.name, position: player.position, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team },
+    timestamp: Date.now(),
+  };
+  gameState.pendingCard = pending;
+  console.log(`[${sessionId}] Hediye: ${giftName} (${diamondCount} jeton) → ${quality} bekleyen kart (${username})`);
+  return pending;
+}
+
+/**
+ * Confirm a pending card — assigns it to the chosen team and clears pending state.
+ */
+export async function confirmPendingCard(
+  sessionId: string,
+  teamId: number
+): Promise<OpenedCard | null> {
+  const gameState = gameStates.get(sessionId);
+  if (!gameState || !gameState.pendingCard) return null;
+
+  const { username, quality, player } = gameState.pendingCard;
+  gameState.pendingCard = null;
+
+  if (teamId < 0 || teamId >= gameState.teams.length) return null;
+
+  const team = gameState.teams[teamId];
+  team.players.push({ playerId: player.id, name: player.name, position: player.position, quality, openedBy: username, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team });
+
+  const scoreMap: Record<CardQuality, number> = { bronze: 10, silver: 25, gold: 50, elite: 100 };
+  team.score += scoreMap[quality];
+
+  const openedCard: OpenedCard = { playerId: player.id, quality, teamId, openedBy: username, timestamp: Date.now() };
+  gameState.openedCards.push(openedCard);
+
+  console.log(`[${sessionId}] Kart onaylandı: ${player.name} (${quality}) → ${team.name} (${username})`);
+  return openedCard;
 }
 
 /**

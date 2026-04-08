@@ -4,78 +4,117 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kadrokur — Admin Girişi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    font-family:'Segoe UI',system-ui,sans-serif;
-    background:#030a06;
-    color:#e2e8f0;
+    font-family:'DM Sans',system-ui,sans-serif;
+    background:#080c09;
+    color:#F8F6F3;
     min-height:100vh;
     display:flex;
     align-items:center;
     justify-content:center;
   }
-  .card {
-    background:#0a1a0f;
-    border:1px solid #14532d;
-    border-radius:12px;
-    padding:2rem;
+  .wrap {
     width:100%;
     max-width:360px;
+    padding:1.5rem;
   }
-  .logo { text-align:center; margin-bottom:1.75rem; }
-  .logo-title { font-size:1.2rem; font-weight:800; letter-spacing:0.1em; color:#22c55e; }
-  .logo-sub { font-size:0.65rem; color:#166534; letter-spacing:0.1em; margin-top:3px; }
-  label { display:block; font-size:0.7rem; font-weight:700; letter-spacing:0.08em; color:#4ade80; text-transform:uppercase; margin-bottom:0.4rem; }
+  .logo {
+    text-align:center;
+    margin-bottom:2.5rem;
+  }
+  .logo-title {
+    font-family:'Cormorant Garamond',serif;
+    font-size:2rem;
+    font-weight:600;
+    letter-spacing:0.12em;
+    color:#D4AF37;
+  }
+  .logo-sub {
+    font-size:0.6rem;
+    font-weight:500;
+    color:rgba(212,175,55,0.45);
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    margin-top:4px;
+  }
+  .card {
+    background:#0c1309;
+    border:1px solid rgba(212,175,55,0.12);
+    padding:2rem;
+  }
+  label {
+    display:block;
+    font-size:0.6rem;
+    font-weight:500;
+    letter-spacing:0.18em;
+    color:rgba(212,175,55,0.6);
+    text-transform:uppercase;
+    margin-bottom:0.5rem;
+  }
   input[type="password"] {
     width:100%;
-    background:#030a06;
-    border:1px solid #14532d;
-    border-radius:6px;
-    color:#e2e8f0;
-    padding:0.6rem 0.75rem;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid rgba(212,175,55,0.2);
+    color:#F8F6F3;
+    padding:0.6rem 0;
     font-size:0.9rem;
+    font-family:'DM Sans',sans-serif;
     outline:none;
-    margin-bottom:1.25rem;
+    margin-bottom:2rem;
+    transition:border-color 0.2s;
   }
-  input[type="password"]:focus { border-color:#22c55e44; }
+  input[type="password"]:focus {
+    border-bottom-color:rgba(212,175,55,0.6);
+  }
   button[type="submit"] {
     width:100%;
-    background:linear-gradient(135deg,#16a34a,#15803d);
-    border:none;
-    border-radius:7px;
-    color:#fff;
-    font-size:0.85rem;
-    font-weight:700;
-    letter-spacing:0.05em;
-    padding:0.65rem;
+    background:#D4AF37;
+    border:1px solid #D4AF37;
+    color:#080c09;
+    font-family:'DM Sans',sans-serif;
+    font-size:0.75rem;
+    font-weight:500;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    padding:0.75rem;
     cursor:pointer;
+    transition:background 0.2s, color 0.2s;
   }
-  button[type="submit"]:hover { opacity:0.9; }
+  button[type="submit"]:hover {
+    background:transparent;
+    color:#D4AF37;
+  }
   .error {
     display:none;
-    margin-top:0.75rem;
-    padding:0.5rem 0.75rem;
-    background:#7f1d1d22;
-    border:1px solid #7f1d1d;
-    border-radius:6px;
+    margin-top:1rem;
+    padding:0.6rem 0.75rem;
+    background:rgba(127,29,29,0.15);
+    border:1px solid rgba(127,29,29,0.5);
     color:#fca5a5;
     font-size:0.78rem;
   }
 </style>
 </head>
 <body>
-<div class="card">
+<div class="wrap">
   <div class="logo">
     <div class="logo-title">KADROKUR</div>
-    <div class="logo-sub">ADMIN PANELİ</div>
+    <div class="logo-sub">Admin Paneli</div>
   </div>
-  <form id="loginForm">
-    <label for="password">Şifre</label>
-    <input type="password" id="password" name="password" autocomplete="current-password" required>
-    <button type="submit">Giriş Yap</button>
-    <div class="error" id="errorMsg">Hatalı şifre. Lütfen tekrar deneyin.</div>
-  </form>
+  <div class="card">
+    <form id="loginForm">
+      <label for="password">Şifre</label>
+      <input type="password" id="password" name="password" autocomplete="current-password" required>
+      <button type="submit">Giriş Yap</button>
+      <div class="error" id="errorMsg">Hatalı şifre. Lütfen tekrar deneyin.</div>
+    </form>
+  </div>
 </div>
 <script>
   document.getElementById('loginForm').addEventListener('submit', async (e) => {

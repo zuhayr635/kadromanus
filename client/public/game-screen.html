@@ -4,380 +4,709 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kadrokur - Oyun Ekranı</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin:0; padding:0; box-sizing:border-box; }
 
     body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      overflow: hidden;
+      font-family:'DM Sans',Arial,sans-serif;
+      background:#060e08;
+      width:100vw;
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#F8F6F3;
+      overflow:hidden;
     }
 
     .game-container {
-      width: 1920px;
-      height: 1080px;
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
+      width:1920px;
+      height:1080px;
+      background:#060e08;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      overflow:hidden;
+    }
+
+    /* Subtle pitch texture overlay */
+    .game-container::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.012) 0px,
+          rgba(255,255,255,0.012) 60px,
+          transparent 60px,
+          transparent 120px
+        );
+      pointer-events:none;
+      z-index:0;
     }
 
     .header {
-      background: rgba(0, 0, 0, 0.3);
-      padding: 20px;
-      text-align: center;
-      border-bottom: 3px solid #00d4ff;
+      position:relative;
+      z-index:1;
+      background:rgba(6,14,8,0.92);
+      border-bottom:1px solid rgba(212,175,55,0.2);
+      padding:20px 40px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
     }
 
-    .header h1 {
-      font-size: 48px;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    .header-brand {
+      display:flex;
+      flex-direction:column;
     }
 
-    .header p {
-      font-size: 24px;
-      opacity: 0.9;
+    .header-title {
+      font-family:'Cormorant Garamond',serif;
+      font-size:36px;
+      font-weight:600;
+      letter-spacing:0.1em;
+      color:#D4AF37;
+      line-height:1;
+    }
+
+    .header-sub {
+      font-size:11px;
+      letter-spacing:0.25em;
+      text-transform:uppercase;
+      color:rgba(212,175,55,0.4);
+      margin-top:4px;
+    }
+
+    #sessionInfo {
+      font-size:14px;
+      color:rgba(248,246,243,0.35);
+      letter-spacing:0.08em;
     }
 
     .game-content {
-      flex: 1;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 30px;
-      padding: 30px;
-      align-items: center;
+      flex:1;
+      position:relative;
+      z-index:1;
+      display:grid;
+      grid-template-columns:repeat(2, 1fr);
+      gap:2px;
+      background:rgba(212,175,55,0.06);
+      padding:2px;
     }
 
     .team-section {
-      background: rgba(0, 0, 0, 0.2);
-      border: 3px solid #00d4ff;
-      border-radius: 10px;
-      padding: 25px;
-      display: flex;
-      flex-direction: column;
-      min-height: 400px;
+      background:#060e08;
+      padding:24px 28px;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
     }
 
     .team-header {
-      text-align: center;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #00d4ff;
-      padding-bottom: 15px;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      margin-bottom:18px;
+      padding-bottom:14px;
+      border-bottom:1px solid rgba(212,175,55,0.12);
     }
 
     .team-name {
-      font-size: 32px;
-      font-weight: bold;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      font-family:'Cormorant Garamond',serif;
+      font-size:28px;
+      font-weight:600;
+      color:#F8F6F3;
+      letter-spacing:0.04em;
     }
 
     .team-score {
-      font-size: 28px;
-      color: #00ff00;
-      font-weight: bold;
+      font-family:'Cormorant Garamond',serif;
+      font-size:22px;
+      color:#D4AF37;
+      font-weight:400;
+    }
+
+    .team-score span {
+      font-weight:600;
+      font-size:28px;
     }
 
     .players-list {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      flex:1;
+      overflow:hidden;
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:4px;
+      min-height:0;
+      padding:4px;
     }
 
-    .player-card {
-      background: rgba(0, 212, 255, 0.1);
-      border: 2px solid #00d4ff;
-      border-radius: 6px;
-      padding: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      animation: slideIn 0.5s ease-out;
+    /* Mini FUT Card for OBS */
+    .mini-fut-card {
+      position:relative;
+      aspect-ratio:220/308;
+      border-radius:10px 10px 45% 45% / 10px 10px 30% 30%;
+      border:2px solid;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:3px;
+      animation:miniCardSlide 0.3s ease-out;
     }
 
-    .player-card.bronze {
-      border-color: #cd7f32;
-      background: rgba(205, 127, 50, 0.1);
+    .mini-fut-card.bronze {
+      background:linear-gradient(145deg, #8B5E3C, #CD7F32 30%, #8B5E3C);
+      border-color:#CD7F32;
+    }
+    .mini-fut-card.silver {
+      background:linear-gradient(145deg, #708090, #C0C0C0 30%, #D8D8D8);
+      border-color:#C0C0C0;
+    }
+    .mini-fut-card.gold {
+      background:linear-gradient(145deg, #B8860B, #FFD700 25%, #FFF8DC);
+      border-color:#FFD700;
+    }
+    .mini-fut-card.elite {
+      background:linear-gradient(145deg, #4B0082, #8B008B 25%, #DA70D6);
+      border-color:#DA70D6;
     }
 
-    .player-card.silver {
-      border-color: #c0c0c0;
-      background: rgba(192, 192, 192, 0.1);
+    @keyframes miniCardSlide {
+      from { opacity:0; transform:translateY(-8px); }
+      to   { opacity:1; transform:translateY(0); }
     }
 
-    .player-card.gold {
-      border-color: #ffd700;
-      background: rgba(255, 215, 0, 0.1);
+    .mini-card-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      width:100%;
+      margin-bottom:2px;
     }
 
-    .player-card.elite {
-      border-color: #ff1493;
-      background: rgba(255, 20, 147, 0.1);
+    .mini-card-overall {
+      font-size:14px;
+      font-weight:900;
+      color:#FFF8E7;
+      text-shadow:0 1px 2px rgba(0,0,0,0.5);
+    }
+    .mini-card-position {
+      font-size:8px;
+      font-weight:700;
+      color:#FFF8E7;
+      letter-spacing:0.05em;
+      text-shadow:0 1px 2px rgba(0,0,0,0.5);
     }
 
-    .player-info {
-      flex: 1;
+    .mini-card-face {
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      border:1px solid;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,0.15);
+    }
+    .mini-card-face img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
     }
 
-    .player-name {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 4px;
+    .mini-card-name {
+      font-size:8px;
+      font-weight:600;
+      color:#FFF8E7;
+      text-align:center;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+      text-shadow:0 1px 2px rgba(0,0,0,0.3);
     }
 
-    .player-position {
-      font-size: 12px;
-      opacity: 0.8;
+    .mini-card-stats {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:1px;
+      width:100%;
     }
 
-    .player-quality {
-      font-size: 12px;
-      font-weight: bold;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: rgba(255, 255, 255, 0.1);
+    .mini-stat {
+      display:flex;
+      justify-content:space-between;
+      background:rgba(0,0,0,0.2);
+      border-radius:2px;
+      padding:1px 3px;
     }
 
-    .player-quality.bronze {
-      color: #cd7f32;
+    .mini-stat-label {
+      font-size:6px;
+      font-weight:700;
+      color:rgba(255,255,255,0.7);
+    }
+    .mini-stat-value {
+      font-size:7px;
+      font-weight:900;
     }
 
-    .player-quality.silver {
-      color: #c0c0c0;
-    }
-
-    .player-quality.gold {
-      color: #ffd700;
-    }
-
-    .player-quality.elite {
-      color: #ff1493;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateX(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
+    /* Card opening animation - updated */
     .card-opening-animation {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1000;
-      pointer-events: none;
+      position:fixed;
+      top:50%;
+      left:50%;
+      transform:translate(-50%, -50%);
+      z-index:1000;
+      pointer-events:none;
     }
 
-    .card {
-      width: 200px;
-      height: 300px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      font-weight: bold;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      animation: cardFlip 1s ease-in-out;
+    .card-anim {
+      width:180px;
+      height:252px;
+      border-radius:14px 14px 55% 55% / 14px 14px 35% 35%;
+      border:2px solid;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:12px;
+      animation:cardFlip 1s ease-in-out;
+    }
+
+    .card-anim.bronze {
+      background:linear-gradient(145deg, #8B5E3C, #CD7F32 30%, #8B5E3C);
+      border-color:#CD7F32;
+      box-shadow:0 0 40px rgba(205,127,50,0.5);
+    }
+    .card-anim.silver {
+      background:linear-gradient(145deg, #708090, #C0C0C0 30%, #D8D8D8);
+      border-color:#C0C0C0;
+      box-shadow:0 0 40px rgba(192,192,192,0.5);
+    }
+    .card-anim.gold {
+      background:linear-gradient(145deg, #B8860B, #FFD700 25%, #FFF8DC);
+      border-color:#FFD700;
+      box-shadow:0 0 50px rgba(255,215,0,0.6);
+    }
+    .card-anim.elite {
+      background:linear-gradient(145deg, #4B0082, #8B008B 25%, #DA70D6);
+      border-color:#DA70D6;
+      box-shadow:0 0 60px rgba(218,112,214,0.8);
+    }
+
+    .card-anim-quality {
+      font-size:9px;
+      font-weight:700;
+      letter-spacing:0.15em;
+      text-transform:uppercase;
+      color:#FFF8E7;
+      background:rgba(0,0,0,0.25);
+      padding:2px 8px;
+      border-radius:2px;
+    }
+
+    .card-anim-name {
+      font-size:14px;
+      font-weight:600;
+      color:#FFF8E7;
+      text-align:center;
+      margin:8px 0;
+      text-shadow:0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .card-anim-face {
+      width:70px;
+      height:70px;
+      border-radius:50%;
+      border:2px solid;
+      overflow:hidden;
+      margin:4px 0;
+      background:rgba(0,0,0,0.15);
+    }
+    .card-anim-face img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
     }
 
     @keyframes cardFlip {
-      0% {
-        transform: rotateY(0deg) scale(0.5);
-        opacity: 0;
-      }
-      50% {
-        transform: rotateY(90deg) scale(1);
-      }
-      100% {
-        transform: rotateY(0deg) scale(1);
-        opacity: 1;
-      }
+      0%   { transform:rotateY(0deg) scale(0.5); opacity:0; }
+      50%  { transform:rotateY(90deg) scale(1.1); opacity:1; }
+      100% { transform:rotateY(0deg) scale(1); opacity:1; }
     }
 
+    /* Footer */
     .footer {
-      background: rgba(0, 0, 0, 0.3);
-      padding: 15px;
-      text-align: center;
-      border-top: 3px solid #00d4ff;
-      font-size: 18px;
+      position:relative;
+      z-index:1;
+      background:rgba(6,14,8,0.92);
+      border-top:1px solid rgba(212,175,55,0.12);
+      padding:14px 40px;
     }
 
     .stats {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 10px;
-      font-size: 16px;
+      display:flex;
+      justify-content:space-around;
+      align-items:center;
     }
 
     .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
     }
 
     .stat-label {
-      opacity: 0.8;
+      font-size:11px;
+      letter-spacing:0.15em;
+      text-transform:uppercase;
+      color:rgba(248,246,243,0.3);
     }
 
     .stat-value {
-      font-weight: bold;
-      color: #00ff00;
+      font-family:'Cormorant Garamond',serif;
+      font-size:22px;
+      font-weight:600;
+      color:#D4AF37;
     }
 
+    /* Final scores overlay */
     .final-scores {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.9);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      animation: fadeIn 0.5s ease-out;
+      position:fixed;
+      inset:0;
+      background:rgba(6,14,8,0.96);
+      display:none;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index:2000;
+      animation:fadeIn 0.6s ease-out;
     }
 
-    .final-scores.active {
-      display: flex;
-    }
-
-    .final-scores-content {
-      text-align: center;
-    }
+    .final-scores.active { display:flex; }
 
     .final-scores-title {
-      font-size: 48px;
-      font-weight: bold;
-      margin-bottom: 40px;
-      color: #00ff00;
+      font-family:'Cormorant Garamond',serif;
+      font-size:52px;
+      font-weight:600;
+      color:#D4AF37;
+      letter-spacing:0.12em;
+      margin-bottom:50px;
     }
 
-    .final-scores-table {
-      font-size: 32px;
-      margin-bottom: 40px;
-    }
+    .final-scores-table { min-width:600px; }
 
     .score-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 100px;
-      margin: 20px 0;
-      padding: 15px;
-      background: rgba(0, 212, 255, 0.1);
-      border-radius: 10px;
-      min-width: 600px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:60px;
+      margin:10px 0;
+      padding:18px 28px;
+      border:1px solid rgba(212,175,55,0.15);
+      background:rgba(212,175,55,0.03);
     }
 
     .score-rank {
-      font-weight: bold;
-      color: #ffd700;
-      min-width: 100px;
+      font-family:'Cormorant Garamond',serif;
+      font-size:28px;
+      font-weight:600;
+      color:#D4AF37;
+      min-width:60px;
     }
 
     .score-team {
-      font-weight: bold;
-      min-width: 200px;
+      font-size:22px;
+      font-weight:500;
+      color:#F8F6F3;
+      min-width:200px;
     }
 
     .score-points {
-      color: #00ff00;
-      font-weight: bold;
-      min-width: 150px;
+      font-family:'Cormorant Garamond',serif;
+      font-size:28px;
+      font-weight:600;
+      color:#D4AF37;
+      min-width:130px;
+      text-align:right;
     }
 
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
+      from { opacity:0; }
+      to   { opacity:1; }
     }
 
-    /* Scrollbar styling */
-    .players-list::-webkit-scrollbar {
-      width: 8px;
+    .players-list::-webkit-scrollbar { width:4px; }
+    .players-list::-webkit-scrollbar-track { background:transparent; }
+    .players-list::-webkit-scrollbar-thumb { background:rgba(212,175,55,0.2); border-radius:2px; }
+    .players-list::-webkit-scrollbar-thumb:hover { background:rgba(212,175,55,0.4); }
+
+    /* Pending card overlay */
+    .pending-overlay {
+      position:fixed;
+      inset:0;
+      background:rgba(6,14,8,0.88);
+      display:none;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index:1500;
+      animation:fadeIn 0.4s ease-out;
+    }
+    .pending-overlay.active { display:flex; }
+
+    .pending-username {
+      font-family:'Cormorant Garamond',serif;
+      font-size:38px;
+      font-weight:600;
+      color:#F8F6F3;
+      letter-spacing:0.08em;
+      margin-bottom:8px;
     }
 
-    .players-list::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
+    .pending-label {
+      font-size:12px;
+      letter-spacing:0.3em;
+      text-transform:uppercase;
+      color:rgba(212,175,55,0.5);
+      margin-bottom:48px;
     }
 
-    .players-list::-webkit-scrollbar-thumb {
-      background: #00d4ff;
-      border-radius: 10px;
+    .pending-card-closed {
+      width:160px;
+      height:240px;
+      border:2px solid rgba(212,175,55,0.4);
+      background:linear-gradient(160deg,#0c1309,#060e08);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      margin-bottom:52px;
+      position:relative;
+      overflow:hidden;
     }
 
-    .players-list::-webkit-scrollbar-thumb:hover {
-      background: #00ffff;
+    .pending-card-closed::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:repeating-linear-gradient(
+        45deg,
+        rgba(212,175,55,0.04) 0px,
+        rgba(212,175,55,0.04) 2px,
+        transparent 2px,
+        transparent 12px
+      );
+    }
+
+    .pending-card-closed.bronze { border-color:#cd7f32; }
+    .pending-card-closed.silver { border-color:#c0c0c0; }
+    .pending-card-closed.gold   { border-color:#D4AF37; box-shadow:0 0 30px rgba(212,175,55,0.2); }
+    .pending-card-closed.elite  { border-color:#e879f9; box-shadow:0 0 30px rgba(232,121,249,0.25); }
+
+    .pending-card-quality {
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:0.22em;
+      text-transform:uppercase;
+      padding:4px 10px;
+      border:1px solid;
+      position:relative;
+      z-index:1;
+    }
+    .pending-card-quality.bronze { color:#cd7f32; border-color:rgba(205,127,50,0.5); }
+    .pending-card-quality.silver { color:#c0c0c0; border-color:rgba(192,192,192,0.5); }
+    .pending-card-quality.gold   { color:#D4AF37; border-color:rgba(212,175,55,0.6); }
+    .pending-card-quality.elite  { color:#e879f9; border-color:rgba(232,121,249,0.6); }
+
+    .pending-card-mystery {
+      font-family:'Cormorant Garamond',serif;
+      font-size:42px;
+      color:rgba(212,175,55,0.15);
+      position:relative;
+      z-index:1;
+    }
+
+    .pending-teams {
+      display:flex;
+      gap:16px;
+    }
+
+    .pending-team-btn {
+      padding:16px 28px;
+      border:1px solid rgba(212,175,55,0.2);
+      background:rgba(212,175,55,0.04);
+      font-family:'Cormorant Garamond',serif;
+      font-size:20px;
+      font-weight:600;
+      color:rgba(248,246,243,0.6);
+      letter-spacing:0.06em;
+      text-align:center;
+      min-width:160px;
+      cursor:pointer;
+      transition:background 0.2s, border-color 0.2s, color 0.2s;
+    }
+
+    .pending-team-btn:hover {
+      background:rgba(212,175,55,0.12);
+      border-color:rgba(212,175,55,0.6);
+      color:#F8F6F3;
+    }
+
+    .pending-team-btn:active {
+      background:rgba(212,175,55,0.2);
+    }
+
+    .pending-team-btn:disabled {
+      opacity:0.4;
+      cursor:not-allowed;
+    }
+
+    .pending-select-hint {
+      margin-top:20px;
+      font-size:11px;
+      letter-spacing:0.2em;
+      text-transform:uppercase;
+      color:rgba(212,175,55,0.3);
+    }
+
+    /* Card reveal animation (extended 2 seconds) */
+    .card-reveal {
+      position:fixed;
+      top:62%;
+      left:50%;
+      transform:translate(-50%, -50%);
+      z-index:2500;
+      pointer-events:none;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:16px;
+    }
+
+    .card-reveal-inner {
+      width:200px;
+      height:300px;
+      border:2px solid #D4AF37;
+      background:#0c1309;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      animation:revealFlip 0.6s ease-out;
+    }
+    .card-reveal-inner.bronze { border-color:#cd7f32; box-shadow:0 0 40px rgba(205,127,50,0.5); }
+    .card-reveal-inner.silver { border-color:#c0c0c0; box-shadow:0 0 40px rgba(192,192,192,0.5); }
+    .card-reveal-inner.gold   { border-color:#D4AF37; box-shadow:0 0 50px rgba(212,175,55,0.6); }
+    .card-reveal-inner.elite  { border-color:#e879f9; box-shadow:0 0 60px rgba(232,121,249,0.7); }
+
+    .card-reveal-quality {
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:0.22em;
+      text-transform:uppercase;
+      padding:3px 9px;
+      border:1px solid;
+    }
+    .card-reveal-quality.bronze { color:#cd7f32; border-color:rgba(205,127,50,0.5); }
+    .card-reveal-quality.silver { color:#c0c0c0; border-color:rgba(192,192,192,0.5); }
+    .card-reveal-quality.gold   { color:#D4AF37; border-color:rgba(212,175,55,0.6); }
+    .card-reveal-quality.elite  { color:#e879f9; border-color:rgba(232,121,249,0.6); }
+
+    .card-reveal-name {
+      font-family:'Cormorant Garamond',serif;
+      font-size:22px;
+      font-weight:600;
+      color:#F8F6F3;
+      letter-spacing:0.06em;
+      text-align:center;
+      padding:0 12px;
+    }
+
+    .card-reveal-position {
+      font-size:11px;
+      color:rgba(248,246,243,0.4);
+      letter-spacing:0.1em;
+    }
+
+    .card-reveal-team {
+      font-size:13px;
+      letter-spacing:0.15em;
+      text-transform:uppercase;
+      color:rgba(212,175,55,0.6);
+    }
+
+    @keyframes revealFlip {
+      0%   { transform:rotateY(90deg) scale(0.8); opacity:0; }
+      50%  { transform:rotateY(0deg) scale(1.05); opacity:1; }
+      100% { transform:rotateY(0deg) scale(1); }
     }
   </style>
 </head>
 <body>
   <div class="game-container">
     <div class="header">
-      <h1>⚽ KADROKUR - TikTok Live Futbol Kartları</h1>
-      <p id="sessionInfo">Oturum: Yükleniyor...</p>
+      <div class="header-brand">
+        <div class="header-title">KADROKUR</div>
+        <div class="header-sub">TikTok Live Futbol Kartları</div>
+      </div>
+      <span id="sessionInfo">Oturum: Yükleniyor...</span>
     </div>
 
-    <div class="game-content" id="gameContent">
-      <!-- Teams will be dynamically inserted here -->
-    </div>
+    <div class="game-content" id="gameContent"></div>
 
     <div class="footer">
       <div class="stats">
         <div class="stat-item">
-          <span class="stat-label">Açılan Kartlar:</span>
+          <span class="stat-label">Açılan Kartlar</span>
           <span class="stat-value" id="totalCards">0</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Katılımcılar:</span>
+          <span class="stat-label">Katılımcılar</span>
           <span class="stat-value" id="totalParticipants">0</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Beğeni:</span>
+          <span class="stat-label">Beğeni</span>
           <span class="stat-value" id="totalLikes">0</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Hediye:</span>
+          <span class="stat-label">Hediye</span>
           <span class="stat-value" id="totalGifts">0</span>
         </div>
       </div>
     </div>
 
     <div class="final-scores" id="finalScores">
-      <div class="final-scores-content">
-        <div class="final-scores-title">🏆 OYUN BİTTİ 🏆</div>
-        <div class="final-scores-table" id="scoresTable"></div>
-      </div>
+      <div class="final-scores-title">OYUN BİTTİ</div>
+      <div class="final-scores-table" id="scoresTable"></div>
     </div>
   </div>
 
   <div class="card-opening-animation" id="cardAnimation"></div>
+
+  <!-- Pending card overlay: shown while waiting for team selection -->
+  <div class="pending-overlay" id="pendingOverlay">
+    <div class="pending-username" id="pendingUsername"></div>
+    <div class="pending-label">Takım Seçimi Bekleniyor</div>
+    <div class="pending-card-closed" id="pendingCardClosed">
+      <div class="pending-card-mystery">?</div>
+      <div class="pending-card-quality" id="pendingCardQuality"></div>
+    </div>
+    <div class="pending-teams" id="pendingTeams"></div>
+    <div class="pending-select-hint">Takıma tıkla veya yayıncı panelinden seç</div>
+  </div>
+
+  <!-- Card reveal overlay: shown for 2 seconds after team is selected -->
+  <div id="cardRevealOverlay"></div>
 
   <script>
     const gameContent = document.getElementById('gameContent');
@@ -385,11 +714,18 @@
     const finalScores = document.getElementById('finalScores');
     const scoresTable = document.getElementById('scoresTable');
     const cardAnimation = document.getElementById('cardAnimation');
+    const pendingOverlay = document.getElementById('pendingOverlay');
+    const pendingUsername = document.getElementById('pendingUsername');
+    const pendingCardClosed = document.getElementById('pendingCardClosed');
+    const pendingCardQuality = document.getElementById('pendingCardQuality');
+    const pendingTeams = document.getElementById('pendingTeams');
+    const cardRevealOverlay = document.getElementById('cardRevealOverlay');
 
     let gameState = null;
-    let socket = null;
+    let prevPendingCard = null; // track previous pending state to detect reveal moment
+    let isAssigning = false;    // guard against multi-click and polling rebuilds
+    let isRevealing = false;    // true during 2-second card reveal — blocks new pending overlay
 
-    // Get session ID from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('sessionId');
 
@@ -398,25 +734,17 @@
         sessionInfo.textContent = 'Oturum ID bulunamadı';
         return;
       }
-
       sessionInfo.textContent = `Oturum: ${sessionId}`;
-
-      // Initialize Socket.io connection
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const socketUrl = `${protocol}//${window.location.host}`;
-      
-      // Note: Socket.io setup would go here
-      // For now, we'll use polling to simulate real-time updates
       setupPolling();
     }
 
     function setupPolling() {
-      // Simulate real-time updates
       setInterval(async () => {
         try {
-          const response = await fetch(`/api/game/state?sessionId=${sessionId}`);
+          const response = await fetch(`/api/trpc/game.getState?input=${encodeURIComponent(JSON.stringify({ json: { sessionId } }))}`);
           if (response.ok) {
-            const data = await response.json();
+            const raw = await response.json();
+            const data = raw.result?.data?.json || raw.result?.data || raw;
             updateGameScreen(data);
           }
         } catch (error) {
@@ -428,36 +756,181 @@
     function updateGameScreen(state) {
       if (!state || !state.teams) return;
 
+      const wasPending = !!prevPendingCard;
+      const isNowPending = !!state.pendingCard;
+
+      // Detect transition: pending → confirmed (team was just selected)
+      if (wasPending && !isNowPending) {
+        showCardReveal(prevPendingCard, state);
+      }
+
+      prevPendingCard = state.pendingCard || null;
       gameState = state;
 
-      // Update team sections
+      // Show/hide pending overlay (suppressed during card reveal animation)
+      if (isNowPending && !isRevealing) {
+        showPendingOverlay(state.pendingCard, state.teams);
+      } else if (!isNowPending) {
+        pendingOverlay.classList.remove('active');
+      }
+
       if (gameContent.children.length === 0) {
         renderTeams(state.teams);
       }
 
-      // Update teams with new players
       state.teams.forEach((team, idx) => {
         const teamSection = document.querySelectorAll('.team-section')[idx];
-        if (teamSection) {
-          updateTeamSection(teamSection, team);
-        }
+        if (teamSection) updateTeamSection(teamSection, team);
       });
 
-      // Update stats
       document.getElementById('totalCards').textContent = state.openedCards?.length || 0;
-      document.getElementById('totalParticipants').textContent = state.participants?.size || 0;
+      document.getElementById('totalParticipants').textContent = state.participants?.length || state.participants?.size || 0;
       document.getElementById('totalLikes').textContent = state.totalLikes || 0;
       document.getElementById('totalGifts').textContent = state.totalGifts || 0;
 
-      // Check if game is complete
-      if (state.isComplete) {
-        showFinalScores(state.teams);
+      if (state.isComplete) showFinalScores(state.teams);
+    }
+
+    function showPendingOverlay(pending, teams) {
+      // If this same card is already showing and we're mid-assignment, don't rebuild
+      // (rebuilding resets disabled state and loses the click-in-progress)
+      if (isAssigning && pendingOverlay.classList.contains('active') &&
+          pendingUsername.textContent === pending.username) {
+        return;
       }
+
+      // New card — reset state
+      isAssigning = false;
+
+      pendingUsername.textContent = pending.username;
+      pendingCardClosed.className = `pending-card-closed ${pending.quality}`;
+      pendingCardQuality.className = `pending-card-quality ${pending.quality}`;
+      pendingCardQuality.textContent = pending.quality.toUpperCase();
+
+      pendingTeams.innerHTML = '';
+      teams.forEach((team) => {
+        const btn = document.createElement('button');
+        btn.className = 'pending-team-btn';
+        btn.textContent = team.name;
+        btn.addEventListener('click', () => assignTeam(team.id));
+        pendingTeams.appendChild(btn);
+      });
+
+      pendingOverlay.classList.add('active');
+    }
+
+    async function assignTeam(teamId) {
+      if (isAssigning) return; // block duplicate calls
+      isAssigning = true;
+      pendingTeams.querySelectorAll('button').forEach(b => b.disabled = true);
+      try {
+        const res = await fetch('/api/trpc/broadcaster.assignPendingCard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ json: { sessionId, teamId } }),
+        });
+        if (!res.ok) throw new Error('Request failed');
+        pendingOverlay.classList.remove('active');
+      } catch (err) {
+        console.error('Takım ataması başarısız:', err);
+        isAssigning = false;
+        pendingTeams.querySelectorAll('button').forEach(b => b.disabled = false);
+      }
+    }
+
+    function showCardReveal(pending, state) {
+      if (!pending) return;
+      // Find the newly added card to get player data
+      let playerData = null;
+      let teamName = '';
+      state.teams.forEach((team) => {
+        const lastPlayer = team.players[team.players.length - 1];
+        if (lastPlayer && lastPlayer.openedBy === pending.username) {
+          playerData = lastPlayer;
+          teamName = team.name;
+        }
+      });
+
+      if (!playerData) return;
+
+      isRevealing = true;
+      pendingOverlay.classList.remove('active');
+
+      // Get stats for display
+      let statsHtml = '';
+      if (playerData.position === 'GK') {
+        statsHtml = `
+          <div class="reveal-stat"><span>DIV</span><span>${playerData.diving || playerData.overall || '?'}</span></div>
+          <div class="reveal-stat"><span>HAN</span><span>${playerData.handling || playerData.overall || '?'}</span></div>
+          <div class="reveal-stat"><span>REF</span><span>${playerData.reflexes || playerData.overall || '?'}</span></div>
+        `;
+      } else {
+        statsHtml = `
+          <div class="reveal-stat"><span>PAC</span><span>${playerData.pace || playerData.overall || '?'}</span></div>
+          <div class="reveal-stat"><span>SHO</span><span>${playerData.shooting || playerData.overall || '?'}</span></div>
+          <div class="reveal-stat"><span>PAS</span><span>${playerData.passing || playerData.overall || '?'}</span></div>
+        `;
+      }
+
+      cardRevealOverlay.innerHTML = `
+        <div class="card-reveal">
+          <div class="card-anim ${pending.quality}">
+            <div class="card-anim-quality ${pending.quality}">${pending.quality.toUpperCase()}</div>
+            <div class="card-anim-face">
+              <img src="${playerData.faceImageUrl || playerData.imageUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(playerData.name) + '&background=random&size=128&bold=true'}" alt="${playerData.name}" />
+            </div>
+            <div class="card-anim-name">${playerData.name || '—'}</div>
+            <div class="card-anim-position">${playerData.position} • ${playerData.team || ''}</div>
+            <div class="reveal-stats">${statsHtml}</div>
+          </div>
+          <div class="card-reveal-team">${teamName}</div>
+        </div>
+      `;
+
+      // Add reveal stats styles
+      if (!document.getElementById('reveal-extra-styles')) {
+        const style = document.createElement('style');
+        style.id = 'reveal-extra-styles';
+        style.textContent = `
+          .reveal-stats {
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:4px;
+            width:100%;
+            margin-top:8px;
+          }
+          .reveal-stat {
+            display:flex;
+            justify-content:space-between;
+            background:rgba(0,0,0,0.2);
+            border-radius:3px;
+            padding:2px 6px;
+          }
+          .reveal-stat span:first-child {
+            font-size:8px;
+            font-weight:700;
+            color:rgba(255,255,255,0.7);
+          }
+          .reveal-stat span:last-child {
+            font-size:10px;
+            font-weight:900;
+            color:#FFF8E7;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      setTimeout(() => {
+        cardRevealOverlay.innerHTML = '';
+        isRevealing = false;
+        if (gameState?.pendingCard) {
+          showPendingOverlay(gameState.pendingCard, gameState.teams);
+        }
+      }, 2000);
     }
 
     function renderTeams(teams) {
       gameContent.innerHTML = '';
-
       teams.forEach((team) => {
         const teamSection = document.createElement('div');
         teamSection.className = 'team-section';
@@ -473,77 +946,81 @@
     }
 
     function updateTeamSection(teamSection, team) {
-      const scoreElement = teamSection.querySelector(`#score-${team.id}`);
-      if (scoreElement) {
-        scoreElement.textContent = team.score;
-      }
+      const scoreEl = teamSection.querySelector(`#score-${team.id}`);
+      if (scoreEl) scoreEl.textContent = team.score;
 
       const playersList = teamSection.querySelector(`#players-${team.id}`);
       if (playersList) {
-        const currentPlayers = playersList.querySelectorAll('.player-card').length;
-        
-        // Add new players
+        const currentPlayers = playersList.querySelectorAll('.mini-fut-card').length;
         team.players.slice(currentPlayers).forEach((player) => {
-          const playerCard = document.createElement('div');
-          playerCard.className = `player-card ${player.quality}`;
-          playerCard.innerHTML = `
-            <div class="player-info">
-              <div class="player-name">${player.name}</div>
-              <div class="player-position">${player.position}</div>
-            </div>
-            <div class="player-quality ${player.quality}">
-              ${player.quality.toUpperCase()}
-            </div>
-          `;
-          playersList.appendChild(playerCard);
+          const miniCard = document.createElement('div');
+          miniCard.className = `mini-fut-card ${player.quality}`;
 
-          // Trigger card animation
-          animateCardOpening(player.quality);
+          // Get stats based on position
+          let statsHtml = '';
+          if (player.position === 'GK') {
+            statsHtml = `
+              <div class="mini-stat"><span class="mini-stat-label">DIV</span><span class="mini-stat-value">${player.diving || player.overall || '?'}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">HAN</span><span class="mini-stat-value">${player.handling || player.overall || '?'}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">REF</span><span class="mini-stat-value">${player.reflexes || player.overall || '?'}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">SPD</span><span class="mini-stat-value">${player.pace || '?'}</span></div>
+            `;
+          } else {
+            statsHtml = `
+              <div class="mini-stat"><span class="mini-stat-label">PAC</span><span class="mini-stat-value">${player.pace || player.overall || '?'}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">SHO</span><span class="mini-stat-value">${player.shooting || player.overall || '?'}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">PAS</span><span class="mini-stat-value">${player.passing || player.overall || '?'}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">DRI</span><span class="mini-stat-value">${player.dribbling || player.overall || '?'}</span></div>
+            `;
+          }
+
+          miniCard.innerHTML = `
+            <div class="mini-card-header">
+              <span class="mini-card-overall">${player.overall || '?'}</span>
+              <span class="mini-card-position">${player.position}</span>
+            </div>
+            <div class="mini-card-face">
+              <img src="${player.faceImageUrl || player.imageUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(player.name) + '&background=random&size=64&bold=true'}" alt="${player.name}" />
+            </div>
+            <div class="mini-card-name">${player.name}</div>
+            <div class="mini-card-stats">${statsHtml}</div>
+          `;
+          playersList.appendChild(miniCard);
+
+          // Trim oldest cards from top until list fits within the fixed container
+          while (playersList.scrollHeight > playersList.clientHeight && playersList.children.length > 3) {
+            playersList.removeChild(playersList.firstChild);
+          }
         });
       }
     }
 
     function animateCardOpening(quality) {
-      const colors = {
-        bronze: '#cd7f32',
-        silver: '#c0c0c0',
-        gold: '#ffd700',
-        elite: '#ff1493',
-      };
-
       const card = document.createElement('div');
-      card.className = 'card';
-      card.style.background = colors[quality] || '#667eea';
+      card.className = `card-anim ${quality}`;
       card.textContent = quality.toUpperCase();
-
       cardAnimation.innerHTML = '';
       cardAnimation.appendChild(card);
-
-      setTimeout(() => {
-        cardAnimation.innerHTML = '';
-      }, 1000);
+      setTimeout(() => { cardAnimation.innerHTML = ''; }, 1000);
     }
 
     function showFinalScores(teams) {
       const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
-
-      let scoresHTML = '';
+      const medals = ['I', 'II', 'III', 'IV'];
+      let html = '';
       sortedTeams.forEach((team, idx) => {
-        const medals = ['🥇', '🥈', '🥉', '4️⃣'];
-        scoresHTML += `
+        html += `
           <div class="score-row">
-            <div class="score-rank">${medals[idx] || idx + 1}.</div>
+            <div class="score-rank">${medals[idx] || (idx + 1) + '.'}</div>
             <div class="score-team">${team.name}</div>
             <div class="score-points">${team.score} Puan</div>
           </div>
         `;
       });
-
-      scoresTable.innerHTML = scoresHTML;
+      scoresTable.innerHTML = html;
       finalScores.classList.add('active');
     }
 
-    // Initialize when page loads
     window.addEventListener('load', initializeGameScreen);
   </script>
 </body>

@@ -1,0 +1,149 @@
+<h2>Panel düzeni nasıl olsun?</h2>
+<p class="subtitle">Yayıncı panelinin genel iskelet yapısı — navigasyon ve içerik yerleşimi</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="sidebar" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#030a06;padding:1rem;min-height:180px">
+      <div style="display:flex;gap:0.5rem;height:150px">
+        <!-- Sidebar -->
+        <div style="width:52px;background:#0a1a0f;border-radius:6px;border:1px solid #14532d;display:flex;flex-direction:column;align-items:center;padding:0.6rem 0;gap:0.6rem">
+          <div style="width:28px;height:28px;background:#16a34a22;border-radius:6px;border:1px solid #16a34a55"></div>
+          <div style="width:28px;height:5px;background:#22c55e;border-radius:3px"></div>
+          <div style="width:28px;height:5px;background:#14532d;border-radius:3px"></div>
+          <div style="width:28px;height:5px;background:#14532d;border-radius:3px"></div>
+          <div style="width:28px;height:5px;background:#14532d;border-radius:3px"></div>
+        </div>
+        <!-- Main content -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.4rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.4rem">
+            <div style="background:#0a1a0f;border:1px solid #14532d;border-radius:5px;padding:0.5rem;text-align:center">
+              <div style="color:#22c55e;font-size:0.7rem;font-weight:700">24</div>
+              <div style="color:#166534;font-size:0.55rem">KART</div>
+            </div>
+            <div style="background:#0a1a0f;border:1px solid #14532d;border-radius:5px;padding:0.5rem;text-align:center">
+              <div style="color:#4ade80;font-size:0.7rem;font-weight:700">128</div>
+              <div style="color:#166534;font-size:0.55rem">OYUNCU</div>
+            </div>
+            <div style="background:#0a1a0f;border:1px solid #22c55e;border-radius:5px;padding:0.5rem;text-align:center">
+              <div style="color:#22c55e;font-size:0.7rem;font-weight:700">CANLI</div>
+              <div style="color:#166534;font-size:0.55rem">DURUM</div>
+            </div>
+          </div>
+          <div style="flex:1;background:#0a1a0f;border:1px solid #14532d;border-radius:5px;padding:0.5rem">
+            <div style="color:#166534;font-size:0.6rem;margin-bottom:0.3rem">AKTİF OTURUM</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem">
+              <div style="background:#030a06;border-radius:4px;height:30px;border:1px solid #052e16"></div>
+              <div style="background:#030a06;border-radius:4px;height:30px;border:1px solid #052e16"></div>
+              <div style="background:#030a06;border-radius:4px;height:30px;border:1px solid #052e16"></div>
+              <div style="background:#030a06;border-radius:4px;height:30px;border:1px solid #052e16"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="label" style="color:#22c55e">A — Dar Sidebar</div>
+      <h3>İkon Sidebar + Ana İçerik</h3>
+      <p>Sol tarafta sadece ikonlardan oluşan dar navigasyon. Maksimum içerik alanı. Masaüstü odaklı.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="topnav" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#030a06;padding:1rem;min-height:180px">
+      <div style="display:flex;flex-direction:column;gap:0.4rem;height:150px">
+        <!-- Top nav -->
+        <div style="background:#0a1a0f;border-radius:6px;border:1px solid #14532d;padding:0.4rem 0.6rem;display:flex;align-items:center;gap:0.5rem">
+          <div style="width:20px;height:20px;background:#16a34a22;border-radius:4px;border:1px solid #16a34a55"></div>
+          <div style="color:#22c55e;font-size:0.65rem;font-weight:700">KADROKUR</div>
+          <div style="flex:1"></div>
+          <div style="width:40px;height:5px;background:#22c55e;border-radius:3px"></div>
+          <div style="width:40px;height:5px;background:#14532d;border-radius:3px"></div>
+          <div style="width:40px;height:5px;background:#14532d;border-radius:3px"></div>
+        </div>
+        <!-- Content area -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.4rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.4rem">
+            <div style="background:#0a1a0f;border:1px solid #14532d;border-radius:5px;padding:0.4rem;text-align:center">
+              <div style="color:#22c55e;font-size:0.65rem;font-weight:700">24/44</div>
+              <div style="color:#166534;font-size:0.5rem">KART</div>
+            </div>
+            <div style="background:#0a1a0f;border:1px solid #14532d;border-radius:5px;padding:0.4rem;text-align:center">
+              <div style="color:#4ade80;font-size:0.65rem;font-weight:700">128</div>
+              <div style="color:#166534;font-size:0.5rem">OYUNCU</div>
+            </div>
+            <div style="background:#0a1a0f;border:1px solid #22c55e;border-radius:5px;padding:0.4rem;text-align:center">
+              <div style="color:#22c55e;font-size:0.65rem;font-weight:700">CANLI</div>
+              <div style="color:#166534;font-size:0.5rem">TİKTOK</div>
+            </div>
+            <div style="background:#0a1a0f;border:1px solid #14532d;border-radius:5px;padding:0.4rem;text-align:center">
+              <div style="color:#fbbf24;font-size:0.65rem;font-weight:700">12:34</div>
+              <div style="color:#166534;font-size:0.5rem">SÜRE</div>
+            </div>
+          </div>
+          <div style="flex:1;background:#0a1a0f;border:1px solid #14532d;border-radius:5px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="label" style="color:#22c55e">B — Üst Navigasyon</div>
+      <h3>Top Nav + İstatistik Barı</h3>
+      <p>Üstte logo + navigasyon, altında istatistik kartları. Dashboard hissi, geniş içerik alanı.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="single-focus" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#030a06;padding:1rem;min-height:180px">
+      <div style="display:flex;flex-direction:column;gap:0.4rem;height:150px">
+        <!-- Header with status -->
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="color:#22c55e;font-size:0.65rem;font-weight:700;letter-spacing:0.08em">KADROKUR v3</div>
+          <div style="background:#16a34a22;border:1px solid #22c55e;border-radius:20px;padding:2px 8px;display:flex;align-items:center;gap:4px">
+            <div style="width:5px;height:5px;background:#22c55e;border-radius:50%"></div>
+            <span style="color:#22c55e;font-size:0.55rem">CANLI</span>
+          </div>
+        </div>
+        <!-- Big focus area -->
+        <div style="flex:1;background:#0a1a0f;border:1px solid #14532d;border-radius:8px;padding:0.6rem;display:flex;flex-direction:column;gap:0.4rem">
+          <div style="color:#166534;font-size:0.55rem">AKTİF OTURUM — @yayinci123</div>
+          <!-- Team grids -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;flex:1">
+            <div style="background:#030a06;border:1px solid #052e16;border-radius:5px;padding:0.4rem">
+              <div style="color:#22c55e;font-size:0.6rem;font-weight:600;margin-bottom:0.3rem">TAKIM A</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px">
+                <div style="background:#16a34a33;border-radius:2px;height:14px"></div>
+                <div style="background:#16a34a33;border-radius:2px;height:14px"></div>
+                <div style="background:#14532d22;border-radius:2px;height:14px;border:1px dashed #14532d"></div>
+              </div>
+            </div>
+            <div style="background:#030a06;border:1px solid #052e16;border-radius:5px;padding:0.4rem">
+              <div style="color:#4ade80;font-size:0.6rem;font-weight:600;margin-bottom:0.3rem">TAKIM B</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px">
+                <div style="background:#16a34a33;border-radius:2px;height:14px"></div>
+                <div style="background:#14532d22;border-radius:2px;height:14px;border:1px dashed #14532d"></div>
+                <div style="background:#14532d22;border-radius:2px;height:14px;border:1px dashed #14532d"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Bottom action bar -->
+        <div style="display:flex;gap:0.4rem">
+          <div style="flex:1;background:#16a34a;border-radius:5px;padding:0.35rem;text-align:center">
+            <div style="color:#fff;font-size:0.6rem;font-weight:700">OTURUMU BAŞLAT</div>
+          </div>
+          <div style="background:#0a1a0f;border:1px solid #14532d;border-radius:5px;padding:0.35rem 0.6rem">
+            <div style="color:#4ade80;font-size:0.6rem">AYARLAR</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="label" style="color:#22c55e">C — Tek Odak Ekranı</div>
+      <h3>Minimal Header + Büyük İçerik</h3>
+      <p>Navigasyon neredeyse yok. Odak tamamen aktif oyun oturumunda. Canlı yayın için optimize.</p>
+    </div>
+  </div>
+
+</div>
+
+<p style="margin-top:1.5rem;color:#8b949e;font-size:0.85rem">Tıkla ya da terminalde söyle.</p>

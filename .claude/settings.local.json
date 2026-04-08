@@ -11,7 +11,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:www.npmjs.com)",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "mcp__plugin_telegram_telegram__reply",
+      "WebFetch(domain:sofifa.com)"
     ]
   }
 }

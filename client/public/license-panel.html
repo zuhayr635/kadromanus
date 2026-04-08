@@ -3,281 +3,646 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="img-src * data: blob:; default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
 <title>Kadrokur — Lisans Yönetimi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Segoe UI',system-ui,sans-serif; background:#030a06; color:#e2e8f0; min-height:100vh; }
+  body { font-family:'DM Sans',system-ui,sans-serif; background:#080c09; color:#F8F6F3; min-height:100vh; }
 
-  .page { max-width:1100px; margin:0 auto; padding:1.5rem; }
+  /* ── NAV ── */
+  .nav { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 2rem; border-bottom:1px solid rgba(212,175,55,0.1); background:rgba(8,12,9,0.95); position:sticky; top:0; z-index:50; }
+  .nav-logo { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.2rem; font-weight:700; letter-spacing:0.2em; color:#F8F6F3; text-transform:uppercase; display:flex; align-items:center; gap:6px; }
+  .nav-logo-dot { width:5px; height:5px; background:#D4AF37; border-radius:50%; display:inline-block; position:relative; top:-1px; }
+  .nav-sub { font-size:0.58rem; letter-spacing:0.2em; color:#D4AF37; text-transform:uppercase; font-weight:600; margin-top:1px; }
+  .nav-right { display:flex; align-items:center; gap:0.6rem; }
+  .nav-btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.45rem 1rem; border:1px solid rgba(212,175,55,0.25); color:#D4AF37; font-family:'DM Sans',sans-serif; font-size:0.7rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; cursor:pointer; background:transparent; transition:background 0.18s, color 0.18s; }
+  .nav-btn:hover { background:#D4AF37; color:#080c09; }
+  .nav-btn.danger { border-color:rgba(220,38,38,0.3); color:#fca5a5; }
+  .nav-btn.danger:hover { background:rgba(220,38,38,0.15); color:#fca5a5; }
 
-  .header { display:flex; align-items:center; justify-content:space-between; padding-bottom:1rem; border-bottom:1px solid #14532d; margin-bottom:1.5rem; }
-  .header-left { display:flex; align-items:center; gap:0.75rem; }
-  .logo-icon { width:36px; height:36px; background:linear-gradient(135deg,#16a34a,#15803d); border-radius:8px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px #16a34a44; }
-  .logo-text { font-size:1.1rem; font-weight:700; letter-spacing:0.08em; color:#22c55e; }
-  .logo-sub { font-size:0.65rem; color:#166534; letter-spacing:0.1em; margin-top:1px; }
-  .back-btn { display:flex; align-items:center; gap:0.4rem; padding:0.4rem 0.85rem; background:#0a1a0f; border:1px solid #14532d; border-radius:6px; color:#4ade80; font-size:0.75rem; font-weight:600; cursor:pointer; text-decoration:none; }
-  .back-btn:hover { border-color:#22c55e44; }
+  /* ── PAGE ── */
+  .page { max-width:1160px; margin:0 auto; padding:2rem; }
 
-  .grid { display:grid; grid-template-columns:320px 1fr; gap:1.25rem; }
+  /* ── STATS ── */
+  .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid rgba(212,175,55,0.1); margin-bottom:2rem; }
+  .stat-cell { padding:1.5rem 1.25rem; border-right:1px solid rgba(212,175,55,0.1); text-align:center; }
+  .stat-cell:last-child { border-right:none; }
+  .stat-label { font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:#3d4d3d; font-weight:600; margin-bottom:0.4rem; display:flex; align-items:center; justify-content:center; gap:0.3rem; }
+  .stat-val { font-family:'Cormorant Garamond',Georgia,serif; font-size:2.2rem; font-weight:700; color:#D4AF37; line-height:1; }
+  .stat-val.ok { color:#D4AF37; }
+  .stat-val.warn { color:#fca5a5; }
 
-  .panel { background:#0a1a0f; border:1px solid #14532d; border-radius:10px; padding:1.25rem; }
-  .panel-title { display:flex; align-items:center; gap:0.6rem; font-size:0.75rem; font-weight:700; letter-spacing:0.08em; color:#4ade80; text-transform:uppercase; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid #14532d44; }
+  /* ── GRID ── */
+  .main-grid { display:grid; grid-template-columns:320px 1fr; gap:1.5rem; }
 
-  .pkg-list { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.25rem; }
-  .pkg-item { padding:0.75rem; border:1.5px solid #14532d; border-radius:7px; cursor:pointer; transition:all 0.15s; }
-  .pkg-item:hover { border-color:#22c55e44; }
-  .pkg-item.selected { border-color:#22c55e; background:#16a34a0f; }
-  .pkg-top { display:flex; justify-content:space-between; align-items:center; }
-  .pkg-name { font-size:0.82rem; font-weight:700; color:#e2e8f0; }
-  .pkg-price { font-size:0.95rem; font-weight:800; color:#22c55e; }
-  .pkg-desc { font-size:0.7rem; color:#166534; margin-top:3px; }
-  .pkg-badges { display:flex; gap:0.3rem; margin-top:0.4rem; flex-wrap:wrap; }
-  .badge { font-size:0.62rem; padding:2px 7px; border-radius:10px; background:#16a34a22; border:1px solid #14532d; color:#4ade80; }
-  .badge.gold { background:#92400e22; border-color:#78350f; color:#fbbf24; }
+  /* ── PANEL ── */
+  .panel { background:#0c1309; border:1px solid rgba(212,175,55,0.1); }
+  .panel-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid rgba(212,175,55,0.08); }
+  .panel-title { display:flex; align-items:center; gap:0.5rem; font-size:0.65rem; font-weight:700; letter-spacing:0.18em; color:#D4AF37; text-transform:uppercase; }
+  .panel-body { padding:1.25rem; }
 
-  .field { margin-bottom:0.85rem; }
-  label { display:block; font-size:0.72rem; font-weight:600; color:#4ade80; margin-bottom:0.35rem; letter-spacing:0.04em; }
+  /* ── PKG LIST ── */
+  .pkg-list { display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1.25rem; }
+  .pkg-item { padding:1rem 2.5rem 1rem 1rem; border:1px solid rgba(212,175,55,0.1); cursor:pointer; position:relative; transition:border-color 0.18s, background 0.18s; }
+  .pkg-item:hover { border-color:rgba(212,175,55,0.3); background:rgba(212,175,55,0.03); }
+  .pkg-item.selected { border-color:#D4AF37; background:rgba(212,175,55,0.05); }
+  .pkg-top { display:flex; justify-content:space-between; align-items:baseline; }
+  .pkg-name { font-size:0.85rem; font-weight:700; color:#F8F6F3; }
+  .pkg-price { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.2rem; font-weight:700; color:#D4AF37; }
+  .pkg-desc { font-size:0.72rem; color:#3d4d3d; margin-top:3px; }
+  .pkg-badges { display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap; }
+  .badge { font-size:0.6rem; padding:2px 8px; border:1px solid rgba(212,175,55,0.2); color:#6b7a6b; letter-spacing:0.06em; }
+  .badge.gold { border-color:rgba(212,175,55,0.5); color:#D4AF37; }
+  .pkg-edit-btn { position:absolute; top:0.6rem; right:0.6rem; width:26px; height:26px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(212,175,55,0.25); background:rgba(8,12,9,0.8); color:#6b7a6b; cursor:pointer; opacity:0.45; transition:opacity 0.15s, border-color 0.15s, color 0.15s; }
+  .pkg-item:hover .pkg-edit-btn { opacity:1; }
+  .pkg-edit-btn:hover { border-color:#D4AF37; color:#D4AF37; }
+  @media (hover:none) { .pkg-edit-btn { opacity:1; } }
+
+  /* ── FORM ── */
+  .field { margin-bottom:0.8rem; }
+  .field label { display:block; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6b7a6b; margin-bottom:0.35rem; }
   input[type=text], input[type=email], input[type=number], input[type=date], select {
-    width:100%; padding:0.55rem 0.8rem; background:#030a06; border:1px solid #14532d;
-    border-radius:6px; color:#e2e8f0; font-size:0.82rem; outline:none; transition:border-color 0.2s;
+    width:100%; padding:0.55rem 0.75rem; background:#080c09; border:1px solid rgba(212,175,55,0.12);
+    color:#F8F6F3; font-size:0.82rem; font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.18s;
   }
-  input:focus, select:focus { border-color:#22c55e; }
-  input::placeholder { color:#166534; }
-  select option { background:#030a06; }
-
+  input:focus, select:focus { border-color:#D4AF37; }
+  input::placeholder { color:#2e3d2e; }
+  select option { background:#080c09; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; }
   .checkbox-row { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem; }
-  .checkbox-row input[type=checkbox] { width:14px; height:14px; accent-color:#22c55e; }
-  .checkbox-row label { margin:0; font-size:0.75rem; color:#4ade80; font-weight:500; letter-spacing:0; }
+  .checkbox-row input[type=checkbox] { width:14px; height:14px; accent-color:#D4AF37; }
+  .checkbox-row label { font-size:0.75rem; color:#8a9a8a; font-weight:500; letter-spacing:0; margin:0; text-transform:none; }
+  .btn-gold { width:100%; padding:0.72rem; border:1px solid #D4AF37; background:#D4AF37; color:#080c09; font-family:'DM Sans',sans-serif; font-size:0.75rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-top:0.5rem; transition:background 0.18s, color 0.18s; }
+  .btn-gold:hover { background:transparent; color:#D4AF37; }
+  .btn-ghost { padding:0.45rem 0.9rem; border:1px solid rgba(212,175,55,0.2); background:transparent; color:#6b7a6b; font-family:'DM Sans',sans-serif; font-size:0.7rem; font-weight:500; letter-spacing:0.08em; cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; transition:border-color 0.15s, color 0.15s; }
+  .btn-ghost:hover { border-color:#D4AF37; color:#D4AF37; }
 
-  .btn-primary { width:100%; padding:0.7rem; border-radius:7px; border:none; background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.5rem; box-shadow:0 4px 14px #16a34a33; margin-top:0.5rem; }
-  .btn-primary:hover { opacity:0.9; }
-
+  /* ── LICENSE LIST ── */
   .lic-list { display:flex; flex-direction:column; gap:0.75rem; }
-  .lic-item { background:#030a06; border:1px solid #14532d; border-radius:8px; padding:1rem; border-left:3px solid #22c55e; }
-  .lic-item.expired { border-left-color:#dc2626; }
-  .lic-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; }
-  .lic-key { font-family:monospace; font-size:0.75rem; color:#4ade80; background:#0a1a0f; border:1px solid #14532d; padding:3px 8px; border-radius:4px; display:flex; align-items:center; gap:0.4rem; }
-  .lic-badge { font-size:0.65rem; font-weight:700; padding:3px 9px; border-radius:10px; }
-  .lic-badge.active { background:#16a34a22; border:1px solid #22c55e44; color:#22c55e; }
-  .lic-badge.expired { background:#7f1d1d22; border:1px solid #dc262644; color:#fca5a5; }
-  .lic-detail-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; }
-  .lic-detail-label { font-size:0.62rem; color:#166534; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:2px; }
-  .lic-detail-val { font-size:0.78rem; color:#cbd5e1; font-weight:500; }
-  .lic-actions { display:flex; gap:0.4rem; margin-top:0.75rem; padding-top:0.6rem; border-top:1px solid #14532d44; }
-  .act-btn { padding:0.3rem 0.7rem; border-radius:5px; font-size:0.7rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.3rem; border:none; }
-  .act-btn.copy { background:#16a34a12; border:1px solid #14532d; color:#4ade80; }
-  .act-btn.extend { background:#16a34a22; border:1px solid #22c55e44; color:#22c55e; }
-  .act-btn.revoke { background:#7f1d1d12; border:1px solid #dc262633; color:#fca5a5; }
+  .lic-item { background:#080c09; border:1px solid rgba(212,175,55,0.08); border-left:2px solid #D4AF37; padding:1rem 1.25rem; }
+  .lic-item.expired { border-left-color:rgba(220,38,38,0.5); }
+  .lic-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; gap:0.5rem; flex-wrap:wrap; }
+  .lic-key { font-family:monospace; font-size:0.72rem; color:#D4AF37; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.15); padding:3px 8px; display:flex; align-items:center; gap:0.4rem; }
+  .lic-badge { font-size:0.6rem; font-weight:700; padding:3px 10px; letter-spacing:0.1em; text-transform:uppercase; }
+  .lic-badge.active { border:1px solid rgba(212,175,55,0.4); color:#D4AF37; }
+  .lic-badge.expired { border:1px solid rgba(220,38,38,0.3); color:#fca5a5; }
+  .lic-detail-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.5rem; }
+  .lic-detail-label { font-size:0.58rem; color:#2e3d2e; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:2px; }
+  .lic-detail-val { font-size:0.78rem; color:#8a9a8a; font-weight:500; }
+  .lic-actions { display:flex; gap:0.4rem; margin-top:0.85rem; padding-top:0.6rem; border-top:1px solid rgba(212,175,55,0.06); flex-wrap:wrap; }
+  .act-btn { padding:0.3rem 0.75rem; font-size:0.68rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.3rem; letter-spacing:0.06em; transition:opacity 0.15s; border:none; }
   .act-btn:hover { opacity:0.8; }
+  .act-btn.copy { background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.2); color:#D4AF37; }
+  .act-btn.extend { background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.3); color:#D4AF37; }
+  .act-btn.revoke { background:rgba(220,38,38,0.07); border:1px solid rgba(220,38,38,0.25); color:#fca5a5; }
+  .search-input { padding:0.35rem 0.7rem; background:#080c09; border:1px solid rgba(212,175,55,0.12); color:#F8F6F3; font-size:0.75rem; font-family:'DM Sans',sans-serif; outline:none; width:160px; transition:border-color 0.18s; }
+  .search-input:focus { border-color:#D4AF37; }
+  .search-input::placeholder { color:#2e3d2e; }
 
-  .stats-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:0.75rem; margin-bottom:1.25rem; }
-  .stat-mini { background:#0a1a0f; border:1px solid #14532d; border-radius:8px; padding:0.75rem 1rem; }
-  .stat-mini-label { font-size:0.62rem; font-weight:700; letter-spacing:0.1em; color:#166534; text-transform:uppercase; margin-bottom:0.25rem; }
-  .stat-mini-val { font-size:1.3rem; font-weight:800; color:#22c55e; }
+  /* ── MODAL ── */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:#0c1309; border:1px solid rgba(212,175,55,0.2); width:100%; max-width:420px; padding:2rem; position:relative; }
+  .modal-title { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.5rem; font-weight:700; color:#F8F6F3; margin-bottom:0.25rem; }
+  .modal-sub { font-size:0.72rem; color:#3d4d3d; letter-spacing:0.06em; margin-bottom:1.5rem; }
+  .modal-close { position:absolute; top:1rem; right:1rem; width:28px; height:28px; border:1px solid rgba(212,175,55,0.2); background:transparent; color:#6b7a6b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1rem; transition:border-color 0.15s, color 0.15s; }
+  .modal-close:hover { border-color:#D4AF37; color:#D4AF37; }
+  .modal-actions { display:flex; gap:0.5rem; margin-top:1.25rem; }
+  .modal-actions .btn-gold { flex:1; margin:0; }
+  .modal-actions .btn-ghost { flex:1; justify-content:center; }
+
+  /* ── EMPTY / ERROR ── */
+  .empty-msg { color:#2e3d2e; font-size:0.8rem; padding:2rem; text-align:center; letter-spacing:0.04em; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width:900px) {
+    .main-grid { grid-template-columns:1fr; }
+    .stats-bar { grid-template-columns:1fr 1fr; }
+    .stat-cell:nth-child(2) { border-right:none; }
+    .stat-cell:nth-child(3),
+    .stat-cell:nth-child(4) { border-top:1px solid rgba(212,175,55,0.1); }
+    .nav { padding:0.85rem 1.25rem; }
+    .page { padding:1.25rem; }
+  }
+  @media (max-width:560px) {
+    .stats-bar { grid-template-columns:1fr 1fr; }
+    .lic-detail-grid { grid-template-columns:1fr 1fr; }
+    .two-col { grid-template-columns:1fr; }
+  }
+
+  /* ── TABS ── */
+  .tabs { display:flex; gap:0; border-bottom:1px solid rgba(212,175,55,0.1); margin-bottom:2rem; }
+  .tab { padding:0.75rem 1.5rem; font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#3d4d3d; cursor:pointer; border-bottom:2px solid transparent; transition:color 0.18s,border-color 0.18s; display:flex; align-items:center; gap:0.4rem; }
+  .tab:hover { color:#6b7a6b; }
+  .tab.active { color:#D4AF37; border-bottom-color:#D4AF37; }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* ── CARD GALLERY ── */
+  .card-toolbar { display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center; margin-bottom:1.5rem; }
+  .card-toolbar select, .card-toolbar input { padding:0.45rem 0.7rem; background:#080c09; border:1px solid rgba(212,175,55,0.12); color:#F8F6F3; font-size:0.75rem; font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.18s; }
+  .card-toolbar select:focus, .card-toolbar input:focus { border-color:#D4AF37; }
+  .card-toolbar select option { background:#080c09; }
+  .card-toolbar input::placeholder { color:#2e3d2e; }
+  .card-count { font-size:0.68rem; color:#3d4d3d; letter-spacing:0.06em; margin-left:auto; }
+
+  .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1.25rem; justify-items:center; }
+
+  /* ── FUT CARD ── */
+  .fut-card { width:180px; height:260px; border-radius:12px; border:2px solid; overflow:hidden; position:relative; cursor:pointer; transition:transform 0.22s,box-shadow 0.22s; flex-shrink:0; }
+  .fut-card:hover { transform:translateY(-6px) scale(1.03); }
+  .fut-card .shine { position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.18) 0%,transparent 50%,transparent 100%); pointer-events:none; border-radius:12px; }
+  .fut-card .card-inner { position:relative; height:100%; padding:12px; display:flex; flex-direction:column; }
+
+  /* Card tiers */
+  .fut-card.bronze { background:linear-gradient(135deg,#92633a,#7a5430,#a06d3f); border-color:#5e3d1d; box-shadow:0 6px 24px rgba(146,99,58,0.3); }
+  .fut-card.bronze .card-text { color:#f5dfc0; }
+  .fut-card.bronze .card-accent { color:#f5dfc0; }
+  .fut-card.bronze .stat-bg { background:rgba(0,0,0,0.25); }
+
+  .fut-card.silver { background:linear-gradient(135deg,#b8c4cc,#a0adb8,#c8d4dc); border-color:#7a8a94; box-shadow:0 6px 24px rgba(160,173,184,0.3); }
+  .fut-card.silver .card-text { color:#2a3540; }
+  .fut-card.silver .card-accent { color:#1a252e; }
+  .fut-card.silver .stat-bg { background:rgba(0,0,0,0.12); }
+
+  .fut-card.gold { background:linear-gradient(135deg,#e8b830,#d4a420,#f0c840); border-color:#b08a10; box-shadow:0 6px 24px rgba(212,175,55,0.35); }
+  .fut-card.gold .card-text { color:#3a2800; }
+  .fut-card.gold .card-accent { color:#2a1c00; }
+  .fut-card.gold .stat-bg { background:rgba(0,0,0,0.12); }
+
+  .fut-card.elite { background:linear-gradient(135deg,#7c3aed,#c026d3,#7c3aed); border-color:#5b21b6; box-shadow:0 6px 24px rgba(192,38,211,0.35); }
+  .fut-card.elite .card-text { color:#f0e0ff; }
+  .fut-card.elite .card-accent { color:#e8d0ff; }
+  .fut-card.elite .stat-bg { background:rgba(0,0,0,0.25); }
+
+  .fut-card .top-row { display:flex; justify-content:space-between; align-items:flex-start; }
+  .fut-card .ovr-block { text-align:center; }
+  .fut-card .ovr-num { font-family:'Cormorant Garamond',Georgia,serif; font-size:2rem; font-weight:700; line-height:1; }
+  .fut-card .pos-label { font-size:0.6rem; font-weight:800; letter-spacing:0.08em; }
+  .fut-card .meta-block { display:flex; flex-direction:column; gap:3px; align-items:flex-end; }
+  .fut-card .meta-tag { font-size:0.55rem; font-weight:700; padding:1px 6px; border-radius:3px; letter-spacing:0.04em; }
+
+  .fut-card .player-img { flex:1; display:flex; align-items:center; justify-content:center; margin:4px 0; }
+  .fut-card .player-img svg { width:56px; height:80px; opacity:0.3; }
+  .fut-card .player-img img { max-height:90px; max-width:100%; object-fit:contain; filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4)); border-radius:4px; }
+
+  .fut-card .player-name { text-align:center; font-size:0.72rem; font-weight:800; letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:6px; text-transform:uppercase; }
+
+  .fut-card .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }
+  .fut-card .stat-item { display:flex; align-items:center; justify-content:space-between; padding:2px 5px; border-radius:3px; }
+  .fut-card .stat-label { font-size:0.5rem; font-weight:800; opacity:0.7; }
+  .fut-card .stat-value { font-size:0.7rem; font-weight:800; }
+
+  .fut-card .quality-tag { position:absolute; bottom:4px; right:6px; font-size:0.45rem; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; padding:1px 5px; border-radius:2px; background:rgba(0,0,0,0.25); }
+
+  /* ── PAGINATION ── */
+  .pagination { display:flex; align-items:center; justify-content:center; gap:0.4rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid rgba(212,175,55,0.08); }
+  .page-btn { padding:0.35rem 0.7rem; font-size:0.7rem; font-weight:600; cursor:pointer; border:1px solid rgba(212,175,55,0.2); background:transparent; color:#6b7a6b; font-family:'DM Sans',sans-serif; transition:border-color 0.15s,color 0.15s,background 0.15s; }
+  .page-btn:hover { border-color:#D4AF37; color:#D4AF37; }
+  .page-btn.active { background:#D4AF37; border-color:#D4AF37; color:#080c09; }
+  .page-btn:disabled { opacity:0.3; cursor:default; }
+  .page-info { font-size:0.68rem; color:#3d4d3d; margin:0 0.5rem; }
+
+  /* ── CARD STATS BAR ── */
+  .card-stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid rgba(212,175,55,0.1); margin-bottom:1.5rem; }
+  .card-stat-cell { padding:1rem; text-align:center; border-right:1px solid rgba(212,175,55,0.1); }
+  .card-stat-cell:last-child { border-right:none; }
+  .card-stat-label { font-size:0.55rem; letter-spacing:0.15em; text-transform:uppercase; color:#3d4d3d; font-weight:700; display:flex; align-items:center; justify-content:center; gap:0.3rem; }
+  .card-stat-val { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.8rem; font-weight:700; line-height:1.2; }
+  .card-stat-val.bronze-c { color:#a06d3f; }
+  .card-stat-val.silver-c { color:#b8c4cc; }
+  .card-stat-val.gold-c { color:#D4AF37; }
+  .card-stat-val.elite-c { color:#c026d3; }
+
+  @media (max-width:900px) {
+    .cards-grid { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1rem; }
+    .card-stats-bar { grid-template-columns:1fr 1fr; }
+    .card-stat-cell:nth-child(2) { border-right:none; }
+    .card-stat-cell:nth-child(3),
+    .card-stat-cell:nth-child(4) { border-top:1px solid rgba(212,175,55,0.1); }
+  }
+  @media (max-width:560px) {
+    .cards-grid { grid-template-columns:repeat(2,1fr); gap:0.75rem; }
+    .fut-card { width:160px; height:235px; }
+  }
 </style>
 </head>
 <body>
 
-<div style="background:#030a06;padding:0.6rem 1.5rem;text-align:center;border-bottom:1px solid #14532d66;font-size:0.72rem;color:#166534;letter-spacing:0.06em">
-  KADROKUR — LİSANS YÖNETİM PANELİ &nbsp;|&nbsp; Admin erişimi gerektirir
-</div>
+<!-- NAV -->
+<nav class="nav">
+  <div>
+    <div class="nav-logo">Kadrokur<span class="nav-logo-dot"></span></div>
+    <div class="nav-sub">Lisans Yönetim Paneli</div>
+  </div>
+  <div class="nav-right">
+    <a class="nav-btn" href="/broadcaster">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Yayıncı Paneli
+    </a>
+    <button class="nav-btn danger" onclick="handleLogout()">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Çıkış
+    </button>
+  </div>
+</nav>
 
 <div class="page">
 
-  <div class="header">
-    <div class="header-left">
-      <div class="logo-icon">
-        <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      </div>
-      <div>
-        <div class="logo-text">KADROKUR</div>
-        <div class="logo-sub">LİSANS YÖNETİM PANELİ</div>
-      </div>
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" data-tab="licenses" onclick="switchTab('licenses')">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      Lisanslar
     </div>
-    <div style="display:flex;align-items:center;gap:0.75rem">
-      <button class="back-btn" onclick="handleLogout()" style="background:#7f1d1d12;border-color:#dc262633;color:#fca5a5">
-        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        Çıkış Yap
-      </button>
-      <a class="back-btn" href="/broadcaster">
-        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Yayıncı Paneline Dön
-      </a>
+    <div class="tab" data-tab="cards" onclick="switchTab('cards')">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 4v16M2 12h20"/></svg>
+      Futbol Kartları
     </div>
   </div>
 
-  <div class="stats-strip">
-    <div class="stat-mini" id="stat-total">
-      <div class="stat-mini-label">Toplam Lisans</div>
-      <div class="stat-mini-val" id="val-total">—</div>
+  <!-- TAB: LICENSES -->
+  <div class="tab-content active" id="tab-licenses">
+    <!-- STATS -->
+    <div class="stats-bar">
+      <div class="stat-cell">
+        <div class="stat-label">
+          <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Toplam
+        </div>
+        <div class="stat-val" id="val-total">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">
+          <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Aktif
+        </div>
+        <div class="stat-val ok" id="val-active">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">
+          <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+          Süresi Dolmuş
+        </div>
+        <div class="stat-val warn" id="val-expired">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">
+          <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Bu Ay
+        </div>
+        <div class="stat-val" id="val-thismonth">—</div>
+      </div>
     </div>
-    <div class="stat-mini">
-      <div class="stat-mini-label">Aktif</div>
-      <div class="stat-mini-val" style="color:#22c55e" id="val-active">—</div>
-    </div>
-    <div class="stat-mini">
-      <div class="stat-mini-label">Süresi Dolmuş</div>
-      <div class="stat-mini-val" style="color:#fca5a5" id="val-expired">—</div>
-    </div>
-    <div class="stat-mini">
-      <div class="stat-mini-label">Bu Ay Oluşturulan</div>
-      <div class="stat-mini-val" id="val-thismonth">—</div>
+
+    <div class="main-grid">
+
+      <!-- LEFT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:1.25rem">
+
+        <!-- PACKAGE SELECT -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              Paket Seç
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="pkg-list" id="pkg-list"></div>
+          </div>
+        </div>
+
+        <!-- CREATE LICENSE -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Lisans Oluştur
+            </div>
+          </div>
+          <div class="panel-body">
+            <form id="create-form" onsubmit="handleCreate(event)">
+              <div class="field"><label>Kullanıcı Adı</label><input type="text" id="f-username" placeholder="@yayinci_adi" required></div>
+              <div class="field"><label>E-posta</label><input type="email" id="f-email" placeholder="ornek@email.com" required></div>
+              <div class="two-col">
+                <div class="field"><label>Başlangıç Tarihi</label><input type="date" id="f-startdate" required></div>
+                <div class="field"><label>Süre (Gün)</label><input type="number" id="f-duration" value="90" min="1" required></div>
+              </div>
+              <div style="margin-bottom:0.85rem">
+                <label style="display:block;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#6b7a6b;margin-bottom:0.5rem">İzinler</label>
+                <div class="checkbox-row"><input type="checkbox" id="perm-manual" checked><label for="perm-manual">Manuel Mod</label></div>
+                <div class="checkbox-row"><input type="checkbox" id="perm-auto" checked><label for="perm-auto">Otomatik Mod</label></div>
+                <div class="checkbox-row"><input type="checkbox" id="perm-admin"><label for="perm-admin">Admin Erişimi</label></div>
+              </div>
+              <div class="field"><label>Not (İsteğe Bağlı)</label><input type="text" id="f-note" placeholder="Sipariş notu..."></div>
+              <button type="submit" class="btn-gold">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Lisans Oluştur
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: LICENSES -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Lisanslar
+          </div>
+          <input type="text" class="search-input" placeholder="Ara..." oninput="filterLicenses(this.value)">
+        </div>
+        <div class="panel-body">
+          <div class="lic-list" id="lic-list">
+            <div class="empty-msg">Lisanslar yükleniyor…</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <div class="grid">
-
-    <div style="display:flex;flex-direction:column;gap:1rem">
-
-      <div class="panel">
-        <div class="panel-title">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-          Paket Sec
-        </div>
-        <div class="pkg-list" id="pkg-list">
-          <div class="pkg-item" data-pkg="starter" onclick="selectPkg(this)">
-            <div class="pkg-top"><div class="pkg-name">Baslangic</div><div class="pkg-price">149 TL</div></div>
-            <div class="pkg-desc">30 gunluk lisans</div>
-            <div class="pkg-badges"><span class="badge">Manuel Mod</span><span class="badge">1 Oturum</span></div>
-          </div>
-          <div class="pkg-item selected" data-pkg="pro" onclick="selectPkg(this)">
-            <div class="pkg-top"><div class="pkg-name">Profesyonel</div><div class="pkg-price">349 TL</div></div>
-            <div class="pkg-desc">90 gunluk lisans — En Populer</div>
-            <div class="pkg-badges"><span class="badge">Manuel + Otomatik</span><span class="badge">Sinirsiz Oturum</span><span class="badge gold">Oncelikli Destek</span></div>
-          </div>
-          <div class="pkg-item" data-pkg="annual" onclick="selectPkg(this)">
-            <div class="pkg-top"><div class="pkg-name">Yillik</div><div class="pkg-price">999 TL</div></div>
-            <div class="pkg-desc">365 gunluk lisans</div>
-            <div class="pkg-badges"><span class="badge">Tum Ozellikler</span><span class="badge gold">VIP Destek</span></div>
-          </div>
-        </div>
+  <!-- TAB: CARDS -->
+  <div class="tab-content" id="tab-cards">
+    <!-- Card stats -->
+    <div class="card-stats-bar" id="card-stats-bar">
+      <div class="card-stat-cell">
+        <div class="card-stat-label">Bronze</div>
+        <div class="card-stat-val bronze-c" id="cs-bronze">—</div>
       </div>
-
-      <div class="panel">
-        <div class="panel-title">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          Lisans Olustur
-        </div>
-        <form id="create-form" onsubmit="handleCreate(event)">
-          <div class="field"><label>Kullanici Adi</label><input type="text" id="f-username" placeholder="@yayinci_adi" required></div>
-          <div class="field"><label>E-posta</label><input type="email" id="f-email" placeholder="ornek@email.com" required></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem">
-            <div class="field"><label>Baslangic Tarihi</label><input type="date" id="f-startdate" required></div>
-            <div class="field"><label>Sure (Gun)</label><input type="number" id="f-duration" value="90" min="1" required></div>
-          </div>
-          <div style="margin-bottom:0.85rem">
-            <label style="margin-bottom:0.5rem">Izinler</label>
-            <div class="checkbox-row"><input type="checkbox" id="perm-manual" checked><label for="perm-manual">Manuel Mod</label></div>
-            <div class="checkbox-row"><input type="checkbox" id="perm-auto" checked><label for="perm-auto">Otomatik Mod</label></div>
-            <div class="checkbox-row"><input type="checkbox" id="perm-admin"><label for="perm-admin">Admin Erisimi</label></div>
-          </div>
-          <div class="field"><label>Not (Istege Bagli)</label><input type="text" id="f-note" placeholder="Siparis notu..."></div>
-          <button type="submit" class="btn-primary">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-            Lisans Olustur
-          </button>
-        </form>
+      <div class="card-stat-cell">
+        <div class="card-stat-label">Silver</div>
+        <div class="card-stat-val silver-c" id="cs-silver">—</div>
+      </div>
+      <div class="card-stat-cell">
+        <div class="card-stat-label">Gold</div>
+        <div class="card-stat-val gold-c" id="cs-gold">—</div>
+      </div>
+      <div class="card-stat-cell">
+        <div class="card-stat-label">Elite</div>
+        <div class="card-stat-val elite-c" id="cs-elite">—</div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-title" style="justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:0.6rem">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          Lisanslar
-        </div>
-        <input type="text" id="search-input" placeholder="Ara..." style="width:180px;padding:0.3rem 0.6rem;font-size:0.75rem" oninput="filterLicenses(this.value)">
+    <!-- Image Stats -->
+    <div style="display:flex;gap:0.75rem;align-items:center;justify-content:center;margin-bottom:1.5rem;padding:0.75rem;border:1px solid rgba(212,175,55,0.08);background:rgba(212,175,55,0.02);">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="opacity:0.5;">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+        </svg>
+        <span style="font-size:0.7rem;color:#6b7a6b;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Fotoğraflı:</span>
+        <span style="font-size:0.85rem;color:#D4AF37;font-weight:700;" id="img-with">—</span>
       </div>
-      <div class="lic-list" id="lic-list">
-        <div style="color:#166534;font-size:0.8rem;padding:1rem;text-align:center">Lisanslar yukleniyor...</div>
+      <div style="width:1px;height:18px;background:rgba(212,175,55,0.15);"></div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="opacity:0.3;">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="3" x2="21" y2="21"/>
+        </svg>
+        <span style="font-size:0.7rem;color:#6b7a6b;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Fotoğrafsız:</span>
+        <span style="font-size:0.85rem;color:#ef4444;font-weight:700;" id="img-without">—</span>
       </div>
+      <div style="width:1px;height:18px;background:rgba(212,175,55,0.15);"></div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="font-size:0.7rem;color:#6b7a6b;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Toplam:</span>
+        <span style="font-size:0.85rem;color:#F8F6F3;font-weight:700;" id="img-total">—</span>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="card-toolbar">
+      <select id="card-filter-quality" onchange="loadCards()">
+        <option value="">Tüm Tipler</option>
+        <option value="bronze">Bronze</option>
+        <option value="silver">Silver</option>
+        <option value="gold">Gold</option>
+        <option value="elite">Elite</option>
+      </select>
+      <select id="card-filter-position" onchange="loadCards()">
+        <option value="">Tüm Pozisyonlar</option>
+        <option value="GK">GK</option>
+        <option value="CB">CB</option>
+        <option value="LB">LB</option>
+        <option value="RB">RB</option>
+        <option value="CDM">CDM</option>
+        <option value="CM">CM</option>
+        <option value="CAM">CAM</option>
+        <option value="LW">LW</option>
+        <option value="RW">RW</option>
+        <option value="ST">ST</option>
+      </select>
+      <select id="card-filter-league" onchange="loadCards()">
+        <option value="">Tüm Ligler</option>
+      </select>
+      <input type="text" id="card-search" placeholder="Oyuncu, takım, ülke ara..." style="width:200px" onkeyup="debounceSearch()">
+      <div class="card-count" id="card-count"></div>
+    </div>
+
+    <!-- Cards grid -->
+    <div class="cards-grid" id="cards-grid">
+      <div class="empty-msg">Kartlar yükleniyor…</div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="card-pagination"></div>
+  </div>
+
+</div>
+
+<!-- EDIT PACKAGE MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Paket Düzenle</div>
+    <div class="modal-sub" id="modal-pkg-id">—</div>
+    <input type="hidden" id="edit-pkg-id">
+    <div class="field"><label>Paket Adı</label><input type="text" id="edit-name" placeholder="Profesyonel"></div>
+    <div class="two-col">
+      <div class="field"><label>Fiyat</label><input type="text" id="edit-price" placeholder="349 TL"></div>
+      <div class="field"><label>Süre (Gün)</label><input type="number" id="edit-duration" min="1"></div>
+    </div>
+    <div class="field"><label>Açıklama</label><input type="text" id="edit-desc" placeholder="90 günlük lisans"></div>
+    <div class="field"><label>Rozetler (virgülle ayır)</label><input type="text" id="edit-badges" placeholder="Manuel Mod, Sınırsız Oturum"></div>
+    <div class="field"><label>Altın Rozet (tek, isteğe bağlı)</label><input type="text" id="edit-gold-badge" placeholder="Öncelikli Destek"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">İptal</button>
+      <button class="btn-gold" onclick="savePkg()" style="margin:0">Kaydet</button>
     </div>
   </div>
 </div>
 
 <script>
-  // Auth guard
+  // ── Auth guard (kart galerisi herkese açık) ──────────────────────────────────
   (async () => {
     try {
       const r = await fetch('/api/admin/me');
-      if (!r.ok) location.href = '/admin-login.html';
-    } catch {
-      location.href = '/admin-login.html';
-    }
+      window.isAdmin = r.ok;
+    } catch { window.isAdmin = false; }
   })();
 
-  // Logout handler
   async function handleLogout() {
     try {
-      const response = await fetch('/api/admin/logout', { method: 'POST' });
-      if (response.ok) {
-        location.href = '/admin-login.html';
-      } else {
-        alert('Çıkış işlemi başarısız oldu');
-      }
-    } catch {
-      location.href = '/admin-login.html';
-    }
+      const r = await fetch('/api/admin/logout', { method: 'POST' });
+      if (r.ok) location.href = '/admin-login.html';
+      else alert('Çıkış işlemi başarısız oldu');
+    } catch { location.href = '/admin-login.html'; }
   }
 
-  function selectPkg(el) {
-    document.querySelectorAll('.pkg-item').forEach(i => i.classList.remove('selected'));
-    el.classList.add('selected');
+  // ── Packages ───────────────────────────────────────────────────────────────
+  const DEFAULT_PKGS = [
+    { id:'starter', name:'Başlangıç',     price:'149 TL', desc:'30 günlük lisans',             duration:30,  badges:['Manuel Mod','1 Oturum'],                           goldBadge:null              },
+    { id:'pro',     name:'Profesyonel',   price:'349 TL', desc:'90 günlük lisans — En Popüler', duration:90,  badges:['Manuel + Otomatik','Sınırsız Oturum'],            goldBadge:'Öncelikli Destek' },
+    { id:'annual',  name:'Yıllık',        price:'999 TL', desc:'365 günlük lisans',             duration:365, badges:['Tüm Özellikler'],                                  goldBadge:'VIP Destek'       },
+  ];
+
+  function loadPkgs() {
+    try { return JSON.parse(localStorage.getItem('kadrokur_pkgs')) || DEFAULT_PKGS; }
+    catch { return DEFAULT_PKGS; }
   }
 
-  document.getElementById('f-startdate').value = new Date().toISOString().split('T')[0];
+  function savePkgsLocal(pkgs) {
+    localStorage.setItem('kadrokur_pkgs', JSON.stringify(pkgs));
+  }
+
+  let packages = loadPkgs();
+  let selectedPkgId = packages[1]?.id || packages[0]?.id;
+
+  function renderPkgs() {
+    const list = document.getElementById('pkg-list');
+    list.innerHTML = packages.map(p => `
+      <div class="pkg-item${p.id === selectedPkgId ? ' selected' : ''}" data-pkg="${p.id}" onclick="selectPkg('${p.id}')">
+        <button class="pkg-edit-btn" onclick="event.stopPropagation();openModal('${p.id}')" title="Düzenle">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+        </button>
+        <div class="pkg-top">
+          <div class="pkg-name">${p.name}</div>
+          <div class="pkg-price">${p.price}</div>
+        </div>
+        <div class="pkg-desc">${p.desc}</div>
+        <div class="pkg-badges">
+          ${p.badges.map(b => `<span class="badge">${b}</span>`).join('')}
+          ${p.goldBadge ? `<span class="badge gold">${p.goldBadge}</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+    // sync duration field
+    const pkg = packages.find(p => p.id === selectedPkgId);
+    if (pkg) document.getElementById('f-duration').value = pkg.duration;
+  }
+
+  function selectPkg(id) {
+    selectedPkgId = id;
+    const pkg = packages.find(p => p.id === id);
+    if (pkg) document.getElementById('f-duration').value = pkg.duration;
+    renderPkgs();
+  }
+
+  // ── Edit modal ─────────────────────────────────────────────────────────────
+  function openModal(id) {
+    const pkg = packages.find(p => p.id === id);
+    if (!pkg) return;
+    document.getElementById('edit-pkg-id').value = id;
+    document.getElementById('modal-pkg-id').textContent = pkg.name;
+    document.getElementById('edit-name').value = pkg.name;
+    document.getElementById('edit-price').value = pkg.price;
+    document.getElementById('edit-duration').value = pkg.duration;
+    document.getElementById('edit-desc').value = pkg.desc;
+    document.getElementById('edit-badges').value = pkg.badges.join(', ');
+    document.getElementById('edit-gold-badge').value = pkg.goldBadge || '';
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+  }
+
+  function savePkg() {
+    const id = document.getElementById('edit-pkg-id').value;
+    const idx = packages.findIndex(p => p.id === id);
+    if (idx === -1) return;
+    const badgesRaw = document.getElementById('edit-badges').value;
+    packages[idx] = {
+      id,
+      name:      document.getElementById('edit-name').value.trim() || packages[idx].name,
+      price:     document.getElementById('edit-price').value.trim() || packages[idx].price,
+      duration:  parseInt(document.getElementById('edit-duration').value) || packages[idx].duration,
+      desc:      document.getElementById('edit-desc').value.trim(),
+      badges:    badgesRaw.split(',').map(s => s.trim()).filter(Boolean),
+      goldBadge: document.getElementById('edit-gold-badge').value.trim() || null,
+    };
+    savePkgsLocal(packages);
+    renderPkgs();
+    closeModal();
+  }
+
+  // close modal clicking overlay
+  document.getElementById('edit-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // ── Licenses ───────────────────────────────────────────────────────────────
+  let allLicenses = [];
 
   async function loadLicenses() {
     try {
-      const res = await fetch('/api/licenses');
-      if (!res.ok) throw new Error('API error');
-      const data = await res.json();
-      renderLicenses(data.licenses || []);
-      updateStats(data.licenses || []);
+      const res = await fetch('/api/trpc/license.getAll');
+      if (!res.ok) throw new Error();
+      const raw = await res.json();
+      const licenses = raw.result?.data?.json || raw.result?.data || [];
+      // Map server fields to UI fields
+      allLicenses = (Array.isArray(licenses) ? licenses : []).map(l => ({
+        ...l,
+        username: l.broadcasterName || l.username || '—',
+        expiresAt: l.expiresAt ? (typeof l.expiresAt === 'string' ? l.expiresAt : new Date(l.expiresAt).toISOString()) : null,
+        createdAt: l.createdAt ? (typeof l.createdAt === 'string' ? l.createdAt : new Date(l.createdAt).toISOString()) : null,
+        permissions: l.features || l.permissions || {},
+        usageCount: l.usageCount || 0,
+      }));
+      renderLicenses(allLicenses);
+      updateStats(allLicenses);
     } catch (e) {
-      document.getElementById('lic-list').innerHTML = '<div style="color:#166534;font-size:0.8rem;padding:1rem;text-align:center">Lisans verisi yuklenemedi.</div>';
+      console.error('Lisans yükleme hatası:', e);
+      document.getElementById('lic-list').innerHTML = '<div class="empty-msg">Lisans verisi yüklenemedi.</div>';
     }
   }
 
   function updateStats(licenses) {
     const now = new Date();
-    const active = licenses.filter(l => new Date(l.expiresAt) > now);
-    const expired = licenses.filter(l => new Date(l.expiresAt) <= now);
+    const active   = licenses.filter(l => new Date(l.expiresAt) > now);
+    const expired  = licenses.filter(l => new Date(l.expiresAt) <= now);
     const thisMonth = licenses.filter(l => {
       const d = new Date(l.createdAt);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
-    document.getElementById('val-total').textContent = licenses.length;
-    document.getElementById('val-active').textContent = active.length;
-    document.getElementById('val-expired').textContent = expired.length;
-    document.getElementById('val-thismonth').textContent = thisMonth.length;
-  }
-
-  let allLicenses = [];
-
-  function renderLicenses(licenses) {
-    allLicenses = licenses;
-    _render(licenses);
+    document.getElementById('val-total').textContent      = licenses.length;
+    document.getElementById('val-active').textContent     = active.length;
+    document.getElementById('val-expired').textContent    = expired.length;
+    document.getElementById('val-thismonth').textContent  = thisMonth.length;
   }
 
   function filterLicenses(q) {
-    const filtered = allLicenses.filter(l =>
+    const f = allLicenses.filter(l =>
       l.licenseKey.toLowerCase().includes(q.toLowerCase()) ||
       (l.username || '').toLowerCase().includes(q.toLowerCase())
     );
-    _render(filtered);
+    renderLicenses(f);
   }
 
-  function _render(licenses) {
+  function renderLicenses(licenses) {
     const container = document.getElementById('lic-list');
     if (!licenses.length) {
-      container.innerHTML = '<div style="color:#166534;font-size:0.8rem;padding:1rem;text-align:center">Lisans bulunamadi.</div>';
+      container.innerHTML = '<div class="empty-msg">Lisans bulunamadı.</div>';
       return;
     }
     container.innerHTML = licenses.map(l => {
       const isActive = new Date(l.expiresAt) > new Date();
       const daysLeft = Math.ceil((new Date(l.expiresAt) - new Date()) / 86400000);
-      const daysColor = daysLeft > 30 ? '#22c55e' : daysLeft > 7 ? '#fbbf24' : '#fca5a5';
+      const daysColor = daysLeft > 30 ? '#D4AF37' : daysLeft > 7 ? '#fbbf24' : '#fca5a5';
       return `
         <div class="lic-item${isActive ? '' : ' expired'}">
           <div class="lic-header">
@@ -285,29 +650,32 @@
               <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
               ${l.licenseKey}
             </div>
-            <div class="lic-badge ${isActive ? 'active' : 'expired'}">${isActive ? 'Aktif' : 'Suresi Doldu'}</div>
+            <div class="lic-badge ${isActive ? 'active' : 'expired'}">${isActive ? 'Aktif' : 'Süresi Doldu'}</div>
           </div>
           <div class="lic-detail-grid">
-            <div><div class="lic-detail-label">Kullanici</div><div class="lic-detail-val">${l.username || '—'}</div></div>
+            <div><div class="lic-detail-label">Kullanıcı</div><div class="lic-detail-val">${l.username || '—'}</div></div>
             <div><div class="lic-detail-label">Paket</div><div class="lic-detail-val">${l.packageType || '—'}</div></div>
-            <div><div class="lic-detail-label">Bitis</div><div class="lic-detail-val">${l.expiresAt ? l.expiresAt.split('T')[0] : '—'}</div></div>
-            <div><div class="lic-detail-label">Kullanim</div><div class="lic-detail-val">${l.usageCount ?? 0} oturum</div></div>
+            <div><div class="lic-detail-label">Bitiş</div><div class="lic-detail-val">${l.expiresAt ? l.expiresAt.split('T')[0] : '—'}</div></div>
+            <div><div class="lic-detail-label">Kullanım</div><div class="lic-detail-val">${l.usageCount ?? 0} oturum</div></div>
             <div><div class="lic-detail-label">Mod</div><div class="lic-detail-val">${l.permissions?.autoMode ? 'Manuel + Oto' : 'Manuel'}</div></div>
-            <div><div class="lic-detail-label">Kalan</div><div class="lic-detail-val" style="color:${daysColor}">${isActive ? daysLeft + ' gun' : '—'}</div></div>
+            <div><div class="lic-detail-label">Kalan</div><div class="lic-detail-val" style="color:${daysColor}">${isActive ? daysLeft + ' gün' : '—'}</div></div>
           </div>
           <div class="lic-actions">
             <button class="act-btn copy" onclick="copyKey('${l.licenseKey}')">
               <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               Kopyala
             </button>
-            ${isActive ? `<button class="act-btn extend" onclick="extendLicense('${l.id}')">
-              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><path d="M16 5l2 2-8 8-4 1 1-4z"/></svg>
-              Uzat
-            </button>
-            <button class="act-btn revoke" onclick="revokeLicense('${l.id}')">
-              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
-              Iptal Et
-            </button>` : `<button class="act-btn extend" onclick="renewLicense('${l.id}')">Yenile</button>`}
+            ${isActive
+              ? `<button class="act-btn extend" onclick="extendLicense('${l.id}')">
+                  <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><path d="M16 5l2 2-8 8-4 1 1-4z"/></svg>
+                  Uzat
+                </button>
+                <button class="act-btn revoke" onclick="revokeLicense('${l.id}')">
+                  <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+                  İptal Et
+                </button>`
+              : `<button class="act-btn extend" onclick="renewLicense('${l.id}')">Yenile</button>`
+            }
           </div>
         </div>
       `;
@@ -315,62 +683,281 @@
   }
 
   function copyKey(key) {
-    navigator.clipboard.writeText(key).then(() => alert('Lisans anahtari kopyalandi'));
+    navigator.clipboard.writeText(key).then(() => alert('Lisans anahtarı kopyalandı.'));
   }
 
   async function extendLicense(id) {
-    const days = prompt('Kac gun uzatmak istiyorsunuz?', '30');
+    const days = prompt('Kaç gün uzatmak istiyorsunuz?', '30');
     if (!days) return;
     try {
-      const res = await fetch(`/api/licenses/${id}/extend`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: parseInt(days) }) });
-      if (res.ok) { alert('Lisans uzatildi'); loadLicenses(); }
-      else alert('Islem basarisiz');
-    } catch { alert('Sunucu hatasi'); }
+      const res = await fetch(`/api/licenses/${id}/extend`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ days: parseInt(days) }) });
+      if (res.ok) { alert('Lisans uzatıldı.'); loadLicenses(); }
+      else alert('İşlem başarısız.');
+    } catch { alert('Sunucu hatası.'); }
   }
 
   async function revokeLicense(id) {
-    if (!confirm('Bu lisansi iptal etmek istediginizden emin misiniz?')) return;
+    if (!confirm('Bu lisansı iptal etmek istediğinizden emin misiniz?')) return;
     try {
-      const res = await fetch(`/api/licenses/${id}`, { method: 'DELETE' });
-      if (res.ok) { alert('Lisans iptal edildi'); loadLicenses(); }
-      else alert('Islem basarisiz');
-    } catch { alert('Sunucu hatasi'); }
+      const res = await fetch(`/api/licenses/${id}`, { method:'DELETE' });
+      if (res.ok) { alert('Lisans iptal edildi.'); loadLicenses(); }
+      else alert('İşlem başarısız.');
+    } catch { alert('Sunucu hatası.'); }
   }
 
   async function renewLicense(id) {
-    const days = prompt('Kac gunluk yenileme yapmak istiyorsunuz?', '30');
+    const days = prompt('Kaç günlük yenileme yapmak istiyorsunuz?', '30');
     if (!days) return;
     try {
-      const res = await fetch(`/api/licenses/${id}/renew`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: parseInt(days) }) });
-      if (res.ok) { alert('Lisans yenilendi'); loadLicenses(); }
-      else alert('Islem basarisiz');
-    } catch { alert('Sunucu hatasi'); }
+      const res = await fetch(`/api/licenses/${id}/renew`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ days: parseInt(days) }) });
+      if (res.ok) { alert('Lisans yenilendi.'); loadLicenses(); }
+      else alert('İşlem başarısız.');
+    } catch { alert('Sunucu hatası.'); }
   }
 
   async function handleCreate(e) {
     e.preventDefault();
-    const selectedPkg = document.querySelector('.pkg-item.selected')?.dataset.pkg || 'pro';
     const body = {
-      username: document.getElementById('f-username').value,
-      email: document.getElementById('f-email').value,
-      startDate: document.getElementById('f-startdate').value,
+      username:     document.getElementById('f-username').value,
+      email:        document.getElementById('f-email').value,
+      startDate:    document.getElementById('f-startdate').value,
       durationDays: parseInt(document.getElementById('f-duration').value),
-      packageType: selectedPkg,
-      note: document.getElementById('f-note').value,
+      packageType:  selectedPkgId,
+      note:         document.getElementById('f-note').value,
       permissions: {
-        manualMode: document.getElementById('perm-manual').checked,
-        autoMode: document.getElementById('perm-auto').checked,
+        manualMode:  document.getElementById('perm-manual').checked,
+        autoMode:    document.getElementById('perm-auto').checked,
         adminAccess: document.getElementById('perm-admin').checked,
       }
     };
     try {
-      const res = await fetch('/api/licenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (res.ok) { alert('Lisans olusturuldu'); document.getElementById('create-form').reset(); loadLicenses(); }
+      const res = await fetch('/api/licenses', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      if (res.ok) { alert('Lisans oluşturuldu.'); document.getElementById('create-form').reset(); document.getElementById('f-startdate').value = new Date().toISOString().split('T')[0]; loadLicenses(); }
       else { const err = await res.json(); alert('Hata: ' + (err.message || 'Bilinmeyen hata')); }
-    } catch { alert('Sunucu hatasi'); }
+    } catch { alert('Sunucu hatası.'); }
   }
 
+  // ── Init ───────────────────────────────────────────────────────────────────
+  document.getElementById('f-startdate').value = new Date().toISOString().split('T')[0];
+  renderPkgs();
   loadLicenses();
+
+  // ── TAB SYSTEM ─────────────────────────────────────────────────────────────
+  function switchTab(tabName) {
+    console.log('Switching to tab:', tabName);
+    // Hide all tabs
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    // Show selected tab
+    const tabBtn = document.querySelector(`.tab[data-tab="${tabName}"]`);
+    const tabContent = document.getElementById(`tab-${tabName}`);
+
+    if (!tabBtn || !tabContent) {
+      console.error('Tab elements not found:', tabName);
+      return;
+    }
+
+    tabBtn.classList.add('active');
+    tabContent.classList.add('active');
+
+    // Load cards on first visit
+    if (tabName === 'cards' && !window.cardsLoaded) {
+      console.log('Loading cards for first time...');
+      loadCardStats();
+      loadImageStats();
+      loadLeagues();
+      loadCards();
+      window.cardsLoaded = true;
+    }
+  }
+
+  // ── CARD GALLERY ───────────────────────────────────────────────────────────
+  let currentPage = 1;
+  let totalCardPages = 1;
+  let searchTimeout = null;
+
+  async function loadCardStats() {
+    try {
+      const r = await fetch('/api/players/stats');
+      if (!r.ok) return;
+      const data = await r.json();
+      const stats = data.stats || [];
+      const counts = { bronze: 0, silver: 0, gold: 0, elite: 0 };
+      stats.forEach(s => { counts[s.cardQuality] = s.count; });
+      document.getElementById('cs-bronze').textContent = counts.bronze;
+      document.getElementById('cs-silver').textContent = counts.silver;
+      document.getElementById('cs-gold').textContent = counts.gold;
+      document.getElementById('cs-elite').textContent = counts.elite;
+    } catch (e) {
+      console.error('Card stats load error:', e);
+    }
+  }
+
+  async function loadLeagues() {
+    try {
+      const r = await fetch('/api/players/leagues');
+      if (!r.ok) return;
+      const leagues = await r.json();
+      const select = document.getElementById('card-filter-league');
+      select.innerHTML = '<option value="">Tüm Ligler</option>' + leagues.map(l => `<option value="${l}">${l}</option>`).join('');
+    } catch (e) {
+      console.error('Leagues load error:', e);
+    }
+  }
+
+  async function loadCards(page = 1) {
+    currentPage = page;
+    const quality = document.getElementById('card-filter-quality').value;
+    const position = document.getElementById('card-filter-position').value;
+    const league = document.getElementById('card-filter-league').value;
+    const search = document.getElementById('card-search').value;
+
+    const params = new URLSearchParams({
+      page: currentPage,
+      limit: 20,
+      ...(quality && { cardQuality: quality }),
+      ...(position && { position }),
+      ...(league && { league }),
+      ...(search && { search }),
+    });
+
+    try {
+      const r = await fetch(`/api/players?${params}`);
+      if (!r.ok) throw new Error();
+      const result = await r.json();
+      const playersList = result?.players || [];
+      totalCardPages = result?.totalPages || 1;
+
+      renderCards(playersList);
+      renderPagination(result?.total || 0);
+    } catch (e) {
+      console.error('Cards load error:', e);
+      document.getElementById('cards-grid').innerHTML = '<div class="empty-msg">Kartlar yüklenemedi.</div>';
+    }
+  }
+
+  function renderCards(players) {
+    const grid = document.getElementById('cards-grid');
+    if (!players.length) {
+      grid.innerHTML = '<div class="empty-msg">Oyuncu bulunamadı.</div>';
+      return;
+    }
+
+    grid.innerHTML = players.map(p => {
+      const isGK = p.position === 'GK';
+      const stats = isGK
+        ? [
+            { label: 'DIV', value: p.diving || 0 },
+            { label: 'HAN', value: p.handling || 0 },
+            { label: 'KIC', value: p.kicking || 0 },
+            { label: 'REF', value: p.reflexes || 0 },
+            { label: 'SPD', value: p.pace || 0 },
+            { label: 'POS', value: p.positioning || 0 },
+          ]
+        : [
+            { label: 'PAC', value: p.pace || 0 },
+            { label: 'SHO', value: p.shooting || 0 },
+            { label: 'PAS', value: p.passing || 0 },
+            { label: 'DRI', value: p.dribbling || 0 },
+            { label: 'DEF', value: p.defending || 0 },
+            { label: 'PHY', value: p.physical || 0 },
+          ];
+
+      const imgSrc = getPlayerImage(p);
+
+      return '<div class="fut-card ' + p.cardQuality + '" title="' + p.name + ' - ' + p.team + '">'
+        + '<div class="shine"></div>'
+        + '<div class="card-inner">'
+        +   '<div class="top-row">'
+        +     '<div class="ovr-block card-text">'
+        +       '<div class="ovr-num">' + p.overall + '</div>'
+        +       '<div class="pos-label">' + p.position + '</div>'
+        +     '</div>'
+        +     '<div class="meta-block">'
+        +       '<div class="meta-tag stat-bg card-text">' + (p.nation || '???').slice(0,3).toUpperCase() + '</div>'
+        +       '<div class="meta-tag stat-bg card-text">' + (p.team || 'CLUB').slice(0,3).toUpperCase() + '</div>'
+        +     '</div>'
+        +   '</div>'
+        +   '<div class="player-img">'
+        +     '<img src="' + imgSrc + '" alt="' + p.name + '" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=getFallbackAvatar(\'' + encodeURIComponent(p.name) + '\')">'
+        +   '</div>'
+        +   '<div class="player-name card-accent">' + p.name + '</div>'
+        +   '<div class="stats-row">'
+        +     stats.map(function(s) {
+                return '<div class="stat-item stat-bg">'
+                  + '<span class="stat-label card-text">' + s.label + '</span>'
+                  + '<span class="stat-value card-text">' + s.value + '</span>'
+                  + '</div>';
+              }).join('')
+        +   '</div>'
+        +   '<div class="quality-tag card-text">' + p.cardQuality + '</div>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function getPlayerImage(p) {
+    var url = p.faceImageUrl || p.imageUrl;
+    if (!url || url === '') return getFallbackAvatar(encodeURIComponent(p.name));
+    return url;
+  }
+
+  function getFallbackAvatar(encodedName) {
+    return 'https://ui-avatars.com/api/?name=' + encodedName + '&background=6b7280&color=ffffff&size=200&bold=true&format=png';
+  }
+
+  // Live image counter - updates as images load/fail on the page
+  var imgOkCount = 0;
+  var imgFailCount = 0;
+
+  function updateImageCounter() {
+    var el = document.getElementById('img-live-ok');
+    var el2 = document.getElementById('img-live-fail');
+    if (el) el.textContent = imgOkCount;
+    if (el2) el2.textContent = imgFailCount;
+  }
+
+  async function loadImageStats() {
+    try {
+      var r = await fetch('/api/players/image-stats');
+      if (!r.ok) return;
+      var data = await r.json();
+      document.getElementById('img-with').textContent = data.withImage;
+      document.getElementById('img-without').textContent = data.withoutImage;
+      document.getElementById('img-total').textContent = data.total;
+    } catch(e) {
+      console.error('Image stats error:', e);
+    }
+  }
+
+  function renderPagination(total) {
+    document.getElementById('card-count').textContent = `${total} oyuncu`;
+    const pag = document.getElementById('card-pagination');
+    if (totalCardPages <= 1) {
+      pag.innerHTML = '';
+      return;
+    }
+
+    let html = '';
+    html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="loadCards(1)">&laquo;</button>`;
+    html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="loadCards(${currentPage - 1})">&lt;</button>`;
+
+    const range = 2;
+    for (let i = Math.max(1, currentPage - range); i <= Math.min(totalCardPages, currentPage + range); i++) {
+      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="loadCards(${i})">${i}</button>`;
+    }
+
+    html += `<button class="page-btn" ${currentPage === totalCardPages ? 'disabled' : ''} onclick="loadCards(${currentPage + 1})">&gt;</button>`;
+    html += `<button class="page-btn" ${currentPage === totalCardPages ? 'disabled' : ''} onclick="loadCards(${totalCardPages})">&raquo;</button>`;
+
+    pag.innerHTML = html;
+  }
+
+  function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => loadCards(1), 400);
+  }
+
 </script>
 </body>
 </html>

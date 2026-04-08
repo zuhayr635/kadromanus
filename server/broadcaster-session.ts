@@ -1,7 +1,5 @@
-import { getDb } from "./db";
-import { sessions, licenses } from "../drizzle/schema";
-import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { getLicenseByKey } from "./license-manager";
 
 export interface BroadcasterSession {
   sessionId: string;
@@ -16,65 +14,44 @@ export interface BroadcasterSession {
 const activeSessions = new Map<string, BroadcasterSession>();
 
 /**
- * Validate broadcaster license
+ * Validate broadcaster license using in-memory license store
  */
 export async function validateLicense(licenseKey: string): Promise<{
   valid: boolean;
   licenseId?: number;
   message: string;
 }> {
-  const db = await getDb();
-  if (!db) {
-    return { valid: false, message: "Veritabanı bağlantısı başarısız" };
+  const license = await getLicenseByKey(licenseKey);
+
+  if (!license) {
+    return { valid: false, message: "Lisans anahtarı bulunamadı" };
   }
 
-  try {
-    const result = await db
-      .select()
-      .from(licenses)
-      .where(eq(licenses.licenseKey, licenseKey))
-      .limit(1);
-
-    if (result.length === 0) {
-      return { valid: false, message: "Lisans anahtarı bulunamadı" };
-    }
-
-    const license = result[0];
-
-    // Check if license is active
-    if (license.status !== "active") {
-      return {
-        valid: false,
-        message: `Lisans durumu: ${license.status}`,
-      };
-    }
-
-    // Check if license is expired
-    if (license.expiresAt && new Date(license.expiresAt) < new Date()) {
-      return { valid: false, message: "Lisans süresi dolmuş" };
-    }
-
-    // Check max sessions
-    const activeBroadcasterSessions = Array.from(activeSessions.values()).filter(
-      (s) => s.licenseId === license.id
-    );
-
-    if (activeBroadcasterSessions.length >= license.maxSessions) {
-      return {
-        valid: false,
-        message: `Maksimum oturum sayısına ulaşıldı (${license.maxSessions})`,
-      };
-    }
-
-    return { valid: true, licenseId: license.id, message: "Lisans geçerli" };
-  } catch (error) {
-    console.error("Lisans doğrulama hatası:", error);
-    return { valid: false, message: "Lisans doğrulama sırasında hata oluştu" };
+  if (!license.isActive) {
+    return { valid: false, message: "Lisans deaktif" };
   }
+
+  if (new Date() > license.expiresAt) {
+    return { valid: false, message: "Lisans süresi dolmuş" };
+  }
+
+  // Check max sessions
+  const activeLicenseSessions = Array.from(activeSessions.values()).filter(
+    (s) => s.licenseId === license.id
+  );
+
+  if (activeLicenseSessions.length >= license.maxSessions) {
+    return {
+      valid: false,
+      message: `Maksimum oturum sayısına ulaşıldı (${license.maxSessions})`,
+    };
+  }
+
+  return { valid: true, licenseId: license.id, message: "Lisans geçerli" };
 }
 
 /**
- * Create a new broadcaster session
+ * Create a new broadcaster session (in-memory only)
  */
 export async function createBroadcasterSession(
   licenseKey: string,
@@ -86,61 +63,35 @@ export async function createBroadcasterSession(
   sessionId?: string;
   message: string;
 }> {
-  // Validate license
   const validation = await validateLicense(licenseKey);
   if (!validation.valid) {
     return { success: false, message: validation.message };
   }
 
-  const db = await getDb();
-  if (!db) {
-    return { success: false, message: "Veritabanı bağlantısı başarısız" };
-  }
+  const sessionId = nanoid(16);
+  const licenseId = validation.licenseId!;
 
-  try {
-    const sessionId = nanoid(16);
-    const licenseId = validation.licenseId!;
+  const broadcasterSession: BroadcasterSession = {
+    sessionId,
+    licenseId,
+    tiktokUsername,
+    teamSelectionMode,
+    teamNames,
+    isActive: true,
+    createdAt: Date.now(),
+  };
 
-    // Create session in database
-    await db.insert(sessions).values({
-      sessionId,
-      licenseId,
-      tiktokUsername,
-      status: "active",
-      gameState: JSON.stringify({}),
-      teamSettings: JSON.stringify({
-        mode: teamSelectionMode,
-        teamNames,
-      }),
-      gameSettings: JSON.stringify({}),
-    });
+  activeSessions.set(sessionId, broadcasterSession);
 
-    // Store in memory
-    const broadcasterSession: BroadcasterSession = {
-      sessionId,
-      licenseId,
-      tiktokUsername,
-      teamSelectionMode,
-      teamNames,
-      isActive: true,
-      createdAt: Date.now(),
-    };
+  console.log(
+    `[${sessionId}] Yayıncı oturumu oluşturuldu: ${tiktokUsername} (${teamSelectionMode} mod)`
+  );
 
-    activeSessions.set(sessionId, broadcasterSession);
-
-    console.log(
-      `[${sessionId}] Yayıncı oturumu oluşturuldu: ${tiktokUsername} (${teamSelectionMode} mod)`
-    );
-
-    return {
-      success: true,
-      sessionId,
-      message: "Oturum başarıyla oluşturuldu",
-    };
-  } catch (error) {
-    console.error("Oturum oluşturma hatası:", error);
-    return { success: false, message: "Oturum oluşturma sırasında hata oluştu" };
-  }
+  return {
+    success: true,
+    sessionId,
+    message: "Oturum başarıyla oluşturuldu",
+  };
 }
 
 /**
@@ -163,27 +114,8 @@ export async function updateTeamSelectionMode(
   if (!session) return false;
 
   session.teamSelectionMode = mode;
-
-  const db = await getDb();
-  if (!db) return false;
-
-  try {
-    await db
-      .update(sessions)
-      .set({
-        teamSettings: JSON.stringify({
-          mode,
-          teamNames: session.teamNames,
-        }),
-      })
-      .where(eq(sessions.sessionId, sessionId));
-
-    console.log(`[${sessionId}] Takım seçim modu değiştirildi: ${mode}`);
-    return true;
-  } catch (error) {
-    console.error(`[${sessionId}] Mod değiştirme hatası:`, error);
-    return false;
-  }
+  console.log(`[${sessionId}] Takım seçim modu değiştirildi: ${mode}`);
+  return true;
 }
 
 /**
@@ -193,26 +125,9 @@ export async function endBroadcasterSession(sessionId: string): Promise<boolean>
   const session = activeSessions.get(sessionId);
   if (!session) return false;
 
-  const db = await getDb();
-  if (!db) return false;
-
-  try {
-    await db
-      .update(sessions)
-      .set({
-        status: "ended",
-        endedAt: new Date(),
-      })
-      .where(eq(sessions.sessionId, sessionId));
-
-    activeSessions.delete(sessionId);
-
-    console.log(`[${sessionId}] Yayıncı oturumu sonlandırıldı`);
-    return true;
-  } catch (error) {
-    console.error(`[${sessionId}] Oturum sonlandırma hatası:`, error);
-    return false;
-  }
+  activeSessions.delete(sessionId);
+  console.log(`[${sessionId}] Yayıncı oturumu sonlandırıldı`);
+  return true;
 }
 
 /**

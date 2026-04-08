@@ -20,6 +20,17 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  // Serve static HTML files from client/public before Vite catches everything
+  const publicDir = path.resolve(import.meta.dirname, "../..", "client", "public");
+  app.get("/*.html", (req, res, next) => {
+    const filePath = path.join(publicDir, req.path);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+      return;
+    }
+    next();
+  });
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;

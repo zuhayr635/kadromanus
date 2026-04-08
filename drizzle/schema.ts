@@ -114,10 +114,37 @@ export const players = mysqlTable("players", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 128 }).notNull(),
   team: varchar("team", { length: 64 }).notNull(),
-  position: varchar("position", { length: 32 }).notNull(),
-  rating: int("rating").default(75),
-  nationality: varchar("nationality", { length: 64 }),
+  league: varchar("league", { length: 64 }),
+  nation: varchar("nation", { length: 64 }),
+  position: varchar("position", { length: 8 }).notNull(),
+  // Card quality based on overall rating
+  overall: int("overall").notNull(),
+  // Detailed card stats (FUT style)
+  pace: int("pace"),
+  shooting: int("shooting"),
+  passing: int("passing"),
+  dribbling: int("dribbling"),
+  defending: int("defending"),
+  physical: int("physical"),
+  // Goalkeeper stats (if position is GK)
+  diving: int("diving"),
+  handling: int("handling"),
+  kicking: int("kicking"),
+  positioning: int("positioningGk"),
+  reflexes: int("reflexes"),
+  // Visual
   imageUrl: text("imageUrl"),
+  faceImageUrl: text("faceImageUrl"),
+  // Meta
+  height: int("height"), // cm
+  weight: int("weight"), // kg
+  preferredFoot: mysqlEnum("preferredFoot", ["left", "right"]),
+  weakFoot: int("weakFoot").default(3), // 1-5 stars
+  skillMoves: int("skillMoves").default(3), // 1-5 stars
+  // Value (optional, for sorting/weighting)
+  marketValue: int("marketValue"), // in thousands EUR
+  // Card quality tier (computed from overall)
+  cardQuality: mysqlEnum("cardQuality", ["bronze", "silver", "gold", "elite"]).notNull(),
 });
 
 export type Player = typeof players.$inferSelect;

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yayıncı Paneli — Mockup</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background:#030a06; color:#e2e8f0; min-height:100vh; }
+
+  /* ─── Layout ─── */
+  .app { display:flex; flex-direction:column; min-height:100vh; max-width:1100px; margin:0 auto; padding:0 1.5rem; }
+
+  /* ─── Header ─── */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1rem 0; border-bottom:1px solid #14532d;
+  }
+  .header-left { display:flex; align-items:center; gap:0.75rem; }
+  .logo-icon {
+    width:36px; height:36px;
+    background:linear-gradient(135deg,#16a34a,#15803d);
+    border-radius:8px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 12px #16a34a44;
+  }
+  .logo-text { font-size:1.1rem; font-weight:700; letter-spacing:0.08em; color:#22c55e; }
+  .logo-version { font-size:0.65rem; color:#166534; letter-spacing:0.1em; margin-top:1px; }
+
+  .status-pill {
+    display:flex; align-items:center; gap:0.5rem;
+    padding:0.4rem 1rem; border-radius:20px;
+    font-size:0.8rem; font-weight:600; letter-spacing:0.04em;
+  }
+  .status-pill.offline { background:#14532d22; border:1px solid #14532d; color:#4ade80; }
+  .status-pill.live { background:#16a34a22; border:1px solid #22c55e; color:#22c55e; }
+  .dot { width:7px; height:7px; border-radius:50%; }
+  .dot.offline { background:#166534; }
+  .dot.live { background:#22c55e; animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ─── Tab switcher (mockup only) ─── */
+  .tab-bar {
+    display:flex; gap:0.5rem; padding:1.25rem 0 0;
+  }
+  .tab {
+    padding:0.5rem 1.25rem; border-radius:6px; font-size:0.82rem; font-weight:600;
+    cursor:pointer; border:none; transition:all 0.2s;
+  }
+  .tab.active { background:#16a34a; color:#fff; }
+  .tab.inactive { background:#0a1a0f; border:1px solid #14532d; color:#4ade80; }
+
+  /* ─── Content ─── */
+  .content { flex:1; padding:1.5rem 0 2rem; }
+
+  /* ─── PRE-SESSION ─── */
+  .setup-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+  .panel {
+    background:#0a1a0f; border:1px solid #14532d; border-radius:10px; padding:1.25rem;
+  }
+  .panel-title {
+    display:flex; align-items:center; gap:0.6rem;
+    font-size:0.8rem; font-weight:700; letter-spacing:0.08em; color:#4ade80;
+    text-transform:uppercase; margin-bottom:1rem; padding-bottom:0.75rem;
+    border-bottom:1px solid #14532d44;
+  }
+  .panel-title svg { opacity:0.8; }
+
+  label { display:block; font-size:0.75rem; font-weight:600; color:#4ade80; margin-bottom:0.4rem; letter-spacing:0.04em; }
+  .field { margin-bottom:0.9rem; }
+  input[type=text], input[type=password] {
+    width:100%; padding:0.6rem 0.85rem;
+    background:#030a06; border:1px solid #14532d;
+    border-radius:6px; color:#e2e8f0; font-size:0.875rem;
+    outline:none; transition:border-color 0.2s;
+  }
+  input[type=text]:focus, input[type=password]:focus { border-color:#22c55e; }
+  input::placeholder { color:#166534; }
+
+  .team-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; }
+
+  .mode-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; margin-top:0.5rem; }
+  .mode-btn {
+    padding:0.75rem; border-radius:7px; border:1.5px solid #14532d;
+    background:#030a06; cursor:pointer; text-align:left; transition:all 0.2s;
+  }
+  .mode-btn.selected { border-color:#22c55e; background:#16a34a12; }
+  .mode-btn-title { font-size:0.8rem; font-weight:700; color:#e2e8f0; margin-bottom:2px; display:flex; align-items:center; gap:0.4rem; }
+  .mode-btn-desc { font-size:0.7rem; color:#166534; }
+
+  .btn-primary {
+    width:100%; padding:0.75rem; border-radius:7px; border:none;
+    background:linear-gradient(135deg,#16a34a,#15803d);
+    color:#fff; font-size:0.875rem; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:0.5rem;
+    letter-spacing:0.03em; transition:all 0.2s;
+    box-shadow:0 4px 14px #16a34a33;
+  }
+  .btn-primary:hover { background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 4px 20px #16a34a55; }
+
+  .btn-danger {
+    width:100%; padding:0.75rem; border-radius:7px; border:1.5px solid #dc2626;
+    background:#7f1d1d22; color:#fca5a5; font-size:0.875rem; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.5rem;
+  }
+
+  /* ─── ACTIVE SESSION ─── */
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:0.75rem; margin-bottom:1.25rem; }
+  .stat-card {
+    background:#0a1a0f; border:1px solid #14532d; border-radius:8px;
+    padding:0.85rem 1rem;
+  }
+  .stat-label { font-size:0.65rem; font-weight:700; letter-spacing:0.1em; color:#166534; text-transform:uppercase; margin-bottom:0.3rem; }
+  .stat-value { font-size:1.5rem; font-weight:800; color:#22c55e; line-height:1; }
+  .stat-sub { font-size:0.65rem; color:#14532d; margin-top:0.2rem; }
+
+  .progress-bar-wrap { background:#030a06; border-radius:4px; height:4px; margin-top:0.5rem; overflow:hidden; }
+  .progress-bar { height:100%; background:linear-gradient(90deg,#16a34a,#4ade80); border-radius:4px; width:55%; }
+
+  .teams-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem; }
+  .team-panel {
+    background:#0a1a0f; border:1px solid #14532d; border-radius:10px; padding:1rem;
+  }
+  .team-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; }
+  .team-name { font-size:0.82rem; font-weight:700; color:#4ade80; display:flex; align-items:center; gap:0.4rem; }
+  .team-count { font-size:0.7rem; color:#166534; background:#030a06; border:1px solid #14532d; border-radius:12px; padding:2px 8px; }
+  .cards-grid { display:grid; grid-template-columns:repeat(11,1fr); gap:3px; }
+  .card-slot {
+    aspect-ratio:2/3; border-radius:3px;
+    background:#030a06; border:1px solid #052e16;
+  }
+  .card-slot.filled-gold { background:linear-gradient(135deg,#854d0e,#a16207); border-color:#ca8a04; }
+  .card-slot.filled-silver { background:linear-gradient(135deg,#374151,#4b5563); border-color:#6b7280; }
+  .card-slot.filled-bronze { background:linear-gradient(135deg,#431407,#7c2d12); border-color:#ea580c; }
+  .card-slot.filled-green { background:linear-gradient(135deg,#14532d,#166534); border-color:#22c55e; }
+
+  .bottom-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
+  .info-panel { background:#0a1a0f; border:1px solid #14532d; border-radius:10px; padding:1rem; }
+  .info-title { font-size:0.7rem; font-weight:700; letter-spacing:0.08em; color:#4ade80; text-transform:uppercase; margin-bottom:0.6rem; }
+  .info-row { display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0; border-bottom:1px solid #052e1633; }
+  .info-row:last-child { border-bottom:none; }
+  .info-key { font-size:0.72rem; color:#166534; }
+  .info-val { font-size:0.72rem; color:#e2e8f0; font-weight:600; }
+  .link-btn {
+    display:flex; align-items:center; gap:0.4rem; width:100%;
+    padding:0.5rem 0.7rem; border-radius:6px; border:1px solid #14532d;
+    background:#030a06; color:#4ade80; font-size:0.75rem; font-weight:600;
+    cursor:pointer; transition:all 0.2s; margin-bottom:0.4rem; text-decoration:none;
+  }
+  .link-btn:hover { border-color:#22c55e; background:#16a34a12; }
+
+  /* ─── Mockup switcher ─── */
+  .mockup-note {
+    text-align:center; padding:0.75rem;
+    background:#14532d22; border:1px solid #14532d; border-radius:8px;
+    color:#4ade80; font-size:0.8rem; margin-bottom:1.5rem;
+  }
+
+  /* ─── Icons (inline SVG snippets) ─── */
+</style>
+</head>
+<body>
+
+<div style="background:#030a06;padding:0.75rem 1.5rem;text-align:center;border-bottom:1px solid #14532d66;font-size:0.75rem;color:#166534">
+  MOCKUP — Sol: Oturum Öncesi &nbsp;|&nbsp; Sağ: Aktif Oturum &nbsp;|&nbsp; Bu sayfa interaktif değil, sadece tasarım önizlemesi
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 36px)">
+
+  <!-- ═══ LEFT: PRE-SESSION ═══ -->
+  <div style="border-right:1px solid #14532d22;padding:1.5rem">
+    <div class="app" style="max-width:100%;padding:0">
+
+      <div class="header" style="margin-bottom:1.25rem">
+        <div class="header-left">
+          <div class="logo-icon">
+            <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3l1 5h4l1-5h3a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-3"/><path d="M12 3v2"/></svg>
+          </div>
+          <div>
+            <div class="logo-text">KADROKUR</div>
+            <div class="logo-version">YAYINCI PANELİ v3</div>
+          </div>
+        </div>
+        <div class="status-pill offline">
+          <div class="dot offline"></div>
+          OTURUM KAPALI
+        </div>
+      </div>
+
+      <div class="setup-grid">
+        <!-- Bağlantı -->
+        <div class="panel" style="grid-column:span 2">
+          <div class="panel-title">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Bağlantı Ayarları
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+            <div class="field">
+              <label>Lisans Anahtarı</label>
+              <input type="password" placeholder="HIRA-XXXXX-XXXXX" value="HIRA-ABC12-DEF34">
+            </div>
+            <div class="field">
+              <label>TikTok Kullanıcı Adı</label>
+              <input type="text" placeholder="@kullanici_adi" value="@futbolcuX">
+            </div>
+          </div>
+        </div>
+
+        <!-- Takım Adları -->
+        <div class="panel">
+          <div class="panel-title">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Takım Adları
+          </div>
+          <div class="team-grid">
+            <div class="field"><label>Takım 1</label><input type="text" value="Süper Kartallar"></div>
+            <div class="field"><label>Takım 2</label><input type="text" value="Altın Aslanlar"></div>
+            <div class="field"><label>Takım 3</label><input type="text" value="Demir Boğalar"></div>
+            <div class="field"><label>Takım 4</label><input type="text" value="Yeşil Yıldızlar"></div>
+          </div>
+        </div>
+
+        <!-- Mod Seçimi -->
+        <div class="panel">
+          <div class="panel-title">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            Seçim Modu
+          </div>
+          <div class="mode-grid">
+            <button class="mode-btn selected">
+              <div class="mode-btn-title">
+                <svg width="12" height="12" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Manuel
+              </div>
+              <div class="mode-btn-desc">Panelden takım seçin</div>
+            </button>
+            <button class="mode-btn">
+              <div class="mode-btn-title">
+                <svg width="12" height="12" fill="none" stroke="#4ade80" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
+                Otomatik
+              </div>
+              <div class="mode-btn-desc">!1 !2 komutlarıyla</div>
+            </button>
+          </div>
+
+          <div style="margin-top:1rem">
+            <button class="btn-primary">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Oturumu Başlat
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT: ACTIVE SESSION ═══ -->
+  <div style="padding:1.5rem">
+    <div class="app" style="max-width:100%;padding:0">
+
+      <div class="header" style="margin-bottom:1.25rem">
+        <div class="header-left">
+          <div class="logo-icon">
+            <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3l1 5h4l1-5h3a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-3"/></svg>
+          </div>
+          <div>
+            <div class="logo-text">KADROKUR</div>
+            <div class="logo-version">@futbolcuX ile oturum</div>
+          </div>
+        </div>
+        <div class="status-pill live">
+          <div class="dot live"></div>
+          CANLI YAYINDA
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Açılan Kart</div>
+          <div class="stat-value">24</div>
+          <div class="stat-sub">44'ten</div>
+          <div class="progress-bar-wrap"><div class="progress-bar" style="width:55%"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Katılımcı</div>
+          <div class="stat-value">128</div>
+          <div class="stat-sub">toplam oyuncu</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Beğeni</div>
+          <div class="stat-value">4.2K</div>
+          <div class="stat-sub">bu oturumda</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Hediye</div>
+          <div class="stat-value">37</div>
+          <div class="stat-sub">TikTok hediyesi</div>
+        </div>
+      </div>
+
+      <!-- Teams -->
+      <div class="teams-grid">
+        <div class="team-panel">
+          <div class="team-header">
+            <div class="team-name">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              Süper Kartallar
+            </div>
+            <div class="team-count">7 oyuncu</div>
+          </div>
+          <div class="cards-grid">
+            <div class="card-slot filled-gold"></div>
+            <div class="card-slot filled-silver"></div>
+            <div class="card-slot filled-bronze"></div>
+            <div class="card-slot filled-green"></div>
+            <div class="card-slot filled-silver"></div>
+            <div class="card-slot filled-bronze"></div>
+            <div class="card-slot filled-gold"></div>
+            <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+          </div>
+        </div>
+        <div class="team-panel">
+          <div class="team-header">
+            <div class="team-name">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              Altın Aslanlar
+            </div>
+            <div class="team-count">6 oyuncu</div>
+          </div>
+          <div class="cards-grid">
+            <div class="card-slot filled-gold"></div>
+            <div class="card-slot filled-bronze"></div>
+            <div class="card-slot filled-green"></div>
+            <div class="card-slot filled-silver"></div>
+            <div class="card-slot filled-bronze"></div>
+            <div class="card-slot filled-silver"></div>
+            <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+          </div>
+        </div>
+        <div class="team-panel">
+          <div class="team-header">
+            <div class="team-name">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              Demir Boğalar
+            </div>
+            <div class="team-count">6 oyuncu</div>
+          </div>
+          <div class="cards-grid">
+            <div class="card-slot filled-silver"></div>
+            <div class="card-slot filled-bronze"></div>
+            <div class="card-slot filled-gold"></div>
+            <div class="card-slot filled-bronze"></div>
+            <div class="card-slot filled-green"></div>
+            <div class="card-slot filled-silver"></div>
+            <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+          </div>
+        </div>
+        <div class="team-panel">
+          <div class="team-header">
+            <div class="team-name">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              Yeşil Yıldızlar
+            </div>
+            <div class="team-count">5 oyuncu</div>
+          </div>
+          <div class="cards-grid">
+            <div class="card-slot filled-bronze"></div>
+            <div class="card-slot filled-silver"></div>
+            <div class="card-slot filled-gold"></div>
+            <div class="card-slot filled-bronze"></div>
+            <div class="card-slot filled-silver"></div>
+            <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom row -->
+      <div class="bottom-row">
+        <div class="info-panel">
+          <div class="info-title">Oturum Bilgisi</div>
+          <div class="info-row"><span class="info-key">Mod</span><span class="info-val">Manuel</span></div>
+          <div class="info-row"><span class="info-key">Süre</span><span class="info-val">12:47</span></div>
+          <div class="info-row"><span class="info-key">Oturum ID</span><span class="info-val" style="font-size:0.65rem;color:#166534">abc123…</span></div>
+        </div>
+        <div class="info-panel">
+          <div class="info-title">Hızlı Erişim</div>
+          <a class="link-btn" href="#">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            Oyun Ekranı (OBS)
+          </a>
+          <a class="link-btn" href="#">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Lisans Paneli
+          </a>
+        </div>
+        <div class="info-panel" style="display:flex;flex-direction:column;gap:0.5rem">
+          <div class="info-title">Kontrol</div>
+          <button class="btn-danger" style="margin-top:auto">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+            Oturumu Sonlandır
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

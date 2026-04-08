@@ -1,250 +1,274 @@
-import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gamepad2, Users, Zap, Trophy, BarChart3, Lock } from "lucide-react";
-import { getLoginUrl } from "@/const";
-import { useLocation } from "wouter";
-
 export default function Home() {
-  const { user, isAuthenticated, logout } = useAuth();
-  const [, navigate] = useLocation();
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Navigation */}
-      <nav className="border-b border-slate-700 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Gamepad2 className="w-8 h-8 text-blue-500" />
-            <span className="text-2xl font-bold text-white">Kadrokur</span>
-          </div>
-          <div className="flex gap-4 items-center">
-            {isAuthenticated ? (
-              <>
-                <span className="text-slate-300">{user?.name}</span>
-                <Button onClick={() => navigate("/profile")} variant="outline" size="sm">
-                  Profil
-                </Button>
-                <Button onClick={logout} variant="ghost" size="sm">
-                  Çıkış
-                </Button>
-              </>
-            ) : (
-              <Button onClick={() => (window.location.href = getLoginUrl())} size="sm">
-                Giriş Yap
-              </Button>
-            )}
-          </div>
-        </div>
+    <div style={{ minHeight: '100vh', background: '#080c09', color: '#F8F6F3', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* NAV */
+        .hp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 1.25rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(212,175,55,0.1); background: rgba(8,12,9,0.88); backdrop-filter: blur(14px); }
+        .hp-logo-text { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.35rem; font-weight: 700; letter-spacing: 0.2em; color: #F8F6F3; text-transform: uppercase; }
+        .hp-logo-dot { display: inline-block; width: 5px; height: 5px; background: #D4AF37; border-radius: 50%; margin-left: 3px; vertical-align: middle; position: relative; top: -2px; }
+        .hp-nav-btn { padding: 0.55rem 1.4rem; background: transparent; border: 1px solid #D4AF37; color: #D4AF37; font-family: 'DM Sans', sans-serif; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; text-decoration: none; transition: background 0.2s, color 0.2s; }
+        .hp-nav-btn:hover { background: #D4AF37; color: #080c09; }
+
+        /* HERO */
+        .hp-hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 9rem 2rem 6rem; position: relative; overflow: hidden; }
+        .hp-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 55% 45% at 50% 38%, rgba(212,175,55,0.05) 0%, transparent 70%); pointer-events: none; }
+        .hp-hero-eyebrow { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.28em; color: #D4AF37; text-transform: uppercase; margin-bottom: 2rem; }
+        .hp-hero-h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(3.2rem, 7.5vw, 5.8rem); font-weight: 700; line-height: 1.04; color: #F8F6F3; margin-bottom: 1.75rem; }
+        .hp-hero-h1 em { font-style: italic; color: #D4AF37; }
+        .hp-hero-line { width: 48px; height: 1px; background: #D4AF37; margin: 0 auto 1.75rem; }
+        .hp-hero-sub { font-size: 0.95rem; font-weight: 300; color: #6b7a6b; line-height: 1.75; max-width: 480px; margin: 0 auto 2.75rem; }
+        .hp-hero-btns { display: flex; gap: 0.85rem; justify-content: center; flex-wrap: wrap; }
+        .hp-btn-gold { padding: 0.78rem 2.2rem; background: #D4AF37; border: 1px solid #D4AF37; color: #080c09; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; text-decoration: none; transition: background 0.2s, color 0.2s; }
+        .hp-btn-gold:hover { background: transparent; color: #D4AF37; }
+        .hp-btn-ghost { padding: 0.78rem 2.2rem; background: transparent; border: 1px solid rgba(248,246,243,0.15); color: #6b7a6b; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; text-decoration: none; transition: border-color 0.2s, color 0.2s; }
+        .hp-btn-ghost:hover { border-color: rgba(248,246,243,0.4); color: #F8F6F3; }
+
+        /* STATEMENT */
+        .hp-statement { background: #030504; padding: 7rem 2rem; text-align: center; border-top: 1px solid rgba(212,175,55,0.08); border-bottom: 1px solid rgba(212,175,55,0.08); }
+        .hp-statement-text { font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(1.75rem, 4vw, 2.9rem); font-weight: 600; font-style: italic; color: #F8F6F3; max-width: 680px; margin: 0 auto 1.25rem; line-height: 1.35; }
+        .hp-statement-attr { font-size: 0.65rem; letter-spacing: 0.22em; color: #D4AF37; text-transform: uppercase; font-weight: 600; }
+
+        /* STATS */
+        .hp-stats-bar { display: grid; grid-template-columns: repeat(4,1fr); border-top: 1px solid rgba(212,175,55,0.1); border-bottom: 1px solid rgba(212,175,55,0.1); }
+        .hp-stat-item { padding: 3rem 1.5rem; text-align: center; border-right: 1px solid rgba(212,175,55,0.1); }
+        .hp-stat-item:last-child { border-right: none; }
+        .hp-stat-num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 3.2rem; font-weight: 700; color: #D4AF37; line-height: 1; margin-bottom: 0.6rem; }
+        .hp-stat-label { font-size: 0.62rem; letter-spacing: 0.22em; color: #3d4d3d; text-transform: uppercase; font-weight: 600; }
+
+        /* SECTIONS */
+        .hp-section { max-width: 1100px; margin: 0 auto; padding: 7rem 2rem; }
+        .hp-section-eyebrow { font-size: 0.65rem; letter-spacing: 0.28em; color: #D4AF37; text-transform: uppercase; font-weight: 600; margin-bottom: 1.1rem; }
+        .hp-section-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(1.9rem, 4vw, 2.75rem); font-weight: 700; color: #F8F6F3; line-height: 1.15; margin-bottom: 3.5rem; }
+
+        /* FEATURES GRID */
+        .hp-features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: rgba(212,175,55,0.08); outline: 1px solid rgba(212,175,55,0.08); }
+        .hp-feature-item { background: #080c09; padding: 2.5rem; transition: background 0.2s; }
+        .hp-feature-item:hover { background: #0c130d; }
+        .hp-feature-num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2rem; font-weight: 700; color: rgba(212,175,55,0.2); line-height: 1; margin-bottom: 1.25rem; }
+        .hp-feature-title { font-size: 0.72rem; font-weight: 700; color: #c4bfb8; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem; }
+        .hp-feature-desc { font-size: 0.82rem; color: #3d4d3d; line-height: 1.7; font-weight: 400; }
+
+        /* PRICING GRID */
+        .hp-pricing-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(212,175,55,0.08); outline: 1px solid rgba(212,175,55,0.08); }
+        .hp-plan-item { background: #080c09; padding: 2.5rem 1.75rem; position: relative; transition: background 0.2s; }
+        .hp-plan-item.featured { background: #0c130d; border-top: 2px solid #D4AF37; }
+        .hp-plan-item:hover { background: #0c130d; }
+        .hp-plan-badge { font-size: 0.58rem; letter-spacing: 0.18em; color: #D4AF37; text-transform: uppercase; font-weight: 700; margin-bottom: 1rem; }
+        .hp-plan-label { font-size: 0.62rem; letter-spacing: 0.2em; color: #4d5c4d; text-transform: uppercase; font-weight: 600; margin-bottom: 1rem; }
+        .hp-plan-price { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.6rem; font-weight: 700; color: #F8F6F3; line-height: 1; margin-bottom: 0.3rem; }
+        .hp-plan-period { font-size: 0.65rem; color: #3d4d3d; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.75rem; }
+        .hp-plan-divider { height: 1px; background: rgba(212,175,55,0.1); margin-bottom: 1.5rem; }
+        .hp-plan-feature { font-size: 0.78rem; color: #2e3d2e; margin-bottom: 0.6rem; padding-left: 1.1rem; position: relative; }
+        .hp-plan-feature::before { content: '—'; position: absolute; left: 0; color: #2e3d2e; font-size: 0.7rem; }
+        .hp-plan-feature.on { color: #7a8a7a; }
+        .hp-plan-feature.on::before { content: '✦'; color: #D4AF37; font-size: 0.55rem; top: 3px; }
+
+        /* CONTACT */
+        .hp-contact-wrap { border: 1px solid rgba(212,175,55,0.14); padding: 5rem 3rem; text-align: center; max-width: 600px; margin: 0 auto; }
+        .hp-contact-eyebrow { font-size: 0.63rem; letter-spacing: 0.28em; color: #D4AF37; text-transform: uppercase; font-weight: 600; margin-bottom: 1.5rem; }
+        .hp-contact-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.1rem; font-weight: 700; color: #F8F6F3; margin-bottom: 0.6rem; }
+        .hp-contact-sub { font-size: 0.8rem; color: #3d4d3d; margin-bottom: 2.5rem; letter-spacing: 0.04em; }
+        .hp-contact-links { display: flex; gap: 0.85rem; justify-content: center; flex-wrap: wrap; }
+        .hp-contact-link { padding: 0.65rem 1.5rem; border: 1px solid rgba(212,175,55,0.25); color: #D4AF37; font-size: 0.73rem; font-weight: 500; letter-spacing: 0.1em; text-decoration: none; text-transform: uppercase; transition: background 0.2s, color 0.2s, border-color 0.2s; }
+        .hp-contact-link:hover { background: #D4AF37; color: #080c09; border-color: #D4AF37; }
+
+        /* FOOTER */
+        .hp-footer { border-top: 1px solid rgba(212,175,55,0.08); padding: 2.5rem; text-align: center; }
+        .hp-footer-logo { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 0.95rem; font-weight: 700; letter-spacing: 0.22em; color: rgba(248,246,243,0.2); text-transform: uppercase; margin-bottom: 1.25rem; }
+        .hp-footer-links { display: flex; justify-content: center; gap: 2.25rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+        .hp-footer-link { font-size: 0.67rem; letter-spacing: 0.12em; color: #2e3d2e; text-decoration: none; text-transform: uppercase; transition: color 0.15s; }
+        .hp-footer-link:hover { color: #D4AF37; }
+        .hp-footer-copy { font-size: 0.65rem; color: #1e2a1e; letter-spacing: 0.08em; text-transform: uppercase; }
+
+        @media (max-width: 900px) {
+          .hp-nav { padding: 1rem 1.25rem; }
+          .hp-features-grid { grid-template-columns: 1fr 1fr; }
+          .hp-pricing-grid { grid-template-columns: 1fr 1fr; }
+          .hp-stats-bar { grid-template-columns: 1fr 1fr; }
+          .hp-stat-item:nth-child(2) { border-right: none; }
+          .hp-stat-item:nth-child(3),
+          .hp-stat-item:nth-child(4) { border-top: 1px solid rgba(212,175,55,0.1); }
+        }
+        @media (max-width: 600px) {
+          .hp-features-grid, .hp-pricing-grid { grid-template-columns: 1fr; }
+          .hp-stats-bar { grid-template-columns: 1fr 1fr; }
+          .hp-section { padding: 4rem 1.25rem; }
+          .hp-contact-wrap { padding: 3rem 1.25rem; }
+          .hp-hero { padding: 7rem 1.25rem 4rem; }
+        }
+      `}</style>
+
+      {/* NAV */}
+      <nav className="hp-nav">
+        <div className="hp-logo-text">Kadrokur<span className="hp-logo-dot" /></div>
+        <a href="/broadcaster" className="hp-nav-btn">Paneli Aç</a>
       </nav>
 
-      {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-4 py-20 text-center">
-        <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-          TikTok Live Futbol Kartları Oyunu
-        </h1>
-        <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-          Canlı yayınlarında izleyicilerin hediye göndermesi ve beğenmeleriyle futbolcu kartları açın. 4 takımın kadrolarını tamamlayın ve final skorlarını Telegram'da paylaşın!
-        </p>
-        <div className="flex gap-4 justify-center">
-          {isAuthenticated ? (
-            <>
-              <Button size="lg" onClick={() => navigate("/profile")}>
-                Profil Sayfasına Git
-              </Button>
-              <Button size="lg" variant="outline">
-                <a href="/broadcaster-panel.html" target="_blank" rel="noopener noreferrer">
-                  Yayıncı Paneli
-                </a>
-              </Button>
-            </>
-          ) : (
-            <Button size="lg" onClick={() => (window.location.href = getLoginUrl())}>
-              Başlamak İçin Giriş Yap
-            </Button>
-          )}
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="max-w-6xl mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-white mb-12 text-center">Özellikler</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Feature 1 */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <Zap className="w-8 h-8 text-yellow-500 mb-2" />
-              <CardTitle className="text-white">TikTok Live Entegrasyonu</CardTitle>
-            </CardHeader>
-            <CardContent className="text-slate-300">
-              Canlı yayında beğeni, hediye ve yorumları gerçek zamanlı olarak yakalayın. Hediye değerine göre farklı kalitede kartlar açın.
-            </CardContent>
-          </Card>
-
-          {/* Feature 2 */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <Users className="w-8 h-8 text-blue-500 mb-2" />
-              <CardTitle className="text-white">4 Takım Kadrosu</CardTitle>
-            </CardHeader>
-            <CardContent className="text-slate-300">
-              550+ futbolcudan rastgele seçilen oyuncularla 4 takımın kadrolarını tamamlayın. Manuel veya otomatik takım seçimi modu.
-            </CardContent>
-          </Card>
-
-          {/* Feature 3 */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <Trophy className="w-8 h-8 text-amber-500 mb-2" />
-              <CardTitle className="text-white">Kart Kaliteleri</CardTitle>
-            </CardHeader>
-            <CardContent className="text-slate-300">
-              Bronz, Gümüş, Altın ve Elit olmak üzere 4 farklı kart kalitesi. Hediye tier sistemi ile otomatik kalite belirleme.
-            </CardContent>
-          </Card>
-
-          {/* Feature 4 */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <Gamepad2 className="w-8 h-8 text-purple-500 mb-2" />
-              <CardTitle className="text-white">OBS Uyumluluğu</CardTitle>
-            </CardHeader>
-            <CardContent className="text-slate-300">
-              1920x1080 optimize oyun ekranı. OBS Browser Source ile doğrudan yayın yapın. Smooth animasyonlar ve gerçek zamanlı güncellemeler.
-            </CardContent>
-          </Card>
-
-          {/* Feature 5 */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <BarChart3 className="w-8 h-8 text-green-500 mb-2" />
-              <CardTitle className="text-white">Admin Dashboard</CardTitle>
-            </CardHeader>
-            <CardContent className="text-slate-300">
-              Session history, istatistikler, lisans yönetimi ve veri dışa aktarma. Grafikler ve analitikler ile detaylı raporlar.
-            </CardContent>
-          </Card>
-
-          {/* Feature 6 */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <Lock className="w-8 h-8 text-red-500 mb-2" />
-              <CardTitle className="text-white">Lisans Sistemi</CardTitle>
-            </CardHeader>
-            <CardContent className="text-slate-300">
-              4 paket türü (Basic, Pro, Premium, Unlimited). Özellik kısıtlamaları ve multi-session yönetimi. Telegram bot entegrasyonu.
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="max-w-6xl mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-white mb-12 text-center">Lisans Paketleri</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Basic */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Basic</CardTitle>
-              <CardDescription>Başlangıç Paketi</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-3xl font-bold text-white">Ücretsiz</div>
-              <ul className="space-y-2 text-slate-300 text-sm">
-                <li>✅ Oyun Oynama</li>
-                <li>❌ Telegram Bot</li>
-                <li>❌ Otomatik Mod</li>
-                <li>❌ Analytics</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* Pro */}
-          <Card className="bg-blue-900 border-blue-700">
-            <CardHeader>
-              <CardTitle className="text-white">Pro</CardTitle>
-              <CardDescription className="text-blue-200">Popüler</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-3xl font-bold text-white">$9.99/ay</div>
-              <ul className="space-y-2 text-blue-100 text-sm">
-                <li>✅ Oyun Oynama</li>
-                <li>✅ Telegram Bot</li>
-                <li>✅ Otomatik Mod</li>
-                <li>❌ Analytics</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* Premium */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Premium</CardTitle>
-              <CardDescription>Profesyonel</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-3xl font-bold text-white">$19.99/ay</div>
-              <ul className="space-y-2 text-slate-300 text-sm">
-                <li>✅ Oyun Oynama</li>
-                <li>✅ Telegram Bot</li>
-                <li>✅ Otomatik Mod</li>
-                <li>✅ Analytics</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* Unlimited */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Unlimited</CardTitle>
-              <CardDescription>Sınırsız</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-3xl font-bold text-white">$49.99/ay</div>
-              <ul className="space-y-2 text-slate-300 text-sm">
-                <li>✅ Tüm Özellikler</li>
-                <li>✅ Sınırsız Oturumlar</li>
-                <li>✅ Öncelikli Destek</li>
-                <li>✅ API Erişimi</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="max-w-6xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-4xl font-bold text-white mb-6">Hemen Başlayın</h2>
-        <p className="text-xl text-slate-300 mb-8">
-          TikTok canlı yayınlarınızda futbol kartları oyununu başlatın ve izleyicilerinizi eğlenin!
-        </p>
-        {isAuthenticated ? (
-          <Button size="lg" onClick={() => navigate("/profile")}>
-            Profil Sayfasına Git
-          </Button>
-        ) : (
-          <Button size="lg" onClick={() => (window.location.href = getLoginUrl())}>
-            Giriş Yap ve Başla
-          </Button>
-        )}
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-700 bg-slate-900/50 py-8">
-        <div className="max-w-6xl mx-auto px-4 text-center text-slate-400">
-          <p>© 2026 Kadrokur - TikTok Live Futbol Kartları Oyunu</p>
-          <div className="mt-4 flex justify-center gap-6 text-sm">
-            <a href="/README.md" className="hover:text-white transition">
-              Dokümantasyon
-            </a>
-            <a href="#" className="hover:text-white transition">
-              Destek
-            </a>
-            <a href="#" className="hover:text-white transition">
-              Gizlilik Politikası
-            </a>
+      {/* HERO */}
+      <section className="hp-hero">
+        <div>
+          <div className="hp-hero-eyebrow">TikTok Live × Futbol Kartları</div>
+          <h1 className="hp-hero-h1">
+            Canlı Yayında<br />
+            <em>Kadro Kur</em>
+          </h1>
+          <div className="hp-hero-line" />
+          <p className="hp-hero-sub">
+            İzleyicilerin beğeni ve hediyesiyle futbolcu kartları açılır,
+            4 takımın kadrosu tamamlanır. Yayın boyunca gerçek zamanlı heyecan.
+          </p>
+          <div className="hp-hero-btns">
+            <a href="/broadcaster" className="hp-btn-gold">Yayıncı Paneli</a>
+            <a href="/game-screen.html" target="_blank" rel="noopener noreferrer" className="hp-btn-ghost">Oyun Ekranı</a>
           </div>
         </div>
+      </section>
+
+      {/* STATEMENT */}
+      <section className="hp-statement">
+        <p className="hp-statement-text">"Yayın bitmeden kimse oturumu kapatmıyor."</p>
+        <div className="hp-statement-attr">Gerçek yayıncılardan</div>
+      </section>
+
+      {/* STATS */}
+      <div className="hp-stats-bar">
+        <div className="hp-stat-item">
+          <div className="hp-stat-num">550+</div>
+          <div className="hp-stat-label">Futbolcu Kartı</div>
+        </div>
+        <div className="hp-stat-item">
+          <div className="hp-stat-num">4</div>
+          <div className="hp-stat-label">Takım Kadrosu</div>
+        </div>
+        <div className="hp-stat-item">
+          <div className="hp-stat-num">4K</div>
+          <div className="hp-stat-label">Kart Kalitesi</div>
+        </div>
+        <div className="hp-stat-item">
+          <div className="hp-stat-num">RT</div>
+          <div className="hp-stat-label">Gerçek Zamanlı</div>
+        </div>
+      </div>
+
+      {/* FEATURES */}
+      <section>
+        <div className="hp-section">
+          <div className="hp-section-eyebrow">Nasıl Çalışır</div>
+          <h2 className="hp-section-title">Birkaç tıkla kur,<br />yayında oyna</h2>
+          <div className="hp-features-grid">
+            <div className="hp-feature-item">
+              <div className="hp-feature-num">01</div>
+              <div className="hp-feature-title">TikTok Live Bağlantısı</div>
+              <div className="hp-feature-desc">Kullanıcı adını gir, bağlan. Yayındaki beğeni, hediye ve yorumlar otomatik yakalanır.</div>
+            </div>
+            <div className="hp-feature-item">
+              <div className="hp-feature-num">02</div>
+              <div className="hp-feature-title">Jeton → Kart Kalitesi</div>
+              <div className="hp-feature-desc">Gönderilen hediyenin jeton değerine göre Bronz, Gümüş, Altın veya Elite kart açılır. Eşikler ayarlanabilir.</div>
+            </div>
+            <div className="hp-feature-item">
+              <div className="hp-feature-num">03</div>
+              <div className="hp-feature-title">Beğeni ile Bronz Kart</div>
+              <div className="hp-feature-desc">Ayarladığın beğeni sayısına ulaşıldığında otomatik bronz kart açılır. Eşik değeri değiştirilebilir.</div>
+            </div>
+            <div className="hp-feature-item">
+              <div className="hp-feature-num">04</div>
+              <div className="hp-feature-title">4 Takım, 11 Oyuncu</div>
+              <div className="hp-feature-desc">Her takım 11 oyuncuyu tamamladığında oyun biter. Manuel ya da otomatik takım seçim modu.</div>
+            </div>
+            <div className="hp-feature-item">
+              <div className="hp-feature-num">05</div>
+              <div className="hp-feature-title">OBS Browser Source</div>
+              <div className="hp-feature-desc">1920×1080 optimize oyun ekranı. OBS'e direkt Browser Source olarak ekle, yayında göster.</div>
+            </div>
+            <div className="hp-feature-item">
+              <div className="hp-feature-num">06</div>
+              <div className="hp-feature-title">Telegram Sonuç Paylaşımı</div>
+              <div className="hp-feature-desc">Oyun bittiğinde final ekranının ekran görüntüsü otomatik olarak Telegram grubuna gönderilir.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section style={{ borderTop: '1px solid rgba(212,175,55,0.07)' }}>
+        <div className="hp-section">
+          <div className="hp-section-eyebrow">Lisans Paketleri</div>
+          <h2 className="hp-section-title">İhtiyacına göre seç,<br />hemen başla</h2>
+          <div className="hp-pricing-grid">
+            <div className="hp-plan-item">
+              <div className="hp-plan-label">Basic</div>
+              <div className="hp-plan-price">Ücretsiz</div>
+              <div className="hp-plan-period">Başlangıç</div>
+              <div className="hp-plan-divider" />
+              <div className="hp-plan-feature on">Oyun Oynama</div>
+              <div className="hp-plan-feature">Telegram Bot</div>
+              <div className="hp-plan-feature">Otomatik Mod</div>
+              <div className="hp-plan-feature">Analytics</div>
+            </div>
+            <div className="hp-plan-item featured">
+              <div className="hp-plan-badge">Popüler</div>
+              <div className="hp-plan-label">Pro</div>
+              <div className="hp-plan-price">$9.99</div>
+              <div className="hp-plan-period">aylık</div>
+              <div className="hp-plan-divider" />
+              <div className="hp-plan-feature on">Oyun Oynama</div>
+              <div className="hp-plan-feature on">Telegram Bot</div>
+              <div className="hp-plan-feature on">Otomatik Mod</div>
+              <div className="hp-plan-feature">Analytics</div>
+            </div>
+            <div className="hp-plan-item">
+              <div className="hp-plan-label">Premium</div>
+              <div className="hp-plan-price">$19.99</div>
+              <div className="hp-plan-period">aylık</div>
+              <div className="hp-plan-divider" />
+              <div className="hp-plan-feature on">Oyun Oynama</div>
+              <div className="hp-plan-feature on">Telegram Bot</div>
+              <div className="hp-plan-feature on">Otomatik Mod</div>
+              <div className="hp-plan-feature on">Analytics</div>
+            </div>
+            <div className="hp-plan-item">
+              <div className="hp-plan-label">Unlimited</div>
+              <div className="hp-plan-price">$49.99</div>
+              <div className="hp-plan-period">aylık</div>
+              <div className="hp-plan-divider" />
+              <div className="hp-plan-feature on">Tüm Özellikler</div>
+              <div className="hp-plan-feature on">Sınırsız Oturum</div>
+              <div className="hp-plan-feature on">Öncelikli Destek</div>
+              <div className="hp-plan-feature on">API Erişimi</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CONTACT */}
+      <section style={{ borderTop: '1px solid rgba(212,175,55,0.07)' }}>
+        <div className="hp-section">
+          <div className="hp-contact-wrap">
+            <div className="hp-contact-eyebrow">İletişim</div>
+            <h3 className="hp-contact-title">Lisans veya destek için</h3>
+            <p className="hp-contact-sub">Kurucu · Luana</p>
+            <div className="hp-contact-links">
+              <a href="https://t.me/luanamobile" target="_blank" rel="noopener noreferrer" className="hp-contact-link">Telegram @luanamobile</a>
+              <a href="https://luanawork.com" target="_blank" rel="noopener noreferrer" className="hp-contact-link">luanawork.com</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="hp-footer">
+        <div className="hp-footer-logo">Kadrokur</div>
+        <div className="hp-footer-links">
+          <a href="/broadcaster" className="hp-footer-link">Yayıncı Paneli</a>
+          <a href="/license-panel.html" className="hp-footer-link">Lisans Paneli</a>
+          <a href="https://t.me/luanamobile" target="_blank" rel="noopener noreferrer" className="hp-footer-link">Telegram</a>
+          <a href="https://luanawork.com" target="_blank" rel="noopener noreferrer" className="hp-footer-link">luanawork.com</a>
+        </div>
+        <div className="hp-footer-copy">© 2026 Kadrokur · TikTok Live Futbol Kartları Oyunu</div>
       </footer>
     </div>
   );
