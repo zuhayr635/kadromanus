@@ -248,18 +248,32 @@ export function FutCard({ player, size = "normal", showAnimation = true, classNa
                 background: "rgba(0,0,0,0.15)",
               }}
             >
-              <img
-                src={player.faceImageUrl || player.imageUrl}
-                alt={player.name}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}&background=${config.border.slice(1)}&color=fff&size=128&bold=true`;
-                }}
+              {(player.faceImageUrl || player.imageUrl) ? (
+                <img
+                  src={player.faceImageUrl || player.imageUrl}
+                  alt={player.name}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                    (e.target as HTMLImageElement).parentElement!.querySelector(".fut-initials")!.classList.remove("hidden");
+                  }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : null}
+              <span
+                className={`fut-initials ${(player.faceImageUrl || player.imageUrl) ? "hidden" : ""}`}
                 style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
+                  fontSize: s.overall,
+                  fontWeight: 900,
+                  color: config.border,
+                  textShadow: "0 2px 4px rgba(0,0,0,0.3)",
                 }}
-              />
+              >
+                {player.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+              </span>
             </div>
           </div>
 

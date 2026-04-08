@@ -877,7 +877,7 @@
           <div class="card-anim ${pending.quality}">
             <div class="card-anim-quality ${pending.quality}">${pending.quality.toUpperCase()}</div>
             <div class="card-anim-face">
-              <img src="${playerData.faceImageUrl || playerData.imageUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(playerData.name) + '&background=random&size=128&bold=true'}" alt="${playerData.name}" />
+              <img src="${playerData.faceImageUrl || playerData.imageUrl || ''}" alt="${playerData.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\\'font-size:24px;font-weight:900;color:#FFF8E7;\\'>${playerData.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</span>'" />
             </div>
             <div class="card-anim-name">${playerData.name || '—'}</div>
             <div class="card-anim-position">${playerData.position} • ${playerData.team || ''}</div>
@@ -980,7 +980,7 @@
               <span class="mini-card-position">${player.position}</span>
             </div>
             <div class="mini-card-face">
-              <img src="${player.faceImageUrl || player.imageUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(player.name) + '&background=random&size=64&bold=true'}" alt="${player.name}" />
+              <img src="${player.faceImageUrl || player.imageUrl || ''}" alt="${player.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\\'font-size:14px;font-weight:900;color:#FFF8E7;\\'>${player.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</span>'" />
             </div>
             <div class="mini-card-name">${player.name}</div>
             <div class="mini-card-stats">${statsHtml}</div>
