@@ -112,14 +112,15 @@ Each player entry includes:
 ### Image Sourcing
 
 **Priority order:**
-1. Wikipedia Commons API (free, high quality, legal)
-2. TheSportsDB API (free tier, sports-focused)
-3. Manual Transfermarkt URLs (last resort for missing players)
+1. Wikipedia Commons API (free, high quality, legal) — expected ~80% hit rate
+2. TheSportsDB API (free tier, sports-focused) — catches ~15% remaining
+3. Manual Transfermarkt URLs (last resort for ~5% missing)
 
 **Process:**
 - Run `fetch-wikipedia-images.mjs` for batch Wikipedia fetch
 - Fallback to existing TheSportsDB script for Wikipedia misses
-- Manual fix remaining ~5% with direct image URLs
+- Manual fix remaining ~20 players with direct image URLs
+- Verify: `SELECT COUNT(*) FROM players WHERE faceImageUrl LIKE '%ui-avatars%'` must return 0
 
 ### Implementation Files
 
@@ -148,7 +149,7 @@ Each player entry includes:
 1. **Header (top 20%):** Overall rating + Position + Nation flag
 2. **Face (middle 50%):** Large player photo with cutout effect
 3. **Stats (bottom 30%):** Stat bars or grid
-4. **Footer:** Player name + club badge placeholder
+4. **Footer:** Player name only (club badges out of scope - no logo database)
 
 **Quality-Specific Styling:**
 
@@ -163,8 +164,8 @@ Each player entry includes:
 
 **Holographic Effect (Elite only):**
 - CSS gradient animation on hover
-- Rainbow color shift (purple → blue → green → pink)
-- Particle overlay using CSS pseudo-elements
+- Rainbow color shift (magenta → cyan → yellow cycle)
+- Animated gradient overlay using `mix-blend-mode: overlay`
 
 **Shine/Glare:**
 - Diagonal white gradient overlay (10% opacity)
@@ -209,26 +210,36 @@ Each player entry includes:
 
     {/* Stats */}
     <div className="card-stats">
-      {stats.map(stat => (
-        <div className="stat-row">
-          <span className="stat-label">{stat.label}</span>
-          <div className="stat-bar">
-            <div className="stat-fill" style={{ width: `${stat.value}%` }} />
-          </div>
-          <span className="stat-value">{stat.value}</span>
-        </div>
-      ))}
+      {/* Position-specific stat display */}
+      {position === 'GK' ? (
+        <>
+          <div className="stat-row"><span>Diving</span><span>{diving}</span></div>
+          <div className="stat-row"><span>Handling</span><span>{handling}</span></div>
+          <div className="stat-row"><span>Kicking</span><span>{kicking}</span></div>
+          <div className="stat-row"><span>Reflexes</span><span>{reflexes}</span></div>
+          <div className="stat-row"><span>Speed</span><span>{pace}</span></div>
+          <div className="stat-row"><span>Positioning</span><span>{positioningGk}</span></div>
+        </>
+      ) : (
+        <>
+          <div className="stat-row"><span>Pace</span><span>{pace}</span></div>
+          <div className="stat-row"><span>Shooting</span><span>{shooting}</span></div>
+          <div className="stat-row"><span>Passing</span><span>{passing}</span></div>
+          <div className="stat-row"><span>Dribbling</span><span>{dribbling}</span></div>
+          <div className="stat-row"><span>Defending</span><span>{defending}</span></div>
+          <div className="stat-row"><span>Physical</span><span>{physical}</span></div>
+        </>
+      )}
     </div>
 
     {/* Footer */}
     <div className="card-footer">
       <span className="player-name">{name}</span>
-      <img className="club-badge" src={clubLogoUrl} />
+      <span className="player-team">{team}</span>
     </div>
 
     {/* Effects */}
     <div className="card-shine" />
-    <div className="card-particles" />
   </div>
 </div>
 ```
@@ -273,9 +284,9 @@ Each player entry includes:
 ```
 
 **Particle Effect:**
-- CSS pseudo-elements with radial gradients
-- Animate opacity + scale for sparkle
-- Elite cards only
+- CSS animated gradient sparkle (not real particles) using `::before` and `::after`
+- Small bright dots that fade in/out on a loop (`@keyframes sparkle { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }`)
+- Elite cards only; 2 pseudo-elements positioned randomly for subtle sparkle
 
 ---
 
@@ -299,6 +310,8 @@ Each player entry includes:
 ```
 
 ### New Implementation
+
+**Communication:** OBS screen uses polling (500ms interval) via existing `setupPolling()` in game-screen.html. No WebSocket changes needed. The server sends full game state including player data with `faceImageUrl` on each poll.
 
 **Replace text cards with mini FUT cards:**
 - Same shield shape as React component
@@ -358,12 +371,11 @@ async function revealCardToTeam(card, teamIndex) {
 ### Shared Styling
 
 **Strategy:**
-- Extract card styles into `fut-card-shared.css`
-- Import in both `FutCard.tsx` (via Tailwind) and `game-screen.html`
-- Use CSS variables for colors/sizes
-- React component uses full features, OBS uses subset
-
-**CSS Variables:**
+- FutCard.tsx continues using Tailwind utility classes (no change to React styling approach)
+- game-screen.html uses pure CSS with same visual output (manually synchronized)
+- CSS variables in game-screen.html only; React uses Tailwind config values
+- Both must produce visually identical cards at different scales
+- No shared CSS file needed - maintain in parallel with visual parity checks
 ```css
 :root {
   --card-bronze-bg: linear-gradient(135deg, #8B5E3C, #CD7F32);
@@ -394,7 +406,6 @@ server/
 
 client/src/
   components/FutCard.tsx  (major rewrite)
-  styles/fut-card-shared.css  (new)
 
 client/public/
   game-screen.html  (card rendering rewrite)
@@ -404,9 +415,9 @@ client/public/
 ```
 client/src/
   components/FutCard.tsx
-  pages/Home.tsx  (update card preview stats)
 
-drizzle/schema.ts  (no changes, schema already supports all fields)
+drizzle/schema.ts  (no changes needed - verified: schema supports all fields
+  including positioningGk, weakFoot, skillMoves, cardQuality enum, etc.)
 ```
 
 ### Database Operations
