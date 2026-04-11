@@ -1,1027 +1,1458 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kadrokur - Oyun Ekranı</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-
-    body {
-      font-family:'DM Sans',Arial,sans-serif;
-      background:#060e08;
-      width:100vw;
-      height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#F8F6F3;
-      overflow:hidden;
-    }
-
-    .game-container {
-      width:1920px;
-      height:1080px;
-      background:#060e08;
-      display:flex;
-      flex-direction:column;
-      position:relative;
-      overflow:hidden;
-    }
-
-    /* Subtle pitch texture overlay */
-    .game-container::before {
-      content:'';
-      position:absolute;
-      inset:0;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          rgba(255,255,255,0.012) 0px,
-          rgba(255,255,255,0.012) 60px,
-          transparent 60px,
-          transparent 120px
-        );
-      pointer-events:none;
-      z-index:0;
-    }
-
-    .header {
-      position:relative;
-      z-index:1;
-      background:rgba(6,14,8,0.92);
-      border-bottom:1px solid rgba(212,175,55,0.2);
-      padding:20px 40px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-    }
-
-    .header-brand {
-      display:flex;
-      flex-direction:column;
-    }
-
-    .header-title {
-      font-family:'Cormorant Garamond',serif;
-      font-size:36px;
-      font-weight:600;
-      letter-spacing:0.1em;
-      color:#D4AF37;
-      line-height:1;
-    }
-
-    .header-sub {
-      font-size:11px;
-      letter-spacing:0.25em;
-      text-transform:uppercase;
-      color:rgba(212,175,55,0.4);
-      margin-top:4px;
-    }
-
-    #sessionInfo {
-      font-size:14px;
-      color:rgba(248,246,243,0.35);
-      letter-spacing:0.08em;
-    }
-
-    .game-content {
-      flex:1;
-      position:relative;
-      z-index:1;
-      display:grid;
-      grid-template-columns:repeat(2, 1fr);
-      gap:2px;
-      background:rgba(212,175,55,0.06);
-      padding:2px;
-    }
-
-    .team-section {
-      background:#060e08;
-      padding:24px 28px;
-      display:flex;
-      flex-direction:column;
-      min-height:0;
-    }
-
-    .team-header {
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-end;
-      margin-bottom:18px;
-      padding-bottom:14px;
-      border-bottom:1px solid rgba(212,175,55,0.12);
-    }
-
-    .team-name {
-      font-family:'Cormorant Garamond',serif;
-      font-size:28px;
-      font-weight:600;
-      color:#F8F6F3;
-      letter-spacing:0.04em;
-    }
-
-    .team-score {
-      font-family:'Cormorant Garamond',serif;
-      font-size:22px;
-      color:#D4AF37;
-      font-weight:400;
-    }
-
-    .team-score span {
-      font-weight:600;
-      font-size:28px;
-    }
-
-    .players-list {
-      flex:1;
-      overflow:hidden;
-      display:grid;
-      grid-template-columns:repeat(3, 1fr);
-      gap:4px;
-      min-height:0;
-      padding:4px;
-    }
-
-    /* Mini FUT Card for OBS */
-    .mini-fut-card {
-      position:relative;
-      aspect-ratio:220/308;
-      border-radius:10px 10px 45% 45% / 10px 10px 30% 30%;
-      border:2px solid;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      padding:3px;
-      animation:miniCardSlide 0.3s ease-out;
-    }
-
-    .mini-fut-card.bronze {
-      background:linear-gradient(145deg, #8B5E3C, #CD7F32 30%, #8B5E3C);
-      border-color:#CD7F32;
-    }
-    .mini-fut-card.silver {
-      background:linear-gradient(145deg, #708090, #C0C0C0 30%, #D8D8D8);
-      border-color:#C0C0C0;
-    }
-    .mini-fut-card.gold {
-      background:linear-gradient(145deg, #B8860B, #FFD700 25%, #FFF8DC);
-      border-color:#FFD700;
-    }
-    .mini-fut-card.elite {
-      background:linear-gradient(145deg, #4B0082, #8B008B 25%, #DA70D6);
-      border-color:#DA70D6;
-    }
-
-    @keyframes miniCardSlide {
-      from { opacity:0; transform:translateY(-8px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
-
-    .mini-card-header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      width:100%;
-      margin-bottom:2px;
-    }
-
-    .mini-card-overall {
-      font-size:14px;
-      font-weight:900;
-      color:#FFF8E7;
-      text-shadow:0 1px 2px rgba(0,0,0,0.5);
-    }
-    .mini-card-position {
-      font-size:8px;
-      font-weight:700;
-      color:#FFF8E7;
-      letter-spacing:0.05em;
-      text-shadow:0 1px 2px rgba(0,0,0,0.5);
-    }
-
-    .mini-card-face {
-      width:40px;
-      height:40px;
-      border-radius:50%;
-      border:1px solid;
-      overflow:hidden;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:rgba(0,0,0,0.15);
-    }
-    .mini-card-face img {
-      width:100%;
-      height:100%;
-      object-fit:cover;
-    }
-
-    .mini-card-name {
-      font-size:8px;
-      font-weight:600;
-      color:#FFF8E7;
-      text-align:center;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width:100%;
-      text-shadow:0 1px 2px rgba(0,0,0,0.3);
-    }
-
-    .mini-card-stats {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:1px;
-      width:100%;
-    }
-
-    .mini-stat {
-      display:flex;
-      justify-content:space-between;
-      background:rgba(0,0,0,0.2);
-      border-radius:2px;
-      padding:1px 3px;
-    }
-
-    .mini-stat-label {
-      font-size:6px;
-      font-weight:700;
-      color:rgba(255,255,255,0.7);
-    }
-    .mini-stat-value {
-      font-size:7px;
-      font-weight:900;
-    }
-
-    /* Card opening animation - updated */
-    .card-opening-animation {
-      position:fixed;
-      top:50%;
-      left:50%;
-      transform:translate(-50%, -50%);
-      z-index:1000;
-      pointer-events:none;
-    }
-
-    .card-anim {
-      width:180px;
-      height:252px;
-      border-radius:14px 14px 55% 55% / 14px 14px 35% 35%;
-      border:2px solid;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      padding:12px;
-      animation:cardFlip 1s ease-in-out;
-    }
-
-    .card-anim.bronze {
-      background:linear-gradient(145deg, #8B5E3C, #CD7F32 30%, #8B5E3C);
-      border-color:#CD7F32;
-      box-shadow:0 0 40px rgba(205,127,50,0.5);
-    }
-    .card-anim.silver {
-      background:linear-gradient(145deg, #708090, #C0C0C0 30%, #D8D8D8);
-      border-color:#C0C0C0;
-      box-shadow:0 0 40px rgba(192,192,192,0.5);
-    }
-    .card-anim.gold {
-      background:linear-gradient(145deg, #B8860B, #FFD700 25%, #FFF8DC);
-      border-color:#FFD700;
-      box-shadow:0 0 50px rgba(255,215,0,0.6);
-    }
-    .card-anim.elite {
-      background:linear-gradient(145deg, #4B0082, #8B008B 25%, #DA70D6);
-      border-color:#DA70D6;
-      box-shadow:0 0 60px rgba(218,112,214,0.8);
-    }
-
-    .card-anim-quality {
-      font-size:9px;
-      font-weight:700;
-      letter-spacing:0.15em;
-      text-transform:uppercase;
-      color:#FFF8E7;
-      background:rgba(0,0,0,0.25);
-      padding:2px 8px;
-      border-radius:2px;
-    }
-
-    .card-anim-name {
-      font-size:14px;
-      font-weight:600;
-      color:#FFF8E7;
-      text-align:center;
-      margin:8px 0;
-      text-shadow:0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .card-anim-face {
-      width:70px;
-      height:70px;
-      border-radius:50%;
-      border:2px solid;
-      overflow:hidden;
-      margin:4px 0;
-      background:rgba(0,0,0,0.15);
-    }
-    .card-anim-face img {
-      width:100%;
-      height:100%;
-      object-fit:cover;
-    }
-
-    @keyframes cardFlip {
-      0%   { transform:rotateY(0deg) scale(0.5); opacity:0; }
-      50%  { transform:rotateY(90deg) scale(1.1); opacity:1; }
-      100% { transform:rotateY(0deg) scale(1); opacity:1; }
-    }
-
-    /* Footer */
-    .footer {
-      position:relative;
-      z-index:1;
-      background:rgba(6,14,8,0.92);
-      border-top:1px solid rgba(212,175,55,0.12);
-      padding:14px 40px;
-    }
-
-    .stats {
-      display:flex;
-      justify-content:space-around;
-      align-items:center;
-    }
-
-    .stat-item {
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    .stat-label {
-      font-size:11px;
-      letter-spacing:0.15em;
-      text-transform:uppercase;
-      color:rgba(248,246,243,0.3);
-    }
-
-    .stat-value {
-      font-family:'Cormorant Garamond',serif;
-      font-size:22px;
-      font-weight:600;
-      color:#D4AF37;
-    }
-
-    /* Final scores overlay */
-    .final-scores {
-      position:fixed;
-      inset:0;
-      background:rgba(6,14,8,0.96);
-      display:none;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      z-index:2000;
-      animation:fadeIn 0.6s ease-out;
-    }
-
-    .final-scores.active { display:flex; }
-
-    .final-scores-title {
-      font-family:'Cormorant Garamond',serif;
-      font-size:52px;
-      font-weight:600;
-      color:#D4AF37;
-      letter-spacing:0.12em;
-      margin-bottom:50px;
-    }
-
-    .final-scores-table { min-width:600px; }
-
-    .score-row {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:60px;
-      margin:10px 0;
-      padding:18px 28px;
-      border:1px solid rgba(212,175,55,0.15);
-      background:rgba(212,175,55,0.03);
-    }
-
-    .score-rank {
-      font-family:'Cormorant Garamond',serif;
-      font-size:28px;
-      font-weight:600;
-      color:#D4AF37;
-      min-width:60px;
-    }
-
-    .score-team {
-      font-size:22px;
-      font-weight:500;
-      color:#F8F6F3;
-      min-width:200px;
-    }
-
-    .score-points {
-      font-family:'Cormorant Garamond',serif;
-      font-size:28px;
-      font-weight:600;
-      color:#D4AF37;
-      min-width:130px;
-      text-align:right;
-    }
-
-    @keyframes fadeIn {
-      from { opacity:0; }
-      to   { opacity:1; }
-    }
-
-    .players-list::-webkit-scrollbar { width:4px; }
-    .players-list::-webkit-scrollbar-track { background:transparent; }
-    .players-list::-webkit-scrollbar-thumb { background:rgba(212,175,55,0.2); border-radius:2px; }
-    .players-list::-webkit-scrollbar-thumb:hover { background:rgba(212,175,55,0.4); }
-
-    /* Pending card overlay */
-    .pending-overlay {
-      position:fixed;
-      inset:0;
-      background:rgba(6,14,8,0.88);
-      display:none;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      z-index:1500;
-      animation:fadeIn 0.4s ease-out;
-    }
-    .pending-overlay.active { display:flex; }
-
-    .pending-username {
-      font-family:'Cormorant Garamond',serif;
-      font-size:38px;
-      font-weight:600;
-      color:#F8F6F3;
-      letter-spacing:0.08em;
-      margin-bottom:8px;
-    }
-
-    .pending-label {
-      font-size:12px;
-      letter-spacing:0.3em;
-      text-transform:uppercase;
-      color:rgba(212,175,55,0.5);
-      margin-bottom:48px;
-    }
-
-    .pending-card-closed {
-      width:160px;
-      height:240px;
-      border:2px solid rgba(212,175,55,0.4);
-      background:linear-gradient(160deg,#0c1309,#060e08);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:14px;
-      margin-bottom:52px;
-      position:relative;
-      overflow:hidden;
-    }
-
-    .pending-card-closed::before {
-      content:'';
-      position:absolute;
-      inset:0;
-      background:repeating-linear-gradient(
-        45deg,
-        rgba(212,175,55,0.04) 0px,
-        rgba(212,175,55,0.04) 2px,
-        transparent 2px,
-        transparent 12px
-      );
-    }
-
-    .pending-card-closed.bronze { border-color:#cd7f32; }
-    .pending-card-closed.silver { border-color:#c0c0c0; }
-    .pending-card-closed.gold   { border-color:#D4AF37; box-shadow:0 0 30px rgba(212,175,55,0.2); }
-    .pending-card-closed.elite  { border-color:#e879f9; box-shadow:0 0 30px rgba(232,121,249,0.25); }
-
-    .pending-card-quality {
-      font-size:11px;
-      font-weight:700;
-      letter-spacing:0.22em;
-      text-transform:uppercase;
-      padding:4px 10px;
-      border:1px solid;
-      position:relative;
-      z-index:1;
-    }
-    .pending-card-quality.bronze { color:#cd7f32; border-color:rgba(205,127,50,0.5); }
-    .pending-card-quality.silver { color:#c0c0c0; border-color:rgba(192,192,192,0.5); }
-    .pending-card-quality.gold   { color:#D4AF37; border-color:rgba(212,175,55,0.6); }
-    .pending-card-quality.elite  { color:#e879f9; border-color:rgba(232,121,249,0.6); }
-
-    .pending-card-mystery {
-      font-family:'Cormorant Garamond',serif;
-      font-size:42px;
-      color:rgba(212,175,55,0.15);
-      position:relative;
-      z-index:1;
-    }
-
-    .pending-teams {
-      display:flex;
-      gap:16px;
-    }
-
-    .pending-team-btn {
-      padding:16px 28px;
-      border:1px solid rgba(212,175,55,0.2);
-      background:rgba(212,175,55,0.04);
-      font-family:'Cormorant Garamond',serif;
-      font-size:20px;
-      font-weight:600;
-      color:rgba(248,246,243,0.6);
-      letter-spacing:0.06em;
-      text-align:center;
-      min-width:160px;
-      cursor:pointer;
-      transition:background 0.2s, border-color 0.2s, color 0.2s;
-    }
-
-    .pending-team-btn:hover {
-      background:rgba(212,175,55,0.12);
-      border-color:rgba(212,175,55,0.6);
-      color:#F8F6F3;
-    }
-
-    .pending-team-btn:active {
-      background:rgba(212,175,55,0.2);
-    }
-
-    .pending-team-btn:disabled {
-      opacity:0.4;
-      cursor:not-allowed;
-    }
-
-    .pending-select-hint {
-      margin-top:20px;
-      font-size:11px;
-      letter-spacing:0.2em;
-      text-transform:uppercase;
-      color:rgba(212,175,55,0.3);
-    }
-
-    /* Card reveal animation (extended 2 seconds) */
-    .card-reveal {
-      position:fixed;
-      top:62%;
-      left:50%;
-      transform:translate(-50%, -50%);
-      z-index:2500;
-      pointer-events:none;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:16px;
-    }
-
-    .card-reveal-inner {
-      width:200px;
-      height:300px;
-      border:2px solid #D4AF37;
-      background:#0c1309;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      animation:revealFlip 0.6s ease-out;
-    }
-    .card-reveal-inner.bronze { border-color:#cd7f32; box-shadow:0 0 40px rgba(205,127,50,0.5); }
-    .card-reveal-inner.silver { border-color:#c0c0c0; box-shadow:0 0 40px rgba(192,192,192,0.5); }
-    .card-reveal-inner.gold   { border-color:#D4AF37; box-shadow:0 0 50px rgba(212,175,55,0.6); }
-    .card-reveal-inner.elite  { border-color:#e879f9; box-shadow:0 0 60px rgba(232,121,249,0.7); }
-
-    .card-reveal-quality {
-      font-size:10px;
-      font-weight:700;
-      letter-spacing:0.22em;
-      text-transform:uppercase;
-      padding:3px 9px;
-      border:1px solid;
-    }
-    .card-reveal-quality.bronze { color:#cd7f32; border-color:rgba(205,127,50,0.5); }
-    .card-reveal-quality.silver { color:#c0c0c0; border-color:rgba(192,192,192,0.5); }
-    .card-reveal-quality.gold   { color:#D4AF37; border-color:rgba(212,175,55,0.6); }
-    .card-reveal-quality.elite  { color:#e879f9; border-color:rgba(232,121,249,0.6); }
-
-    .card-reveal-name {
-      font-family:'Cormorant Garamond',serif;
-      font-size:22px;
-      font-weight:600;
-      color:#F8F6F3;
-      letter-spacing:0.06em;
-      text-align:center;
-      padding:0 12px;
-    }
-
-    .card-reveal-position {
-      font-size:11px;
-      color:rgba(248,246,243,0.4);
-      letter-spacing:0.1em;
-    }
-
-    .card-reveal-team {
-      font-size:13px;
-      letter-spacing:0.15em;
-      text-transform:uppercase;
-      color:rgba(212,175,55,0.6);
-    }
-
-    @keyframes revealFlip {
-      0%   { transform:rotateY(90deg) scale(0.8); opacity:0; }
-      50%  { transform:rotateY(0deg) scale(1.05); opacity:1; }
-      100% { transform:rotateY(0deg) scale(1); }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KADROKUR — LIVE</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;700;family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #000000;
+  --paper: #f4f1ea;
+  --accent-red: #e31c23;
+  --accent-yellow: #ffc72c;
+  --accent-blue: #0066cc;
+  --accent-green: #00a651;
+  --grid: rgba(0,0,0,.08);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--ink);font-family:'Oswald',sans-serif;color:var(--ink);height:100%;overflow:hidden}
+
+/* NOISE TEXTURE */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");opacity:.03;pointer-events:none;z-index:1}
+
+/* LAYOUT */
+.bg{position:fixed;inset:0;background:linear-gradient(180deg,#1a1a1a 0%,#0a0a0a 100%);z-index:0}
+.app{position:relative;z-index:2;display:grid;grid-template-columns:1fr 280px;grid-template-rows:48px 1fr 28px;height:100vh;transition:grid-template-columns .3s}
+
+/* HEADER — TICKER STYLE */
+.hdr{grid-column:1/-1;background:var(--ink);border-bottom:3px solid var(--accent-red);display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:16px;flex-shrink:0;position:relative}
+.hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,var(--accent-red) 0px,var(--accent-red) 8px,transparent 8px,transparent 12px)}
+
+.logo{font-family:'Anton',sans-serif;font-size:1.4rem;color:var(--paper);letter-spacing:3px;text-transform:uppercase;font-style:italic}
+.logo span{color:var(--accent-red)}
+
+.hdr-right{display:flex;align-items:center;gap:4px}
+.hstat{text-align:center;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--paper);background:rgba(255,255,255,.05);padding:4px 8px;border-left:2px solid var(--accent-red);min-width:56px}
+.hstat strong{display:block;font-size:.85rem;color:var(--accent-yellow);font-family:'Anton',sans-serif;letter-spacing:1px}
+
+/* DEMO BUTTONS — INDUSTRIAL */
+.demo-bar{display:flex;gap:4px;align-items:center}
+.demo-btn{padding:4px 10px;background:transparent;border:1px solid rgba(255,255,255,.2);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--paper);transition:all .15s;position:relative;clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
+.demo-btn:hover:not(:disabled){background:var(--accent-red);border-color:var(--accent-red);transform:translateY(-1px)}
+.demo-btn:disabled{opacity:.3;cursor:not-allowed}
+.demo-btn.elite-demo{border-color:var(--accent-yellow);color:var(--accent-yellow)}
+.demo-btn.elite-demo:hover{background:var(--accent-yellow);color:var(--ink)}
+
+/* FIELD — GRID PAPER AESTHETIC */
+.field{padding:8px;overflow:hidden;height:100%;position:relative}
+.field::before{content:'';position:absolute;inset:8px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px;pointer-events:none;opacity:.3}
+
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:10px;height:100%;overflow-y:auto;padding:6px;position:relative;z-index:1}
+.teams::-webkit-scrollbar{width:4px}
+.teams::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
+
+/* TEAM CARD — BRUTALIST */
+.team{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:8px;display:flex;flex-direction:column;gap:6px;position:relative}
+.team::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--team-color,#444)}
+.team-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.1)}
+.team-left{display:flex;align-items:center;gap:8px}
+.team-logo-ph{width:28px;height:28px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-family:'Anton',sans-serif}
+.team-name{font-family:'Anton',sans-serif;font-size:.8rem;color:var(--paper);text-transform:uppercase;letter-spacing:2px}
+.team-right{text-align:right;font-family:'JetBrains Mono',monospace}
+.team-cnt{font-size:.55rem;color:rgba(255,255,255,.4)}
+.team-pow{font-size:.6rem;color:var(--accent-yellow)}
+
+/* POSITION ROWS */
+.pos-rows{display:grid;grid-template-rows:repeat(4,1fr);gap:3px;flex:1}
+.pos-row{display:flex;gap:3px;justify-content:center}
+
+/* SLOTS — INDUSTRIAL */
+.slot{width:clamp(55px,7vw,75px);height:70px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:all .2s}
+.slot::before{content:'';position:absolute;top:2px;left:2px;right:2px;bottom:2px;border:1px dashed rgba(255,255,255,.05);pointer-events:none}
+.slot.filled{border-color:rgba(255,255,255,.2);cursor:pointer}
+.slot.filled:hover{transform:scale(2.3);z-index:50;box-shadow:0 8px 32px rgba(0,0,0,.9);background:var(--ink)}
+
+.slot-lbl{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.15);font-weight:700;letter-spacing:1px}
+.slot-emo{font-size:.9rem;opacity:.2}
+
+/* MINI CARD — REDESIGNED */
+.mc{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px;gap:2px;position:relative}
+.mc::after{content:'';position:absolute;top:0;right:0;width:8px;height:8px;background:var(--card-accent,var(--accent-green));clip-path:polygon(100% 0,100% 100%,0 100%)}
+
+.mc.bronze{--card-accent:#8B7355}
+.mc.silver{--card-accent:#A8A9AD}
+.mc.gold{--card-accent:#D4AF37}
+.mc.elite{--card-accent:#e31c23}
+
+.mc-rat{font-family:'Anton',sans-serif;font-size:1rem;font-weight:400;color:var(--paper);line-height:1;-webkit-text-stroke:1px rgba(0,0,0,.3)}
+.mc-av{width:24px;height:24px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.5rem;font-weight:700;color:var(--paper);border:1px solid rgba(255,255,255,.15)}
+.mc-nm{font-size:.35rem;font-weight:600;color:var(--paper);text-align:center;line-height:1;max-width:90%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-transform:uppercase;letter-spacing:.5px}
+.mc-pos{font-size:.4rem;color:rgba(255,255,255,.3);font-family:'JetBrains Mono',monospace;font-weight:700}
+
+/* FUT CARD REVEAL - License panel'den */
+.card-reveal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:102;display:none;width:280px;height:400px;perspective:1000px}
+.card-reveal.on{display:block}
+.card-reveal-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:cardFlip 1s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes cardFlip{0%{transform:rotateY(180deg) scale(.5);opacity:0}50%{transform:rotateY(90deg) scale(1.05);opacity:.5}100%{transform:rotateY(0deg) scale(1);opacity:1}}
+
+.fut-card{width:100%;height:100%;border-radius:12px;border:2px solid;overflow:hidden;position:relative;display:flex;flex-direction:column;transition:transform .22s,box-shadow .22s;backface-visibility:hidden}
+.fut-card .shine{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.18) 0%,transparent 50%,transparent 100%);pointer-events:none;border-radius:10px}
+.fut-card .card-inner{position:relative;height:100%;padding:12px;display:flex;flex-direction:column;gap:4px}
+.fut-card.bronze{background:linear-gradient(135deg,#92633a,#7a5430,#a06d3f);border-color:#5e3d1d;box-shadow:0 4px 16px rgba(146,99,58,0.4)}
+.fut-card.bronze .card-text{color:#f5dfc0}
+.fut-card.bronze .card-accent{color:#f5dfc0}
+.fut-card.bronze .stat-bg{background:rgba(0,0,0,0.25)}
+.fut-card.silver{background:linear-gradient(135deg,#b8c4cc,#a0adb8,#c8d4dc);border-color:#7a8a94;box-shadow:0 4px 16px rgba(160,173,184,0.4)}
+.fut-card.silver .card-text{color:#2a3540}
+.fut-card.silver .card-accent{color:#1a252e}
+.fut-card.silver .stat-bg{background:rgba(0,0,0,0.12)}
+.fut-card.gold{background:linear-gradient(135deg,#e8b830,#d4a420,#f0c840);border-color:#b08a10;box-shadow:0 4px 16px rgba(212,175,55,0.5)}
+.fut-card.gold .card-text{color:#3a2800}
+.fut-card.gold .card-accent{color:#2a1c00}
+.fut-card.gold .stat-bg{background:rgba(0,0,0,0.12)}
+.fut-card.elite{background:linear-gradient(135deg,#7c3aed,#c026d3,#7c3aed);border-color:#5b21b6;box-shadow:0 4px 16px rgba(192,38,211,0.5);animation:elitePulse 2s infinite}
+@keyframes elitePulse{0%,100%{box-shadow:0 4px 16px rgba(192,38,211,.5)}50%{box-shadow:0 4px 20px rgba(192,38,211,.7)}}
+.fut-card.elite .card-text{color:#f0e0ff}
+.fut-card.elite .card-accent{color:#e8d0ff}
+.fut-card.elite .stat-bg{background:rgba(0,0,0,0.25)}
+.fut-card .top-row{display:flex;justify-content:space-between;align-items:flex-start}
+.fut-card .ovr-block{text-align:center}
+.fut-card .ovr-num{font-family:'Cormorant Garamond',Georgia,serif;font-size:2.8rem;font-weight:700;line-height:1}
+.fut-card .pos-label{font-size:.85rem;font-weight:800;letter-spacing:0.1em}
+.fut-card .meta-block{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.fut-card .meta-tag{font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:0.05em}
+.fut-card .player-img{flex:1;display:flex;align-items:center;justify-content:center;margin:8px 0;min-height:100px}
+.fut-card .player-img img{max-height:140px;max-width:100%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));border-radius:4px}
+.fut-card .player-name{text-align:center;font-size:1rem;font-weight:800;letter-spacing:0.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;text-transform:uppercase}
+.fut-card .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.fut-card .stat-item{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;border-radius:3px}
+.fut-card .stat-label{font-size:.65rem;font-weight:800;opacity:0.7}
+.fut-card .stat-value{font-size:.95rem;font-weight:800}
+.fut-card .quality-tag{position:absolute;bottom:8px;right:8px;font-size:.55rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;padding:3px 6px;border-radius:3px;background:rgba(0,0,0,0.25);color:rgba(255,255,255,.5)}
+
+.card-reveal-btn{margin-top:16px;padding:12px 32px;background:var(--accent-red);border:none;color:var(--paper);font-family:'Anton',sans-serif;font-size:.9rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .15s;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.card-reveal-btn:hover{transform:scale(1.05);box-shadow:0 4px 16px rgba(227,28,35,.5)}
+
+/* SIDE PANEL */
+.side{background:rgba(0,0,0,.5);border-left:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;overflow:hidden;transition:width .3s,min-width .3s}
+.side.collapsed{width:0!important;min-width:0!important;overflow:hidden;border-left:none}
+
+/* SIDE TOGGLE */
+.side-toggle{position:absolute;top:50%;right:0;z-index:10;transform:translateY(-50%);width:20px;height:48px;background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.1);border-right:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.3);font-size:.7rem;transition:all .15s}
+.side-toggle:hover{background:rgba(255,255,255,.05);color:var(--paper)}
+.side-block{padding:10px;border-bottom:1px solid rgba(255,255,255,.05)}
+.side-title{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+
+.live-feed{flex:1;overflow-y:auto;padding:8px}
+.live-feed::-webkit-scrollbar{width:2px}
+.live-feed::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
+
+.feed-item{padding:8px;background:rgba(255,255,255,.02);border-left:2px solid var(--accent-red);margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.feed-user{font-size:.65rem;color:var(--paper);font-weight:700;text-transform:uppercase}
+.feed-act{font-size:.6rem;color:rgba(255,255,255,.5);margin-top:2px}
+
+.top-list{padding:8px;border-top:1px solid rgba(255,255,255,.05)}
+.top-item{display:flex;align-items:center;gap:8px;padding:6px;background:rgba(255,255,255,.02);margin-bottom:4px}
+.top-rank{font-family:'Anton',sans-serif;font-size:.7rem;color:var(--accent-yellow);width:20px}
+.top-name{flex:1;font-size:.65rem;color:var(--paper);text-transform:uppercase}
+.top-amt{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--accent-green)}
+
+/* BOTTOM TICKER */
+.ticker{grid-column:1/-1;background:var(--accent-red);display:flex;align-items:center;overflow:hidden;flex-shrink:0}
+.ticker-content{display:flex;animation:scroll 20s linear infinite;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--ink);font-weight:700;text-transform:uppercase;padding:4px 0}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-item{margin-right:60px}
+.ticker-item span{color:var(--paper)}
+
+/* OVERLAY */
+.ov{position:fixed;inset:0;z-index:100;display:none;pointer-events:none}
+.ov.active{display:block;pointer-events:all}
+.ov-bg{position:absolute;inset:0;background:rgba(0,0,0,.94);backdrop-filter:blur(4px)}
+
+.waiting{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:left;z-index:101;display:none;width:90%;max-width:700px}
+.waiting.on{display:block}
+
+/* BROADCAST CARD REVEAL */
+.wait-box{background:var(--ink);border:1px solid rgba(255,255,255,.1);display:grid;grid-template-columns:1fr 200px;gap:0;position:relative;overflow:hidden}
+.wait-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent-red) 0%,var(--accent-red) 33%,var(--ink) 33%,var(--ink) 66%,var(--accent-red) 66%,var(--accent-red) 100%)}
+
+/* SOL TARAF — KART BİLGİSİ */
+.wait-main{padding:24px;border-right:1px solid rgba(255,255,255,.05)}
+
+.wait-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.w-avatar{width:48px;height:48px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--accent-red);border:1px solid rgba(255,255,255,.1)}
+.w-name{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--paper);letter-spacing:2px;text-transform:uppercase}
+.w-badge{margin-left:auto;padding:4px 12px;background:rgba(227,28,35,.15);color:var(--accent-red);font-family:'JetBrains Mono',monospace;font-size:.55rem;letter-spacing:1px}
+
+/* HEDİYE BİLGİSİ */
+.wait-gift{display:grid;grid-template-columns:40px 1fr;gap:12px;margin-bottom:16px;padding:12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05)}
+.w-gift-icon{font-size:1.5rem;display:flex;align-items:center;justify-content:center}
+.w-gift-info{display:flex;flex-direction:column;gap:2px}
+.w-gift-name{font-family:'Oswald',sans-serif;font-size:.85rem;color:var(--paper);text-transform:uppercase;letter-spacing:1px}
+.w-gift-amount{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--accent-yellow)}
+
+.wait-card-info{display:grid;grid-template-columns:80px 1fr;gap:12px;margin-bottom:16px}
+.w-card-label{font-size:.55rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;padding-top:4px}
+.w-card-value{font-family:'Anton',sans-serif;font-size:2.5rem;color:var(--paper);line-height:1;-webkit-text-stroke:1px rgba(0,0,0,.3)}
+.w-card-value.bronze{color:var(--accent-red)}
+.w-card-value.silver{color:#A8A9AD}
+.w-card-value.gold{color:var(--accent-yellow)}
+.w-card-value.elite{color:#e31c23;text-shadow:0 0 20px rgba(227,28,35,.5)}
+
+.wait-quality{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.4);letter-spacing:3px;text-transform:uppercase}
+
+.wait-instruction{margin-top:20px;padding:12px;background:rgba(255,255,255,.02);border-left:2px solid var(--accent-yellow)}
+.wait-instruction span{display:block;font-size:.6rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
+.wait-instruction strong{display:block;font-family:'Anton',sans-serif;font-size:.9rem;color:var(--paper);letter-spacing:1px}
+
+/* SAĞ TARAF — TAKIM SEÇİMİ */
+.wait-teams{background:rgba(0,0,0,.3);padding:16px;display:flex;flex-direction:column;gap:8px}
+.wait-teams-title{font-size:.5rem;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+
+.tsel{display:grid;grid-template-columns:1fr;gap:6px}
+.tsel-btn{padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-family:'Oswald',sans-serif;font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--paper);text-align:left;transition:all .1s;display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center}
+.tsel-btn:hover:not(.full){background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);transform:translateX(4px)}
+.tsel-btn.full{opacity:.3;cursor:not-allowed;border-style:dashed}
+.tsel-logo{width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.tsel-name{font-size:.7rem}
+.tsel-meta{display:flex;flex-direction:column;align-items:flex-end;font-family:'JetBrains Mono',monospace}
+.tsel-info{font-size:.55rem;color:rgba(255,255,255,.3)}
+.tsel-pow{font-size:.65rem;color:var(--accent-yellow)}
+
+.tsel-btn[data-team="0"]{border-left:3px solid var(--accent-red)}
+.tsel-btn[data-team="0"]:hover{background:linear-gradient(90deg,rgba(227,28,35,.1),transparent)}
+.tsel-btn[data-team="1"]{border-left:3px solid var(--accent-blue)}
+.tsel-btn[data-team="1"]:hover{background:linear-gradient(90deg,rgba(0,102,204,.1),transparent)}
+.tsel-btn[data-team="2"]{border-left:3px solid var(--accent-green)}
+.tsel-btn[data-team="2"]:hover{background:linear-gradient(90deg,rgba(0,166,81,.1),transparent)}
+.tsel-btn[data-team="3"]{border-left:3px solid var(--accent-yellow)}
+.tsel-btn[data-team="3"]:hover{background:linear-gradient(90deg,rgba(255,199,44,.1),transparent)}
+
+/* ANIMATIONS */
+.fly{position:fixed;width:45px;height:60px;z-index:200;pointer-events:none;display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:1.2rem;color:var(--paper);background:var(--accent-red);clip-path:polygon(10% 0,100% 0,100% 90%,90% 100%,0 100%,0 10%)}
+
+.cnf-w{position:fixed;inset:0;z-index:199;pointer-events:none}
+.cnf{position:absolute;top:-10px;animation:cfx linear forwards}
+@keyframes cfx{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+.epic{position:fixed;inset:0;z-index:99;pointer-events:none;display:none}
+.epic.on{display:block}
+.rays{position:absolute;top:50%;left:50%;width:0;height:0}
+.ray{position:absolute;width:3px;height:300px;transform-origin:top center;background:linear-gradient(to bottom,var(--accent-yellow),transparent)}
+
+.go-ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.96);display:none;align-items:center;justify-content:center}
+.go-ov.on{display:flex}
+.go-box{text-align:center;max-width:700px;width:95%}
+.go-title{font-family:'Anton',sans-serif;font-size:2.5rem;color:var(--accent-red);letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;-webkit-text-stroke:2px var(--ink)}
+.go-sub{font-size:.75rem;color:rgba(255,255,255,.4);letter-spacing:4px;text-transform:uppercase;margin-bottom:20px}
+
+.winner-box{background:var(--accent-red);border:4px solid var(--ink);padding:20px;margin-bottom:20px;clip-path:polygon(0 0,calc(100% - 24px) 0,100% 24px,100% 100%,24px 100%,0 calc(100% - 24px))}
+.w-crown{font-size:2rem;display:block;margin-bottom:8px}
+.w-lbl{font-size:.6rem;color:rgba(0,0,0,.5);letter-spacing:3px}
+.w-nm{font-family:'Anton',sans-serif;font-size:1.8rem;color:var(--ink);margin-bottom:4px}
+.w-pw{font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--ink)}
+
+.ranks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.rk{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:10px;text-align:left}
+.rk.r1{border-color:var(--accent-yellow);background:rgba(212,175,55,.1)}
+.rk.r2{border-color:#C0C0C0}
+.rk.r3{border-color:#CD7F32}
+.rk-em{font-size:1rem;display:block;margin-bottom:4px}
+.rk-nm{font-family:'Anton',sans-serif;font-size:.7rem;color:var(--paper);text-transform:uppercase}
+.rk-pw{font-size:.7rem;color:var(--accent-yellow);font-family:'JetBrains Mono',monospace}
+.rk-cnt{font-size:.55rem;color:rgba(255,255,255,.3)}
+
+.best-title{font-size:.65rem;color:rgba(255,255,255,.3);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px}
+.best-grid{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.bi{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:8px 12px;text-align:center}
+.bi-r{font-family:'Anton',sans-serif;font-size:1.2rem;color:var(--accent-yellow)}
+.bi-n{font-size:.65rem;color:var(--paper);font-weight:600;text-transform:uppercase}
+.bi-t{font-size:.55rem;color:rgba(255,255,255,.3)}
+
+.go-btns{display:flex;gap:10px;justify-content:center}
+.go-btn{padding:12px 32px;background:transparent;border:2px solid var(--paper);color:var(--paper);font-family:'Anton',sans-serif;font-size:.8rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.go-btn:hover{background:var(--paper);color:var(--ink)}
+
+/* AYARLAR BUTONU */
+.settings-btn{width:36px;height:36px;background:transparent;border:1px solid rgba(255,255,255,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--paper);transition:all .15s;font-size:1rem;z-index:10;position:relative}
+.settings-btn:hover{background:rgba(255,255,255,.05);border-color:var(--paper);transform:rotate(90deg)}
+
+/* AYARLAR PANELİ */
+.settings-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.settings-ov.on{display:flex}
+.settings-box{background:var(--ink);border:1px solid rgba(255,255,255,.1);width:90%;max-width:750px;max-height:90vh;overflow-y:auto}
+.settings-box::-webkit-scrollbar{width:4px}
+.settings-box::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
+
+.settings-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;background:var(--ink)}
+.settings-title{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--paper);letter-spacing:2px;text-transform:uppercase}
+.settings-close{width:32px;height:32px;background:transparent;border:1px solid rgba(255,255,255,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:1.2rem;transition:all .15s}
+.settings-close:hover{background:var(--accent-red);border-color:var(--accent-red)}
+
+.settings-section{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.05)}
+.settings-section-title{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+
+.settings-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.settings-label{font-size:.75rem;color:var(--paper)}
+.settings-value{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:rgba(255,255,255,.4)}
+
+/* TOGGLE */
+.toggle{width:44px;height:24px;background:rgba(255,255,255,.1);border-radius:12px;position:relative;cursor:pointer;transition:all .2s}
+.toggle.on{background:var(--accent-green)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:var(--paper);border-radius:50%;top:3px;left:3px;transition:all .2s}
+.toggle.on::after{left:23px;background:var(--ink)}
+
+/* SLIDER */
+.slider{width:120px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;appearance:none;cursor:pointer}
+.slider::-webkit-slider-thumb{appearance:none;width:16px;height:16px;background:var(--paper);border-radius:50%;cursor:pointer}
+.slider::-moz-range-thumb{width:16px;height:16px;background:var(--paper);border-radius:50%;cursor:pointer;border:none}
+
+/* INPUT */
+.settings-input{width:100px;padding:6px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:.7rem;text-align:center}
+.settings-input:focus{outline:none;border-color:var(--accent-yellow)}
+
+/* TEAM COLOR PICKER */
+.color-row{display:flex;gap:8px;margin-bottom:8px}
+.color-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.color-input{width:100%;height:28px;border:1px solid rgba(255,255,255,.1);cursor:pointer;background:transparent;padding:0}
+.color-label{font-size:.55rem;color:rgba(255,255,255,.3);font-family:'JetBrains Mono',monospace}
+
+/* BUTTONS */
+.settings-btn-group{display:flex;gap:8px}
+.settings-action-btn{flex:1;padding:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-family:'Oswald',sans-serif;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:all .15s}
+.settings-action-btn:hover{background:var(--accent-red);border-color:var(--accent-red)}
+.settings-action-btn.secondary{background:transparent;color:rgba(255,255,255,.4)}
+.settings-action-btn.secondary:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.2);color:var(--paper)}
+
+/* GIFT GALLERY */
+.gift-layout{display:grid;grid-template-columns:1fr 260px;gap:16px}
+.gift-list{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-height:320px;overflow-y:auto;padding:4px}
+.gift-list::-webkit-scrollbar{width:4px}
+.gift-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
+.gift-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:4px;text-align:center;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.gift-item:hover{background:rgba(255,255,255,.08)}
+.gift-item.selected{border-color:var(--accent-yellow);background:rgba(255,199,44,.15);box-shadow:0 0 8px rgba(255,199,44,.3)}
+.gift-img{width:40px;height:40px;object-fit:contain;border-radius:4px}
+.gift-name{font-size:.45rem;color:var(--paper);text-transform:uppercase;letter-spacing:.3px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gift-coins{font-size:.4rem;color:rgba(255,255,255,.3);font-family:'JetBrains Mono',monospace}
+
+.gift-preview{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.gift-preview-empty{color:rgba(255,255,255,.3);font-size:.8rem;text-align:center;padding:40px 20px}
+.gift-preview-img{width:120px;height:120px;object-fit:contain}
+.gift-preview-name{font-family:'Anton',sans-serif;font-size:1.1rem;color:var(--paper);letter-spacing:1px}
+.gift-preview-coins{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:rgba(255,255,255,.4)}
+.gift-quality-select{width:100%;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}
+.gift-quality-btn{padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-family:'Oswald',sans-serif;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:all .15s;border-radius:4px}
+.gift-quality-btn:hover{background:rgba(255,255,255,.1)}
+.gift-quality-btn.bronze{border-color:#8B7355}
+.gift-quality-btn.bronze:hover{background:rgba(139,115,85,.2)}
+.gift-quality-btn.silver{border-color:#A8A9AD}
+.gift-quality-btn.silver:hover{background:rgba(168,169,173,.2)}
+.gift-quality-btn.gold{border-color:#D4AF37}
+.gift-quality-btn.gold:hover{background:rgba(212,175,55,.2)}
+.gift-quality-btn.elite{border-color:#e31c23}
+.gift-quality-btn.elite:hover{background:rgba(227,28,35,.2)}
+.gift-quality-btn.active{background:var(--accent-green);border-color:var(--accent-green);color:var(--ink)}
+.gift-send-btn{width:100%;padding:12px;margin-top:8px;background:var(--accent-red);border:none;color:var(--paper);font-family:'Anton',sans-serif;font-size:.8rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .15s;border-radius:4px}
+.gift-send-btn:hover{background:var(--accent-yellow);color:var(--ink)}
+.gift-send-btn:disabled{opacity:.3;cursor:not-allowed}
+
+.gift-filter-btn{padding:4px 8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-family:'JetBrains Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:all .15s;border-radius:4px}
+.gift-filter-btn:hover{background:rgba(255,255,255,.1);color:var(--paper)}
+.gift-filter-btn.active{background:var(--accent-red);border-color:var(--accent-red);color:var(--paper)}
+
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{display:none}
+  .teams{grid-template-columns:1fr 1fr}
+}
+</style>
 </head>
 <body>
-  <div class="game-container">
-    <div class="header">
-      <div class="header-brand">
-        <div class="header-title">KADROKUR</div>
-        <div class="header-sub">TikTok Live Futbol Kartları</div>
-      </div>
-      <span id="sessionInfo">Oturum: Yükleniyor...</span>
+<div class="bg"></div><div class="cnf-w" id="cnfW"></div><div class="epic" id="epic"><div class="rays" id="rays"></div></div>
+
+<div class="app">
+  <div class="hdr">
+    <div class="logo"><span>KADRO</span>KUR<span style="font-size:.8em;opacity:.5">LIVE</span></div>
+    <div class="demo-bar">
+      <button class="demo-btn" onclick="openDemo('bronze')">BRONZE</button>
+      <button class="demo-btn" onclick="openDemo('silver')">SILVER</button>
+      <button class="demo-btn" onclick="openDemo('gold')">GOLD</button>
+      <button class="demo-btn elite-demo" onclick="openDemo('elite')">ELITE</button>
     </div>
-
-    <div class="game-content" id="gameContent"></div>
-
-    <div class="footer">
-      <div class="stats">
-        <div class="stat-item">
-          <span class="stat-label">Açılan Kartlar</span>
-          <span class="stat-value" id="totalCards">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Katılımcılar</span>
-          <span class="stat-value" id="totalParticipants">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Beğeni</span>
-          <span class="stat-value" id="totalLikes">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Hediye</span>
-          <span class="stat-value" id="totalGifts">0</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="final-scores" id="finalScores">
-      <div class="final-scores-title">OYUN BİTTİ</div>
-      <div class="final-scores-table" id="scoresTable"></div>
+    <div class="hdr-right">
+      <div class="hstat">KART<strong id="hCards">0</strong></div>
+      <div class="hstat">HEDİYE<strong id="hGifts">0</strong></div>
+      <button class="settings-btn" onclick="openSettings()">⚙</button>
     </div>
   </div>
 
-  <div class="card-opening-animation" id="cardAnimation"></div>
-
-  <!-- Pending card overlay: shown while waiting for team selection -->
-  <div class="pending-overlay" id="pendingOverlay">
-    <div class="pending-username" id="pendingUsername"></div>
-    <div class="pending-label">Takım Seçimi Bekleniyor</div>
-    <div class="pending-card-closed" id="pendingCardClosed">
-      <div class="pending-card-mystery">?</div>
-      <div class="pending-card-quality" id="pendingCardQuality"></div>
-    </div>
-    <div class="pending-teams" id="pendingTeams"></div>
-    <div class="pending-select-hint">Takıma tıkla veya yayıncı panelinden seç</div>
+  <div class="field">
+    <div class="teams" id="teamsEl"></div>
+    <div style="position:absolute;top:50%;left:calc(50% - 140px);transform:translate(-50%,-50%);font-family:'Anton',sans-serif;font-size:3rem;letter-spacing:12px;color:rgba(255,255,255,.04);text-transform:uppercase;pointer-events:none;z-index:0;white-space:nowrap">LUANAWORK.COM</div>
   </div>
 
-  <!-- Card reveal overlay: shown for 2 seconds after team is selected -->
-  <div id="cardRevealOverlay"></div>
+  <div class="side" id="sidePanel">
+    <div class="side-block">
+      <div class="side-title">Bağlantı</div>
+      <div id="connStatus" style="font-size:.65rem;color:rgba(255,255,255,.3);font-family:'JetBrains Mono',monospace">BAĞLANANIYOR...</div>
+    </div>
+    <div class="live-feed" id="liveFeed">
+      <div class="feed-item"><span class="feed-act">Oyun bekleniyor...</span></div>
+    </div>
+    <div class="top-list" id="topList">
+      <div class="side-title">En Çok Katkı</div>
+      <div style="font-size:.6rem;color:rgba(255,255,255,.2);text-align:center;padding:12px">HENÜZ YOK</div>
+    </div>
+  </div>
 
-  <script>
-    const gameContent = document.getElementById('gameContent');
-    const sessionInfo = document.getElementById('sessionInfo');
-    const finalScores = document.getElementById('finalScores');
-    const scoresTable = document.getElementById('scoresTable');
-    const cardAnimation = document.getElementById('cardAnimation');
-    const pendingOverlay = document.getElementById('pendingOverlay');
-    const pendingUsername = document.getElementById('pendingUsername');
-    const pendingCardClosed = document.getElementById('pendingCardClosed');
-    const pendingCardQuality = document.getElementById('pendingCardQuality');
-    const pendingTeams = document.getElementById('pendingTeams');
-    const cardRevealOverlay = document.getElementById('cardRevealOverlay');
+  <div class="side-toggle" id="sideToggle" onclick="toggleSide()">◀</div>
 
-    let gameState = null;
-    let prevPendingCard = null; // track previous pending state to detect reveal moment
-    let isAssigning = false;    // guard against multi-click and polling rebuilds
-    let isRevealing = false;    // true during 2-second card reveal — blocks new pending overlay
+  <div class="ticker">
+    <div class="ticker-content" id="tickerContent">
+      <span class="ticker-item">KADROKUR CANLI <span>●</span> TİKTOK LİNK BURAYA</span>
+      <span class="ticker-item">HEDİYELER İLE KART AÇ <span>●</span> TAKIMINI SEÇ</span>
+      <span class="ticker-item">EN İYİ 11 OYUNCUYU TOPLA <span>●</span> YARIŞI KAZAN</span>
+      <span class="ticker-item">KADROKUR CANLI <span>●</span> TİKTOK LİNK BURAYA</span>
+      <span class="ticker-item">HEDİYELER İLE KART AÇ <span>●</span> TAKIMINI SEÇ</span>
+      <span class="ticker-item">EN İYİ 11 OYUNCUYU TOPLA <span>●</span> YARIŞI KAZAN</span>
+    </div>
+  </div>
+</div>
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('sessionId');
-
-    function initializeGameScreen() {
-      if (!sessionId) {
-        sessionInfo.textContent = 'Oturum ID bulunamadı';
-        return;
-      }
-      sessionInfo.textContent = `Oturum: ${sessionId}`;
-      setupPolling();
-    }
-
-    function setupPolling() {
-      setInterval(async () => {
-        try {
-          const response = await fetch(`/api/trpc/game.getState?input=${encodeURIComponent(JSON.stringify({ json: { sessionId } }))}`);
-          if (response.ok) {
-            const raw = await response.json();
-            const data = raw.result?.data?.json || raw.result?.data || raw;
-            updateGameScreen(data);
-          }
-        } catch (error) {
-          console.error('Error fetching game state:', error);
-        }
-      }, 500);
-    }
-
-    function updateGameScreen(state) {
-      if (!state || !state.teams) return;
-
-      const wasPending = !!prevPendingCard;
-      const isNowPending = !!state.pendingCard;
-
-      // Detect transition: pending → confirmed (team was just selected)
-      if (wasPending && !isNowPending) {
-        showCardReveal(prevPendingCard, state);
-      }
-
-      prevPendingCard = state.pendingCard || null;
-      gameState = state;
-
-      // Show/hide pending overlay (suppressed during card reveal animation)
-      if (isNowPending && !isRevealing) {
-        showPendingOverlay(state.pendingCard, state.teams);
-      } else if (!isNowPending) {
-        pendingOverlay.classList.remove('active');
-      }
-
-      if (gameContent.children.length === 0) {
-        renderTeams(state.teams);
-      }
-
-      state.teams.forEach((team, idx) => {
-        const teamSection = document.querySelectorAll('.team-section')[idx];
-        if (teamSection) updateTeamSection(teamSection, team);
-      });
-
-      document.getElementById('totalCards').textContent = state.openedCards?.length || 0;
-      document.getElementById('totalParticipants').textContent = state.participants?.length || state.participants?.size || 0;
-      document.getElementById('totalLikes').textContent = state.totalLikes || 0;
-      document.getElementById('totalGifts').textContent = state.totalGifts || 0;
-
-      if (state.isComplete) showFinalScores(state.teams);
-    }
-
-    function showPendingOverlay(pending, teams) {
-      // If this same card is already showing and we're mid-assignment, don't rebuild
-      // (rebuilding resets disabled state and loses the click-in-progress)
-      if (isAssigning && pendingOverlay.classList.contains('active') &&
-          pendingUsername.textContent === pending.username) {
-        return;
-      }
-
-      // New card — reset state
-      isAssigning = false;
-
-      pendingUsername.textContent = pending.username;
-      pendingCardClosed.className = `pending-card-closed ${pending.quality}`;
-      pendingCardQuality.className = `pending-card-quality ${pending.quality}`;
-      pendingCardQuality.textContent = pending.quality.toUpperCase();
-
-      pendingTeams.innerHTML = '';
-      teams.forEach((team) => {
-        const btn = document.createElement('button');
-        btn.className = 'pending-team-btn';
-        btn.textContent = team.name;
-        btn.addEventListener('click', () => assignTeam(team.id));
-        pendingTeams.appendChild(btn);
-      });
-
-      pendingOverlay.classList.add('active');
-    }
-
-    async function assignTeam(teamId) {
-      if (isAssigning) return; // block duplicate calls
-      isAssigning = true;
-      pendingTeams.querySelectorAll('button').forEach(b => b.disabled = true);
-      try {
-        const res = await fetch('/api/trpc/broadcaster.assignPendingCard', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ json: { sessionId, teamId } }),
-        });
-        if (!res.ok) throw new Error('Request failed');
-        pendingOverlay.classList.remove('active');
-      } catch (err) {
-        console.error('Takım ataması başarısız:', err);
-        isAssigning = false;
-        pendingTeams.querySelectorAll('button').forEach(b => b.disabled = false);
-      }
-    }
-
-    function showCardReveal(pending, state) {
-      if (!pending) return;
-      // Find the newly added card to get player data
-      let playerData = null;
-      let teamName = '';
-      state.teams.forEach((team) => {
-        const lastPlayer = team.players[team.players.length - 1];
-        if (lastPlayer && lastPlayer.openedBy === pending.username) {
-          playerData = lastPlayer;
-          teamName = team.name;
-        }
-      });
-
-      if (!playerData) return;
-
-      isRevealing = true;
-      pendingOverlay.classList.remove('active');
-
-      // Get stats for display
-      let statsHtml = '';
-      if (playerData.position === 'GK') {
-        statsHtml = `
-          <div class="reveal-stat"><span>DIV</span><span>${playerData.diving || playerData.overall || '?'}</span></div>
-          <div class="reveal-stat"><span>HAN</span><span>${playerData.handling || playerData.overall || '?'}</span></div>
-          <div class="reveal-stat"><span>REF</span><span>${playerData.reflexes || playerData.overall || '?'}</span></div>
-        `;
-      } else {
-        statsHtml = `
-          <div class="reveal-stat"><span>PAC</span><span>${playerData.pace || playerData.overall || '?'}</span></div>
-          <div class="reveal-stat"><span>SHO</span><span>${playerData.shooting || playerData.overall || '?'}</span></div>
-          <div class="reveal-stat"><span>PAS</span><span>${playerData.passing || playerData.overall || '?'}</span></div>
-        `;
-      }
-
-      cardRevealOverlay.innerHTML = `
-        <div class="card-reveal">
-          <div class="card-anim ${pending.quality}">
-            <div class="card-anim-quality ${pending.quality}">${pending.quality.toUpperCase()}</div>
-            <div class="card-anim-face">
-              <img src="${playerData.faceImageUrl || playerData.imageUrl || ''}" alt="${playerData.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\\'font-size:24px;font-weight:900;color:#FFF8E7;\\'>${playerData.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</span>'" />
-            </div>
-            <div class="card-anim-name">${playerData.name || '—'}</div>
-            <div class="card-anim-position">${playerData.position} • ${playerData.team || ''}</div>
-            <div class="reveal-stats">${statsHtml}</div>
-          </div>
-          <div class="card-reveal-team">${teamName}</div>
+<div class="ov" id="ov">
+  <div class="ov-bg"></div>
+  <div class="waiting" id="waitingEl">
+    <div class="wait-box">
+      <div class="wait-main">
+        <div class="wait-header">
+          <div class="w-avatar" id="wAvatar">?</div>
+          <div class="w-name" id="wName">KULLANICI</div>
+          <div class="w-badge">CANLI</div>
         </div>
-      `;
+        <div class="wait-gift" id="wGiftBox" style="display:none">
+          <img class="w-gift-icon" id="wGiftIcon" src="" alt="" style="width:60px;height:60px;object-fit:contain">
+          <div class="w-gift-info">
+            <span class="w-gift-name" id="wGiftName">HEDİYE</span>
+            <span class="w-gift-amount" id="wGiftAmount">0 JETON</span>
+          </div>
+        </div>
+        <div class="wait-card-info">
+          <div class="w-card-label">KART</div>
+          <div>
+            <div class="w-card-value" id="wQual">BRONZE</div>
+            <div class="wait-quality" id="wQualityText">COMMON TIER</div>
+          </div>
+        </div>
+        <div class="wait-instruction">
+          <span>KART EKLENECEK TAKIMI SEÇ</span>
+          <strong>TAKIMINI BELİRLE</strong>
+        </div>
+      </div>
+      <div class="wait-teams">
+        <div class="wait-teams-title">TAKIMLAR</div>
+        <div class="tsel" id="tselGrid"></div>
+      </div>
+    </div>
+  </div>
 
-      // Add reveal stats styles
-      if (!document.getElementById('reveal-extra-styles')) {
-        const style = document.createElement('style');
-        style.id = 'reveal-extra-styles';
-        style.textContent = `
-          .reveal-stats {
-            display:grid;
-            grid-template-columns:repeat(3,1fr);
-            gap:4px;
-            width:100%;
-            margin-top:8px;
-          }
-          .reveal-stat {
-            display:flex;
-            justify-content:space-between;
-            background:rgba(0,0,0,0.2);
-            border-radius:3px;
-            padding:2px 6px;
-          }
-          .reveal-stat span:first-child {
-            font-size:8px;
-            font-weight:700;
-            color:rgba(255,255,255,0.7);
-          }
-          .reveal-stat span:last-child {
-            font-size:10px;
-            font-weight:900;
-            color:#FFF8E7;
-          }
-        `;
-        document.head.appendChild(style);
-      }
+  <!-- KART AÇILIŞ REVEAL -->
+  <div class="card-reveal" id="cardReveal">
+    <div class="card-reveal-inner" id="cardRevealInner">
+      <div class="fut-card" id="futCardFront"></div>
+    </div>
+    <button class="card-reveal-btn" onclick="confirmCardPlace()">TAKIMA EKLE</button>
+  </div>
+</div>
+  <div class="go-box">
+    <div class="go-title">OYUN SONA ERDİ</div>
+    <div class="go-sub">FİNAL SONUÇLARI</div>
+    <div class="winner-box">
+      <span class="w-crown">👑</span>
+      <div class="w-lbl">KAZANAN</div>
+      <div class="w-nm" id="wNm">-</div>
+      <div class="w-pw" id="wPw">⚡ 0</div>
+    </div>
+    <div class="ranks" id="ranksEl"></div>
+    <div class="best-title">⭐ EN İYİ 5 KART</div>
+    <div class="best-grid" id="bestEl"></div>
+    <div class="go-btns">
+      <button class="go-btn" onclick="shareRes()">PAYLAŞ</button>
+    </div>
+  </div>
+</div>
 
-      setTimeout(() => {
-        cardRevealOverlay.innerHTML = '';
-        isRevealing = false;
-        if (gameState?.pendingCard) {
-          showPendingOverlay(gameState.pendingCard, gameState.teams);
+<!-- AYARLAR PANELİ -->
+<div class="settings-ov" id="settingsOv" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-box">
+    <div class="settings-header">
+      <span class="settings-title">AYARLAR</span>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <!-- HEDİYE GALERİSİ — DB'den çekilen gerçek veriler -->
+    <div class="settings-section">
+      <div class="settings-section-title">HEDİYE GALERİSİ</div>
+      <div class="settings-row" style="margin-bottom:12px">
+        <input type="text" id="giftSearch" placeholder="Hediye ara..." style="flex:1;padding:8px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:.65rem" oninput="filterGiftsFromDB()">
+      </div>
+      <div class="settings-row" style="margin-bottom:8px;flex-wrap:wrap;gap:4px">
+        <button class="gift-filter-btn active" data-filter="all" onclick="setGiftCostFilter('all')">TÜMÜ</button>
+        <button class="gift-filter-btn" data-filter="1-5" onclick="setGiftCostFilter('1-5')">1-5</button>
+        <button class="gift-filter-btn" data-filter="5-10" onclick="setGiftCostFilter('5-10')">5-10</button>
+        <button class="gift-filter-btn" data-filter="10-50" onclick="setGiftCostFilter('10-50')">10-50</button>
+        <button class="gift-filter-btn" data-filter="50-100" onclick="setGiftCostFilter('50-100')">50-100</button>
+        <button class="gift-filter-btn" data-filter="100-500" onclick="setGiftCostFilter('100-500')">100-500</button>
+        <button class="gift-filter-btn" data-filter="500+" onclick="setGiftCostFilter('500+')">500+</button>
+      </div>
+      <div class="settings-row" style="margin-bottom:8px;flex-wrap:wrap;gap:4px">
+        <button class="gift-filter-btn gq-filter active" data-qfilter="all" onclick="setGiftQualFilter('all')">TÜMÜ</button>
+        <button class="gift-filter-btn gq-filter" data-qfilter="bronze" onclick="setGiftQualFilter('bronze')" style="border-color:#8B7355;color:#8B7355">BRONZE</button>
+        <button class="gift-filter-btn gq-filter" data-qfilter="silver" onclick="setGiftQualFilter('silver')" style="border-color:#A8A9AD;color:#A8A9AD">SILVER</button>
+        <button class="gift-filter-btn gq-filter" data-qfilter="gold" onclick="setGiftQualFilter('gold')" style="border-color:#D4AF37;color:#D4AF37">GOLD</button>
+        <button class="gift-filter-btn gq-filter" data-qfilter="elite" onclick="setGiftQualFilter('elite')" style="border-color:#e31c23;color:#e31c23">ELITE</button>
+      </div>
+      <div class="gift-stats" style="margin-bottom:8px;font-size:.55rem;color:rgba(255,255,255,.3);font-family:'JetBrains Mono',monospace">
+        <span id="giftCount">0</span> hediye gösteriliyor
+      </div>
+      <div class="gift-layout">
+        <div class="gift-list" id="giftList">
+          <div style="grid-column:1/-1;text-align:center;padding:20px;color:rgba(255,255,255,.2);font-size:.7rem">Yükleniyor...</div>
+        </div>
+        <div class="gift-preview" id="giftPreview">
+          <div class="gift-preview-empty">Hediye seç</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAKIM AYARLARI -->
+    <div class="settings-section">
+      <div class="settings-section-title">TAKIMLAR</div>
+      <div id="settingsTeams"></div>
+      <div class="settings-btn-group" style="margin-top:12px">
+        <button class="settings-action-btn" onclick="applyTeamSettings()">UYGULA</button>
+      </div>
+    </div>
+
+    <!-- ARKA PLAN -->
+    <div class="settings-section">
+      <div class="settings-section-title">ARKA PLAN</div>
+      <div class="settings-row">
+        <span class="settings-label">Renk 1</span>
+        <input type="color" class="color-input" id="setBgC1" value="#1a1a1a" style="width:48px;height:28px" oninput="applyBgLive()">
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Renk 2</span>
+        <input type="color" class="color-input" id="setBgC2" value="#0a0a0a" style="width:48px;height:28px" oninput="applyBgLive()">
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Görsel URL</span>
+        <input class="settings-input" id="setBgUrl" placeholder="https://..." style="width:160px;text-align:left">
+      </div>
+      <div class="settings-btn-group">
+        <button class="settings-action-btn" onclick="applyBgUrl()">GÖRSEL UYGULA</button>
+        <button class="settings-action-btn secondary" onclick="resetBg()">SIFIRLA</button>
+      </div>
+    </div>
+
+    <!-- SES -->
+    <div class="settings-section">
+      <div class="settings-section-title">SES</div>
+      <div class="settings-row">
+        <span class="settings-label">Ses</span>
+        <div class="toggle on" id="togSound" onclick="toggleSound()"></div>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Genel Ses</span>
+        <input type="range" class="slider" id="volMaster" min="0" max="100" value="80" oninput="CFG.vol.master=+this.value;document.getElementById('volMasterVal').textContent=this.value+'%'">
+        <span class="settings-value" id="volMasterVal">80%</span>
+      </div>
+    </div>
+
+    <!-- EFEKTLER -->
+    <div class="settings-section">
+      <div class="settings-section-title">EFEKTLER</div>
+      <div class="settings-row">
+        <span class="settings-label">Konfeti</span>
+        <div class="toggle on" id="togConfetti" onclick="toggleCfg('confetti',this)"></div>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Ekran Parlaması</span>
+        <div class="toggle on" id="togEpic" onclick="toggleCfg('epic',this)"></div>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Uçan Kart</span>
+        <div class="toggle on" id="togFly" onclick="toggleCfg('flyCard',this)"></div>
+      </div>
+    </div>
+
+    <!-- TICKER -->
+    <div class="settings-section">
+      <div class="settings-section-title">ALT YAZI</div>
+      <div class="settings-row">
+        <span class="settings-label">Ticker</span>
+        <div class="toggle on" id="togTicker" onclick="toggleTicker()"></div>
+      </div>
+      <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:6px">
+        <span class="settings-label">Yazılar (satır satır)</span>
+        <textarea id="setTickerText" style="width:100%;height:60px;padding:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:.65rem;resize:vertical">KADROKUR CANLI ● TİKTOK LİNK BURAYA
+HEDİYELER İLE KART AÇ ● TAKIMINI SEÇ
+EN İYİ 11 OYUNCUYU TOPLA ● YARIŞI KAZAN</textarea>
+      </div>
+      <div class="settings-btn-group">
+        <button class="settings-action-btn" onclick="applyTicker()">UYGULA</button>
+      </div>
+    </div>
+
+    <!-- BEĞENİ İLE KATILIM -->
+    <div class="settings-section">
+      <div class="settings-section-title">BEĞENİ İLE KATILIM</div>
+      <div class="settings-row">
+        <span class="settings-label">Beğeni → Kart</span>
+        <div class="toggle on" id="togLikeCard" onclick="toggleCfg('likeCard',this)"></div>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Beğeni Eşiği</span>
+        <input class="settings-input" id="setLikeThreshold" type="number" value="100" min="1" style="width:70px">
+        <span class="settings-value">beğeni = 1 kart</span>
+      </div>
+      <div style="margin-top:8px">
+        <div class="settings-row" style="margin-bottom:4px">
+          <span class="settings-label" style="flex:1">Kalite Eşikleri</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 60px 60px;gap:4px;align-items:center;font-size:.6rem;color:rgba(255,255,255,.3);margin-bottom:6px">
+          <span>KALİTE</span><span style="text-align:center">MİN BEĞENİ</span><span style="text-align:center">JETON</span>
+        </div>
+        <div id="setQualityMap"></div>
+        <div class="settings-btn-group" style="margin-top:8px">
+          <button class="settings-action-btn secondary" onclick="addQualityRow()">+ SATIR EKLE</button>
+          <button class="settings-action-btn" onclick="applyLikeSettings()">KAYDET</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OYUN -->
+    <div class="settings-section">
+      <div class="settings-section-title">OYUN</div>
+      <div class="settings-btn-group">
+        <button class="settings-action-btn" onclick="resetGame()" style="background:rgba(227,28,35,.15);border-color:var(--accent-red);color:var(--accent-red)">OYUNU SIFIRLA</button>
+        <button class="settings-action-btn" onclick="endGameManual()" style="background:rgba(255,199,44,.15);border-color:var(--accent-yellow);color:var(--accent-yellow)">OYUNU BİTİR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const TEAM_COLORS=['#e31c23','#0066cc','#00a651','#ffc72c'];
+const TEAM_EMOJI=['🔴','🔵','🟢','🟡'];
+const QUALITY_LABEL={bronze:'BRONZE',silver:'SILVER',gold:'GOLD',elite:'ELITE'};
+const QUALITY_SCORE={bronze:10,silver:25,gold:50,elite:100};
+
+let GS={teams:[],pendingCard:null,pendingPlayerFull:null,pendingUsername:null,pendingGift:null,selectedTeamIndex:-1,totalCards:0,totalGifts:0,topDonors:[],busy:false};
+let socket=null,playerCache={},currentPlayerId=null,currentQuality='bronze';
+
+async function fetchPlayerDetails(playerId){
+  if(playerCache[playerId])return playerCache[playerId];
+  try{
+    const r=await fetch(`/api/players/${playerId}`);
+    if(!r.ok)return null;
+    const p=await r.json();
+    playerCache[playerId]=p;
+    return p;
+  }catch(err){
+    console.error('[API] Player fetch error:',err);
+    return null;
+  }
+}
+
+let demoPlayersCache={};
+async function openDemo(quality,giftInfo=null){
+  if(GS.busy)return;
+  GS.busy=true;
+  if(!demoPlayersCache[quality]){
+    try{
+      const r=await fetch(`/api/players?cardQuality=${quality}&limit=50&sortOrder=random`);
+      const data=await r.json();
+      demoPlayersCache[quality]=data.players||[];
+    }catch(err){
+      console.error('[Demo] Fetch error:',err);
+      GS.busy=false;
+      return;
+    }
+  }
+  const players=demoPlayersCache[quality];
+  if(!players.length){GS.busy=false;return;}
+  const player=players[Math.floor(Math.random()*players.length)];
+  playerCache[player.id]=player;
+
+  // Hediye bilgisi - galeriden geldiyse kullan, yoksa varsayılan
+  const demoGifts={
+    bronze:{emoji:'🌹',name:'Rose',coins:1},
+    silver:{emoji:'👑',name:'Rosa',coins:10},
+    gold:{emoji:'🦁',name:'Crown',coins:199},
+    elite:{emoji:'🌌',name:'TikTok Universe',coins:44999}
+  };
+  const selectedGift=giftInfo||demoGifts[quality];
+
+  GS.pendingCard={quality,player:{id:player.id,name:player.name,position:player.position},username:'GALERİ',gift:selectedGift};
+  GS.pendingPlayerFull=player;
+  currentPlayerId=player.id;
+  currentQuality=quality;
+  GS.pendingUsername='GALERİ';
+  GS.pendingGift=selectedGift;
+  showWaitingScreen();
+  document.getElementById('ov').classList.add('active');
+}
+
+async function connectSocket(){
+  const SESSION_ID=new URLSearchParams(location.search).get('sessionId')||localStorage.getItem('kadrokur_sessionId');
+  if(!SESSION_ID){
+    document.getElementById('connStatus').innerHTML='<span style="color:var(--accent-red)">⚠ SESSION YOK</span>';
+    return;
+  }
+  socket=io(location.origin,{transports:['websocket','polling']});
+  socket.on('connect',()=>{
+    document.getElementById('connStatus').innerHTML='<span style="color:var(--accent-green)">● BAĞLI</span>';
+    socket.emit('joinSession',SESSION_ID);
+  });
+  socket.on('disconnect',()=>{
+    document.getElementById('connStatus').innerHTML='<span style="color:var(--accent-red)">● KESİLDİ</span>';
+  });
+  socket.on('gameStateUpdate',(state)=>{
+    GS.teams=(state.teams||[]).map((t,i)=>({...t,color:TEAM_COLORS[i]||'#888',emoji:TEAM_EMOJI[i]||'⚪'}));
+    GS.totalCards=(state.openedCards||[]).length;
+    GS.totalGifts=state.totalGifts||0;
+    GS.pendingCard=state.pendingCard;
+    buildTeams();
+    updateHeader();
+  });
+  socket.on('gameEvent',(ev)=>{
+    const {type,data}=ev;
+    switch(type){
+      case 'pendingCard':
+        handlePendingCard(data);
+        break;
+      case 'cardRevealed':
+      case 'playerAdded':
+        if(data.player){
+          updateHeader();
+          updateTopDonor(data.player.openedBy,QUALITY_SCORE[data.player.quality||'bronze']);
         }
-      }, 2000);
+        break;
+      case 'statsUpdated':
+        if(data.cardsOpened!==undefined)GS.totalCards=data.cardsOpened;
+        if(data.totalGifts!==undefined)GS.totalGifts=data.totalGifts;
+        updateHeader();
+        break;
+      case 'gameEnded':
+        handleGameEnd(data);
+        break;
+      case 'gameStarted':
+        GS.teams=(data.teams||[]).map((t,i)=>({...t,color:TEAM_COLORS[i]||'#888',emoji:TEAM_EMOJI[i]||'⚪'}));
+        buildTeams();
+        addFeed('SİSTEM','Oyun başladı','🎮');
+        break;
     }
+  });
+}
 
-    function renderTeams(teams) {
-      gameContent.innerHTML = '';
-      teams.forEach((team) => {
-        const teamSection = document.createElement('div');
-        teamSection.className = 'team-section';
-        teamSection.innerHTML = `
-          <div class="team-header">
-            <div class="team-name">${team.name}</div>
-            <div class="team-score">Skor: <span id="score-${team.id}">${team.score}</span></div>
-          </div>
-          <div class="players-list" id="players-${team.id}"></div>
-        `;
-        gameContent.appendChild(teamSection);
-      });
+async function handlePendingCard(data){
+  if(GS.busy)return;
+  GS.busy=true;
+  const pending=data.pending;
+  GS.pendingCard=pending;
+  currentPlayerId=pending.player?.id;
+  currentQuality=pending.quality;
+  GS.pendingUsername=pending.username;
+  // Hediye bilgisini al
+  GS.pendingGift=pending.gift||null;
+  if(data.teams){
+    data.teams.forEach((t,i)=>{
+      if(GS.teams[i]){GS.teams[i].id=t.id;GS.teams[i].name=t.name;}
+    });
+  }
+  showWaitingScreen();
+  document.getElementById('ov').classList.add('active');
+}
+
+function showWaitingScreen(){
+  const wEl=document.getElementById('waitingEl');
+  wEl.classList.add('on');
+  document.getElementById('wName').textContent=GS.pendingUsername||'KULLANICI';
+  document.getElementById('wAvatar').textContent=(GS.pendingUsername||'?')[0].toUpperCase();
+
+  // Hediye bilgisini göster
+  const giftBox=document.getElementById('wGiftBox');
+  if(GS.pendingGift){
+    giftBox.style.display='grid';
+    const giftIcon=document.getElementById('wGiftIcon');
+    if(GS.pendingGift.img){
+      giftIcon.src=GS.pendingGift.img;
+      giftIcon.style.display='block';
+    }else{
+      giftIcon.src='';
+      giftIcon.style.display='none';
     }
+    document.getElementById('wGiftName').textContent=GS.pendingGift.name||'HEDİYE';
+    document.getElementById('wGiftAmount').textContent=(GS.pendingGift.coins||GS.pendingGift.amount||0)+' 💎';
+  }else{
+    giftBox.style.display='none';
+  }
 
-    function updateTeamSection(teamSection, team) {
-      const scoreEl = teamSection.querySelector(`#score-${team.id}`);
-      if (scoreEl) scoreEl.textContent = team.score;
+  const qualEl=document.getElementById('wQual');
+  const qualTextEl=document.getElementById('wQualityText');
+  const qualLabels={
+    bronze:'BRONZE',
+    silver:'SILVER',
+    gold:'GOLD',
+    elite:'ELITE'
+  };
+  const qualSubs={
+    bronze:'COMMON TIER',
+    silver:'RARE TIER',
+    gold:'LEGENDARY TIER',
+    elite:'ULTIMATE TIER'
+  };
+  const qualColors={
+    bronze:'',
+    silver:'',
+    gold:'',
+    elite:'elite'
+  };
 
-      const playersList = teamSection.querySelector(`#players-${team.id}`);
-      if (playersList) {
-        const currentPlayers = playersList.querySelectorAll('.mini-fut-card').length;
-        team.players.slice(currentPlayers).forEach((player) => {
-          const miniCard = document.createElement('div');
-          miniCard.className = `mini-fut-card ${player.quality}`;
+  qualEl.textContent=qualLabels[currentQuality]||'BRONZE';
+  qualEl.className='w-card-value '+qualColors[currentQuality];
+  qualTextEl.textContent=qualSubs[currentQuality]||'COMMON TIER';
 
-          // Get stats based on position
-          let statsHtml = '';
-          if (player.position === 'GK') {
-            statsHtml = `
-              <div class="mini-stat"><span class="mini-stat-label">DIV</span><span class="mini-stat-value">${player.diving || player.overall || '?'}</span></div>
-              <div class="mini-stat"><span class="mini-stat-label">HAN</span><span class="mini-stat-value">${player.handling || player.overall || '?'}</span></div>
-              <div class="mini-stat"><span class="mini-stat-label">REF</span><span class="mini-stat-value">${player.reflexes || player.overall || '?'}</span></div>
-              <div class="mini-stat"><span class="mini-stat-label">SPD</span><span class="mini-stat-value">${player.pace || '?'}</span></div>
-            `;
-          } else {
-            statsHtml = `
-              <div class="mini-stat"><span class="mini-stat-label">PAC</span><span class="mini-stat-value">${player.pace || player.overall || '?'}</span></div>
-              <div class="mini-stat"><span class="mini-stat-label">SHO</span><span class="mini-stat-value">${player.shooting || player.overall || '?'}</span></div>
-              <div class="mini-stat"><span class="mini-stat-label">PAS</span><span class="mini-stat-value">${player.passing || player.overall || '?'}</span></div>
-              <div class="mini-stat"><span class="mini-stat-label">DRI</span><span class="mini-stat-value">${player.dribbling || player.overall || '?'}</span></div>
-            `;
-          }
+  const grid=document.getElementById('tselGrid');
+  grid.innerHTML='';
+  GS.teams.forEach((t,ti)=>{
+    const cnt=(t.players||[]).length;
+    const full=cnt>=11;
+    const b=document.createElement('button');
+    b.className='tsel-btn'+(full?' full':'');
+    b.dataset.team=ti;
+    b.innerHTML='<span class="tsel-logo">'+t.emoji+'</span><span class="tsel-name">'+t.name+'</span><span class="tsel-meta"><span class="tsel-info">'+cnt+'/11</span><span class="tsel-pow">'+(t.score||0)+'</span></span>';
+    if(!full)b.onclick=()=>selectTeam(ti);
+    grid.appendChild(b);
+  });
+}
 
-          miniCard.innerHTML = `
-            <div class="mini-card-header">
-              <span class="mini-card-overall">${player.overall || '?'}</span>
-              <span class="mini-card-position">${player.position}</span>
-            </div>
-            <div class="mini-card-face">
-              <img src="${player.faceImageUrl || player.imageUrl || ''}" alt="${player.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\\'font-size:14px;font-weight:900;color:#FFF8E7;\\'>${player.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</span>'" />
-            </div>
-            <div class="mini-card-name">${player.name}</div>
-            <div class="mini-card-stats">${statsHtml}</div>
-          `;
-          playersList.appendChild(miniCard);
+async function selectTeam(teamIndex){
+  if(!GS.pendingCard||!currentPlayerId)return;
+  GS.selectedTeamIndex=teamIndex;
+  const team=GS.teams[teamIndex];
+  let player=GS.pendingPlayerFull||playerCache[currentPlayerId];
+  if(!player){
+    player=await fetchPlayerDetails(currentPlayerId);
+    GS.pendingPlayerFull=player||GS.pendingCard.player;
+  }
+  if(!player){
+    console.error('Player not found');
+    GS.busy=false;
+    return;
+  }
+  GS.pendingPlayerFull=player;
 
-          // Trim oldest cards from top until list fits within the fixed container
-          while (playersList.scrollHeight > playersList.clientHeight && playersList.children.length > 3) {
-            playersList.removeChild(playersList.firstChild);
-          }
-        });
+  // Takım seçim ekranını kapat, kart reveal aç
+  document.getElementById('waitingEl').classList.remove('on');
+
+  // Kaliteye göre efekt
+  if(currentQuality==='elite'){
+    playSound('legendary');showEpic('elite');spawnCnf('elite');
+  }else if(currentQuality==='gold'){
+    playSound('rare');spawnCnf('gold');
+  }else{
+    playSound('cardReveal');
+  }
+
+  // FUT card reveal göster
+  showCardReveal(player,currentQuality);
+}
+
+function showCardReveal(player,quality){
+  const q=quality||player.cardQuality||player.quality||'bronze';
+  const isGK=player.position==='GK';
+  const stats=isGK?[
+    {label:'DIV',value:player.diving||0},{label:'HAN',value:player.handling||0},{label:'KIC',value:player.kicking||0},
+    {label:'REF',value:player.reflexes||0},{label:'SPD',value:player.pace||0},{label:'POS',value:player.positioning||0}
+  ]:[
+    {label:'PAC',value:player.pace||0},{label:'SHO',value:player.shooting||0},{label:'PAS',value:player.passing||0},
+    {label:'DRI',value:player.dribbling||0},{label:'DEF',value:player.defending||0},{label:'PHY',value:player.physical||0}
+  ];
+  const img=(player.faceImageUrl||player.imageUrl)?`<img src="${player.faceImageUrl||player.imageUrl}" alt="${player.name}" referrerpolicy="no-referrer">`:'';
+  const nation=(player.nation||'???').slice(0,3).toUpperCase();
+  const teamName=(player.team||'CLB').slice(0,3).toUpperCase();
+
+  const card=document.getElementById('futCardFront');
+  card.className='fut-card '+q;
+  card.innerHTML=`<div class="shine"></div><div class="card-inner">
+    <div class="top-row">
+      <div class="ovr-block card-text"><div class="ovr-num">${player.overall||'??'}</div><div class="pos-label">${player.position||'??'}</div></div>
+      <div class="meta-block"><div class="meta-tag stat-bg card-text">${nation}</div><div class="meta-tag stat-bg card-text">${teamName}</div></div>
+    </div>
+    <div class="player-img">${img}</div>
+    <div class="player-name card-accent">${player.name||'???'}</div>
+    <div class="stats-row">${stats.map(s=>`<div class="stat-item stat-bg"><span class="stat-label card-text">${s.label}</span><span class="stat-value card-text">${s.value}</span></div>`).join('')}</div>
+    <div class="quality-tag card-text">${q.toUpperCase()}</div>
+  </div>`;
+
+  // Animasyonu resetle ve başlat
+  const inner=document.getElementById('cardRevealInner');
+  inner.style.animation='none';
+  inner.offsetHeight;
+  inner.style.animation='cardFlip 1s cubic-bezier(.34,1.56,.64,1) forwards';
+
+  document.getElementById('cardReveal').classList.add('on');
+}
+
+function confirmCardPlace(){
+  const player=GS.pendingPlayerFull;
+  const team=GS.teams[GS.selectedTeamIndex];
+  if(!player||!team)return;
+
+  document.getElementById('cardReveal').classList.remove('on');
+
+  placeCardDirect(player,currentQuality,team);
+  const SESSION_ID=new URLSearchParams(location.search).get('sessionId')||localStorage.getItem('kadrokur_sessionId');
+  fetch('/api/trpc/broadcaster.assignPendingCard',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({json:{sessionId:SESSION_ID,teamId:GS.selectedTeamIndex}})
+  }).catch(err=>console.error('[API] error:',err));
+}
+
+function placeCardDirect(player,quality,team){
+  const teamIndex=GS.selectedTeamIndex;
+  const slotIndex=(team.players||[]).length;
+  const targetSlot=document.getElementById('sl'+teamIndex+'_'+slotIndex);
+  if(!targetSlot){
+    console.error('[placeCard] Slot not found');
+    GS.busy=false;
+    return;
+  }
+  const slotRect=targetSlot.getBoundingClientRect();
+  const cardW=slotRect.width;
+  const cardH=slotRect.height;
+
+  const flyCard=document.createElement('div');
+  flyCard.className='fly';
+  flyCard.style.width=cardW+'px';
+  flyCard.style.height=cardH+'px';
+  flyCard.textContent=player.overall||'?';
+  document.body.appendChild(flyCard);
+
+  const startX=window.innerWidth/2-cardW/2;
+  const startY=window.innerHeight/2-cardH/2;
+  flyCard.style.left=startX+'px';
+  flyCard.style.top=startY+'px';
+
+  setTimeout(()=>{
+    flyCard.style.transition='all .6s cubic-bezier(.25,1,.5,1)';
+    flyCard.style.left=slotRect.left+'px';
+    flyCard.style.top=slotRect.top+'px';
+    flyCard.style.transform='scale(.2)';
+    flyCard.style.opacity='.5';
+  },50);
+
+  setTimeout(()=>{
+    flyCard.remove();
+    if(!team.players)team.players=[];
+    team.players[slotIndex]=player;
+    const q=player.cardQuality||player.quality||'bronze';
+    team.score=(team.score||0)+(player.overall||QUALITY_SCORE[q]);
+    GS.totalCards++;
+    updateHeader();
+    const cardHTML=renderFutCard(player,slotIndex,teamIndex);
+    targetSlot.outerHTML=cardHTML;
+    const newSlot=document.getElementById('sl'+teamIndex+'_'+slotIndex);
+    newSlot.style.transform='scale(1.2)';
+    setTimeout(()=>{
+      newSlot.style.transition='all .4s cubic-bezier(.34,1.56,.64,1)';
+      newSlot.style.transform='scale(1)';
+    },100);
+    buildTeams();
+    addFeed(GS.pendingUsername||'Admin',`${team.name} → ${player.position}`,`${player.name} (${player.overall})`);
+    setTimeout(()=>{
+      hideOverlay();
+      GS.pendingCard=null;
+      GS.pendingPlayerFull=null;
+      GS.pendingUsername=null;
+      GS.selectedTeamIndex=-1;
+      currentPlayerId=null;
+      GS.busy=false;
+    },400);
+  },750);
+}
+
+function renderFutCard(p,slotIdx,teamIdx){
+  const q=p.cardQuality||p.quality||'bronze';
+  const initials=(p.name||'???').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+  return '<div class="slot filled" id="sl'+teamIdx+'_'+slotIdx+'"><div class="mc '+q+'">'+
+    '<div class="mc-rat">'+(p.overall||'??')+'</div>'+
+    '<div class="mc-av">'+initials+'</div>'+
+    '<div class="mc-nm">'+p.name+'</div>'+
+    '<div class="mc-pos">'+p.position+'</div>'+
+    '</div></div>';
+}
+
+let teamsBuilt=false;
+function buildTeams(forceRebuild=false){
+  const el=document.getElementById('teamsEl');
+  if(!teamsBuilt||forceRebuild){
+    el.innerHTML='';
+    GS.teams.forEach((t,ti)=>{
+      const players=t.players||[];
+      const cnt=players.length;
+      const color=t.color||TEAM_COLORS[ti]||'#888';
+      const emoji=t.emoji||TEAM_EMOJI[ti]||'⚪';
+      const slots=[];
+      for(let i=0;i<11;i++){
+        const pl=players[i];
+        if(pl){
+          slots.push(renderFutCard(pl,i,ti));
+        }else{
+          const labels=['GK','RB','CB','CB','LB','CM','CAM','CM','LW','ST','RW'];
+          const emojis=['🧤','🛡️','🛡️','🛡️','🛡️','⚙️','⚙️','⚡','⚽','⚡'];
+          slots.push('<div class="slot" id="sl'+ti+'_'+i+'"><span class="slot-lbl">'+labels[i]+'</span><span class="slot-emo">'+emojis[i]+'</span></div>');
+        }
       }
-    }
+      const d=document.createElement('div');
+      d.className='team';
+      d.style.setProperty('--team-color',color);
+      d.innerHTML='<div class="team-top"><div class="team-left"><div class="team-logo-ph" style="color:'+color+'">'+emoji+'</div><div class="team-name" style="color:'+color+'">'+t.name+'</div></div><div class="team-right"><div class="team-cnt">'+cnt+'/11</div><div class="team-pow">⚡ '+(t.score||0)+'</div></div></div><div class="pos-rows">'+
+        '<div class="pos-row">'+slots[0]+'</div>'+
+        '<div class="pos-row">'+slots.slice(1,5).join('')+'</div>'+
+        '<div class="pos-row">'+slots.slice(5,8).join('')+'</div>'+
+        '<div class="pos-row">'+slots.slice(8,11).join('')+'</div>'+
+      '</div>';
+      el.appendChild(d);
+    });
+    teamsBuilt=true;
+    return;
+  }
+  GS.teams.forEach((t,ti)=>{
+    const cntEl=document.getElementById('tc'+ti);
+    const powEl=document.getElementById('tp'+ti);
+  });
+}
 
-    function animateCardOpening(quality) {
-      const card = document.createElement('div');
-      card.className = `card-anim ${quality}`;
-      card.textContent = quality.toUpperCase();
-      cardAnimation.innerHTML = '';
-      cardAnimation.appendChild(card);
-      setTimeout(() => { cardAnimation.innerHTML = ''; }, 1000);
-    }
+function updateHeader(){
+  document.getElementById('hCards').textContent=GS.totalCards;
+  document.getElementById('hGifts').textContent=GS.totalGifts;
+}
 
-    function showFinalScores(teams) {
-      const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
-      const medals = ['I', 'II', 'III', 'IV'];
-      let html = '';
-      sortedTeams.forEach((team, idx) => {
-        html += `
-          <div class="score-row">
-            <div class="score-rank">${medals[idx] || (idx + 1) + '.'}</div>
-            <div class="score-team">${team.name}</div>
-            <div class="score-points">${team.score} Puan</div>
-          </div>
-        `;
-      });
-      scoresTable.innerHTML = html;
-      finalScores.classList.add('active');
-    }
+function handleGameEnd(data){
+  const sorted=[...data.finalScores].sort((a,b)=>b.score-a.score);
+  const w=sorted[0];
+  document.getElementById('wNm').textContent=w.teamName;
+  document.getElementById('wPw').textContent='⚡ PUAN: '+w.score;
+  const rEl=document.getElementById('ranksEl');rEl.innerHTML='';
+  ['🥇','🥈','🥉','4️⃣'].forEach((em,i)=>{
+    if(!sorted[i])return;
+    const tp=sorted[i];
+    const d=document.createElement('div');d.className='rk r'+(i+1);
+    d.innerHTML='<span class="rk-em">'+em+'</span><div class="rk-nm">'+tp.teamName+'</div><div class="rk-pw">⚡'+tp.score+'</div><div class="rk-cnt">'+tp.players+'/11</div>';
+    rEl.appendChild(d);
+  });
+  const allP=GS.teams.flatMap(t=>(t.players||[]).map(p=>({...p,teamName:t.name})));
+  allP.sort((a,b)=>(b.overall||0)-(a.overall||0));
+  const bEl=document.getElementById('bestEl');bEl.innerHTML='';
+  allP.slice(0,5).forEach(p=>{
+    const d=document.createElement('div');d.className='bi';
+    d.innerHTML='<div class="bi-r">'+(p.overall||'??')+'</div><div class="bi-n">'+p.name+'</div><div class="bi-t">'+p.teamName+'</div>';
+    bEl.appendChild(d);
+  });
+  playSound('winner');spawnCnf('elite');
+  setTimeout(()=>spawnCnf('gold'),400);
+  document.getElementById('goOv').classList.add('on');
+}
 
-    window.addEventListener('load', initializeGameScreen);
-  </script>
+function showEpic(type){
+  if(!CFG.epic)return;
+  const ef=document.getElementById('epic'),rays=document.getElementById('rays');
+  ef.classList.add('on');rays.innerHTML='';
+  const col=type==='elite'?'#e31c23':'#ffc72c';
+  for(let i=0;i<12;i++){
+    const r=document.createElement('div');r.className='ray';
+    r.style.cssText='background:linear-gradient(to bottom,'+col+'99,transparent);transform:rotate('+(i*30)+'deg);height:300px;opacity:.7';
+    rays.appendChild(r);
+  }
+  setTimeout(()=>ef.classList.remove('on'),2000);
+}
+
+function spawnCnf(type){
+  if(!CFG.confetti)return;
+  const w=document.getElementById('cnfW');
+  const cols=type==='elite'?['#e31c23','#ffc72c','#00a651','#fff']:['#ffc72c','#e31c23','#fff','#00a651'];
+  for(let i=0;i<50;i++){
+    const p=document.createElement('div');p.className='cnf';
+    const s=3+Math.random()*6;
+    p.style.cssText='left:'+Math.random()*100+'vw;background:'+cols[i%cols.length]+';width:'+s+'px;height:'+s+'px;border-radius:'+(Math.random()>.5?'50%':'0')+';animation-duration:'+(1+Math.random()*1.5)+'s;animation-delay:'+Math.random()*.5+'s';
+    w.appendChild(p);
+    setTimeout(()=>p.remove(),3000);
+  }
+}
+
+let AC=null;
+function getAC(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();return AC;}
+function playSound(type){
+  try{
+    const ctx=getAC();const vol=0.12;
+    const t=(f,d,w='sine',dl=0)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type=w;o.frequency.value=f;o.connect(g);g.connect(ctx.destination);
+      g.gain.setValueAtTime(0,ctx.currentTime+dl);
+      g.gain.linearRampToValueAtTime(vol,ctx.currentTime+dl+.02);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dl+d);
+      o.start(ctx.currentTime+dl);o.stop(ctx.currentTime+dl+d);
+    };
+    if(type==='gift'){t(300,.1);t(400,.1,'square',.1);t(500,.15,'square',.2);}
+    else if(type==='cardReveal'){t(400,.08);t(500,.08,'square',.08);t(600,.15,'square',.15);}
+    else if(type==='rare'){t(500,.2,'square');t(600,.2,'square',.15);t(800,.25,'square',.3);}
+    else if(type==='legendary'){t(400,.3,'sawtooth');t(500,.3,'sawtooth',.1);t(600,.3,'sawtooth',.2);t(800,.4,'sawtooth',.3);}
+    else if(type==='winner'){t(300,.3,'square');t(400,.3,'square',.1);t(500,.3,'square',.2);t(600,.4,'square',.3);t(800,.5,'square',.4);}
+  }catch(e){}
+}
+
+function updateTopDonor(user,val){
+  if(!user)return;
+  const ex=GS.topDonors.find(d=>d.name===user);
+  if(ex)ex.total+=val;else GS.topDonors.push({name:user,total:val});
+  GS.topDonors.sort((a,b)=>b.total-a.total);
+  renderTop();
+}
+
+function renderTop(){
+  const wrap=document.getElementById('topList');
+  wrap.innerHTML='<div class="side-title">En Çok Katkı</div>';
+  const top=GS.topDonors.slice(0,5);
+  if(!top.length){wrap.innerHTML+='<div style="font-size:.6rem;color:rgba(255,255,255,.2);text-align:center;padding:12px">HENÜZ YOK</div>';return;}
+  const em=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  top.forEach((d,i)=>{
+    const el=document.createElement('div');el.className='top-item';
+    el.innerHTML='<span class="top-rank">'+em[i]+'</span><span class="top-name">'+d.name+'</span><span class="top-amt">'+d.total+'</span>';
+    wrap.appendChild(el);
+  });
+}
+
+function addFeed(user,act,card){
+  const feed=document.getElementById('liveFeed');
+  const el=document.createElement('div');el.className='feed-item';
+  el.innerHTML='<div class="feed-user">'+user+'</div><div class="feed-act">'+act+'</div>';
+  feed.insertBefore(el,feed.firstChild);
+  while(feed.children.length>20)feed.removeChild(feed.lastChild);
+}
+
+function shareRes(){
+  const sorted=[...GS.teams].sort((a,b)=>(b.score||0)-(a.score||0));
+  const txt='🏆 KADROKUR\n\n'+sorted.map((x,i)=>['🥇','🥈','🥉','4️⃣'][i]+' '+x.name+': ⚡'+(x.score||0)).join('\n')+'\n\n#Kadrokur';
+  if(navigator.share)navigator.share({title:'Kadrokur',text:txt});
+  else navigator.clipboard.writeText(txt).then(()=>alert('Kopyalandı!'));
+}
+
+function hideOverlay(){document.getElementById('ov').classList.remove('active');}
+
+function toggleSide(){
+  const side=document.getElementById('sidePanel');
+  const toggle=document.getElementById('sideToggle');
+  const app=document.querySelector('.app');
+  if(side.classList.contains('collapsed')){
+    side.classList.remove('collapsed');
+    toggle.textContent='◀';
+    app.style.gridTemplateColumns='1fr 280px';
+  }else{
+    side.classList.add('collapsed');
+    toggle.textContent='◁';
+    app.style.gridTemplateColumns='1fr 0px';
+  }
+}
+
+// ═══════════════════════════════════════════
+// AYARLAR PANELİ
+// ═══════════════════════════════════════════
+let CFG={sound:true,vol:{master:80},confetti:true,epic:true,flyCard:true,ticker:true,likeCard:true};
+
+let LIKE_MAP=[
+  {quality:'bronze',minLikes:100,jeton:50},
+  {quality:'silver',minLikes:500,jeton:200},
+  {quality:'gold',minLikes:2000,jeton:500},
+  {quality:'elite',minLikes:10000,jeton:1000}
+];
+
+// ═══════════════════════════════════════════
+// HEDİYE GALERİSİ — API'den çekilen DB verileri
+// ═══════════════════════════════════════════
+let allDbGifts=[];
+let dbGiftsFilter={search:'',costRange:'all',quality:'all'};
+let selectedGift=null;
+let selectedQuality=null;
+
+async function loadDbGifts(){
+  try{
+    const r=await fetch('/api/gifts?limit=500');
+    const data=await r.json();
+    allDbGifts=data.gifts||[];
+    console.log('[Gifts] '+allDbGifts.length+' hediye yüklendi (DB)');
+  }catch(err){
+    console.error('[Gifts] Yükleme hatası:',err);
+    allDbGifts=[];
+  }
+}
+
+function getFilteredDbGifts(){
+  return allDbGifts.filter(g=>{
+    if(dbGiftsFilter.search&&!g.giftName.toLowerCase().includes(dbGiftsFilter.search.toLowerCase()))return false;
+    if(dbGiftsFilter.costRange!=='all'){
+      const c=g.diamondCost;
+      if(dbGiftsFilter.costRange==='500+'){if(c<500)return false;}
+      else{const[mn,mx]=dbGiftsFilter.costRange.split('-').map(Number);if(c<mn||c>mx)return false;}
+    }
+    if(dbGiftsFilter.quality!=='all'&&g.cardQuality!==dbGiftsFilter.quality)return false;
+    return true;
+  });
+}
+
+function filterGiftsFromDB(){
+  dbGiftsFilter.search=document.getElementById('giftSearch').value;
+  renderDbGiftList();
+}
+
+function setGiftCostFilter(val){
+  document.querySelectorAll('.gift-filter-btn:not(.gq-filter)').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.gift-filter-btn[data-filter="${val}"]`)?.classList.add('active');
+  dbGiftsFilter.costRange=val;
+  renderDbGiftList();
+}
+
+function setGiftQualFilter(val){
+  document.querySelectorAll('.gq-filter').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.gq-filter[data-qfilter="${val}"]`)?.classList.add('active');
+  dbGiftsFilter.quality=val;
+  renderDbGiftList();
+}
+
+function renderDbGiftList(){
+  const w=document.getElementById('giftList');
+  const filtered=getFilteredDbGifts();
+  document.getElementById('giftCount').textContent=filtered.length;
+  if(!filtered.length){
+    w.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:rgba(255,255,255,.2);font-size:.7rem">'+(allDbGifts.length?'Hediye bulunamadı':'Hediyeler yükleniyor...')+'</div>';
+    return;
+  }
+  const qualColors={bronze:'#8B7355',silver:'#A8A9AD',gold:'#D4AF37',elite:'#e31c23'};
+  w.innerHTML=filtered.slice(0,100).map(g=>{
+    const qc=qualColors[g.cardQuality]||'#8B7355';
+    return `<div class="gift-item" onclick="selectDbGift(${g.id})" data-gid="${g.id}">
+      <img class="gift-img" src="${g.image||'/logo.svg'}" alt="${g.giftName}" loading="lazy" onerror="this.src='/logo.svg'">
+      <span class="gift-name">${g.giftName}</span>
+      <span class="gift-coins" style="color:${qc}">${g.diamondCost}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectDbGift(id){
+  const g=allDbGifts.find(x=>x.id===id);
+  if(!g)return;
+  document.querySelectorAll('.gift-item').forEach(i=>i.classList.remove('selected'));
+  document.querySelector(`.gift-item[data-gid="${id}"]`)?.classList.add('selected');
+  selectedGift=g;
+  selectedQuality=g.cardQuality;
+  showDbGiftPreview();
+}
+
+function showDbGiftPreview(){
+  const w=document.getElementById('giftPreview');
+  if(!selectedGift){resetGiftPreview();return;}
+  const qualColors={bronze:'#8B7355',silver:'#A8A9AD',gold:'#D4AF37',elite:'#e31c23'};
+  const qualLabels={bronze:'BRONZE',silver:'SILVER',gold:'GOLD',elite:'ELITE'};
+  const qualities=['bronze','silver','gold','elite'];
+  w.innerHTML=`
+    <img class="gift-preview-img" src="${selectedGift.image||'/logo.svg'}" alt="${selectedGift.giftName}" onerror="this.src='/logo.svg'">
+    <span class="gift-preview-name">${selectedGift.giftName}</span>
+    <span class="gift-preview-coins">${selectedGift.diamondCost} 💎</span>
+    <div class="gift-quality-select">
+      ${qualities.map(q=>`<button class="gift-quality-btn ${q}${selectedQuality===q?' active':''}" onclick="setDbGiftQuality('${q}')">${qualLabels[q]}</button>`).join('')}
+    </div>
+    <button class="gift-send-btn" onclick="sendDbGiftCard()">KART AÇ</button>
+  `;
+}
+
+function resetGiftPreview(){
+  selectedGift=null;
+  selectedQuality=null;
+  document.getElementById('giftPreview').innerHTML='<div class="gift-preview-empty">Hediye seç</div>';
+}
+
+function setDbGiftQuality(quality){
+  selectedQuality=quality;
+  showDbGiftPreview();
+}
+
+async function sendDbGiftCard(){
+  if(!selectedGift||!selectedQuality)return;
+  if(GS.busy)return;
+  closeSettings();
+  await openDemo(selectedQuality,{name:selectedGift.giftName,coins:selectedGift.diamondCost,img:selectedGift.image||''});
+}
+
+let selectedGift=null;
+let selectedQuality=null;
+
+function openSettings(){
+  buildTeamSettings();
+  buildQualityMap();
+  loadDbGifts().then(()=>renderDbGiftList());
+  document.getElementById('settingsOv').classList.add('on');
+}
+function closeSettings(){document.getElementById('settingsOv').classList.remove('on');}
+
+function buildTeamSettings(){
+  const w=document.getElementById('settingsTeams');
+  w.innerHTML='';
+  GS.teams.forEach((t,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05)';
+    d.innerHTML=`<span style="font-size:.8rem">${t.emoji||TEAM_EMOJI[i]}</span>
+      <input class="settings-input" id="stn${i}" value="${t.name}" style="flex:1;text-align:left;width:auto">
+      <input type="color" class="color-input" id="stc${i}" value="${t.color||TEAM_COLORS[i]}" style="width:32px;height:28px">`;
+    w.appendChild(d);
+  });
+}
+
+function buildQualityMap(){
+  const w=document.getElementById('setQualityMap');
+  if(!w)return;
+  w.innerHTML='';
+  LIKE_MAP.forEach((row,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:grid;grid-template-columns:1fr 60px 60px;gap:4px;align-items:center;margin-bottom:4px';
+    d.innerHTML=`<span style="font-size:.7rem;color:var(--paper);text-transform:uppercase">${row.quality}</span>
+      <input type="number" class="settings-input" data-idx="${i}" data-key="minLikes" value="${row.minLikes}" style="width:100%;padding:4px;font-size:.6rem">
+      <input type="number" class="settings-input" data-idx="${i}" data-key="jeton" value="${row.jeton}" style="width:100%;padding:4px;font-size:.6rem">`;
+    w.appendChild(d);
+  });
+}
+
+function addQualityRow(){
+  const qualities=['bronze','silver','gold','elite'];
+  const existing=LIKE_MAP.map(r=>r.quality);
+  const next=qualities.find(q=>!existing.includes(q));
+  if(!next){
+    alert('Maksimum kalite seviyesine ulaşıldı.');
+    return;
+  }
+  LIKE_MAP.push({quality:next,minLikes:100,jeton:50});
+  buildQualityMap();
+}
+
+function applyLikeSettings(){
+  const w=document.getElementById('setQualityMap');
+  const inputs=w.querySelectorAll('input');
+  inputs.forEach(inp=>{
+    const idx=parseInt(inp.dataset.idx);
+    const key=inp.dataset.key;
+    if(!isNaN(idx))LIKE_MAP[idx][key]=parseInt(inp.value)||0;
+  });
+  const likeThreshold=document.getElementById('setLikeThreshold').value;
+  if(likeThreshold)document.getElementById('setLikeThreshold').value=likeThreshold;
+  alert('Beğeni ayarları kaydedildi.');
+}
+
+function applyTeamSettings(){
+  GS.teams.forEach((t,i)=>{
+    const nameEl=document.getElementById('stn'+i);
+    const colorEl=document.getElementById('stc'+i);
+    if(nameEl&&nameEl.value)t.name=nameEl.value;
+    if(colorEl)t.color=colorEl.value;
+  });
+  teamsBuilt=false;
+  buildTeams();
+  closeSettings();
+}
+
+function toggleSound(){
+  CFG.sound=!CFG.sound;
+  document.getElementById('togSound').className='toggle '+(CFG.sound?'on':'');
+}
+function toggleCfg(key,el){
+  CFG[key]=!CFG[key];
+  el.className='toggle '+(CFG[key]?'on':'');
+}
+function toggleTicker(){
+  CFG.ticker=!CFG.ticker;
+  document.getElementById('togTicker').className='toggle '+(CFG.ticker?'on':'');
+  document.querySelector('.ticker').style.display=CFG.ticker?'flex':'none';
+}
+
+function applyBgLive(){
+  const c1=document.getElementById('setBgC1').value;
+  const c2=document.getElementById('setBgC2').value;
+  document.querySelector('.bg').style.background=`linear-gradient(180deg,${c1},${c2})`;
+}
+function applyBgUrl(){
+  const url=document.getElementById('setBgUrl').value;
+  if(!url)return;
+  const bg=document.querySelector('.bg');
+  bg.style.backgroundImage=`url(${url})`;
+  bg.style.backgroundSize='cover';
+  bg.style.backgroundPosition='center';
+}
+function resetBg(){
+  document.querySelector('.bg').style.background='linear-gradient(180deg,#1a1a1a,#0a0a0a)';
+  document.querySelector('.bg').style.backgroundImage='';
+  document.getElementById('setBgC1').value='#1a1a1a';
+  document.getElementById('setBgC2').value='#0a0a0a';
+  document.getElementById('setBgUrl').value='';
+}
+
+function applyTicker(){
+  const text=document.getElementById('setTickerText').value;
+  const lines=text.split('\n').filter(l=>l.trim());
+  const w=document.getElementById('tickerContent');
+  w.innerHTML='';
+  // Duplicate for seamless scroll
+  [...lines,...lines].forEach(line=>{
+    const s=document.createElement('span');
+    s.className='ticker-item';
+    s.innerHTML=line.replace(/●/g,'<span>●</span>');
+    w.appendChild(s);
+  });
+}
+
+function resetGame(){
+  GS.teams.forEach(t=>{t.players=[];t.score=0;});
+  GS.totalCards=0;GS.totalGifts=0;GS.topDonors=[];
+  teamsBuilt=false;
+  buildTeams();
+  updateHeader();
+  const SESSION_ID=new URLSearchParams(location.search).get('sessionId')||localStorage.getItem('kadrokur_sessionId');
+  if(socket&&SESSION_ID){
+    socket.emit('resetGame',{sessionId:SESSION_ID});
+  }
+  closeSettings();
+}
+
+function endGameManual(){
+  const SESSION_ID=new URLSearchParams(location.search).get('sessionId')||localStorage.getItem('kadrokur_sessionId');
+  if(socket&&SESSION_ID){
+    socket.emit('endGame',{sessionId:SESSION_ID});
+  }
+  closeSettings();
+}
+
+// Override playSound with CFG check
+const _origPlaySound=playSound;
+playSound=function(type){
+  if(!CFG.sound)return;
+  _origPlaySound(type);
+};
+
+connectSocket();
+</script>
 </body>
 </html>

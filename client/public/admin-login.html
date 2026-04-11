@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kadrokur — Admin Girişi</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<title>Kadrokur — Lisans Paneli Girişi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -20,7 +21,7 @@
   }
   .wrap {
     width:100%;
-    max-width:360px;
+    max-width:380px;
     padding:1.5rem;
   }
   .logo {
@@ -45,7 +46,7 @@
   .card {
     background:#0c1309;
     border:1px solid rgba(212,175,55,0.12);
-    padding:2rem;
+    padding:2.5rem 2rem;
   }
   label {
     display:block;
@@ -56,7 +57,7 @@
     text-transform:uppercase;
     margin-bottom:0.5rem;
   }
-  input[type="password"] {
+  input {
     width:100%;
     background:transparent;
     border:none;
@@ -66,10 +67,10 @@
     font-size:0.9rem;
     font-family:'DM Sans',sans-serif;
     outline:none;
-    margin-bottom:2rem;
+    margin-bottom:1.5rem;
     transition:border-color 0.2s;
   }
-  input[type="password"]:focus {
+  input:focus {
     border-bottom-color:rgba(212,175,55,0.6);
   }
   button[type="submit"] {
@@ -104,21 +105,25 @@
 <body>
 <div class="wrap">
   <div class="logo">
+    <img src="/logo.svg" alt="Kadrokur" style="width:64px;height:64px;margin-bottom:1rem">
     <div class="logo-title">KADROKUR</div>
-    <div class="logo-sub">Admin Paneli</div>
+    <div class="logo-sub">Lisans Yönetim Paneli</div>
   </div>
   <div class="card">
     <form id="loginForm">
+      <label for="email">E-posta</label>
+      <input type="email" id="email" name="email" autocomplete="email" placeholder="admin@example.com" required>
       <label for="password">Şifre</label>
       <input type="password" id="password" name="password" autocomplete="current-password" required>
       <button type="submit">Giriş Yap</button>
-      <div class="error" id="errorMsg">Hatalı şifre. Lütfen tekrar deneyin.</div>
+      <div class="error" id="errorMsg">Hatalı e-posta veya şifre.</div>
     </form>
   </div>
 </div>
 <script>
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const errorMsg = document.getElementById('errorMsg');
     errorMsg.style.display = 'none';
@@ -127,10 +132,10 @@
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
       if (res.ok) {
-        location.href = '/admin-dashboard.html';
+        location.href = '/licensepanel';
       } else {
         errorMsg.style.display = 'block';
       }

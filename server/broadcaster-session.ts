@@ -16,7 +16,7 @@ const activeSessions = new Map<string, BroadcasterSession>();
 /**
  * Validate broadcaster license using in-memory license store
  */
-export async function validateLicense(licenseKey: string): Promise<{
+export async function validateLicense(licenseKey: string, tiktokUsername?: string): Promise<{
   valid: boolean;
   licenseId?: number;
   message: string;
@@ -35,16 +35,13 @@ export async function validateLicense(licenseKey: string): Promise<{
     return { valid: false, message: "Lisans süresi dolmuş" };
   }
 
-  // Check max sessions
-  const activeLicenseSessions = Array.from(activeSessions.values()).filter(
-    (s) => s.licenseId === license.id
-  );
-
-  if (activeLicenseSessions.length >= license.maxSessions) {
-    return {
-      valid: false,
-      message: `Maksimum oturum sayısına ulaşıldı (${license.maxSessions})`,
-    };
+  // TikTok kullanıcı adı kontrolü (eğer lisansa bağlıysa)
+  if (license.ownerTikTok && tiktokUsername) {
+    const licenseTikTok = license.ownerTikTok.replace('@', '').toLowerCase().trim();
+    const requestTikTok = tiktokUsername.replace('@', '').toLowerCase().trim();
+    if (licenseTikTok !== requestTikTok) {
+      return { valid: false, message: `Bu lisans sadece @${license.ownerTikTok} kullanıcısı içindir` };
+    }
   }
 
   return { valid: true, licenseId: license.id, message: "Lisans geçerli" };

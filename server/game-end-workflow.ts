@@ -285,7 +285,7 @@ export async function processGameEnd(data: GameEndData): Promise<{
     console.log(`[GameEnd] Oyun sonu işlemi başlatılıyor: ${data.sessionId}`);
 
     // 1. Record session end in history
-    recordSessionEnd(data.sessionId, data.finalScores, "Oyun başarıyla tamamlandı");
+    await recordSessionEnd(data.sessionId, data.finalScores, "Oyun başarıyla tamamlandı");
 
     // 2. Generate summary
     const summary = generateGameSummary(data);

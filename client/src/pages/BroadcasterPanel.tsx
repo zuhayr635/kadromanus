@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Shield, Link, AtSign, Play, Square, Users, Zap, Heart, Gift, Clock, Settings, LayoutGrid, X } from 'lucide-react';
+import { Link, AtSign, Play, Square, Users, Zap, Heart, Gift, Clock, Settings, LayoutGrid, X, Calendar } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { io, Socket } from 'socket.io-client';
 
@@ -30,6 +30,16 @@ export default function BroadcasterPanel() {
     message: string;
   } | null>(null);
 
+  // License info state
+  const [licenseInfo, setLicenseInfo] = useState<{
+    isValid: boolean;
+    expiresAt: string | null;
+    packageType: string | null;
+    daysRemaining: number | null;
+    broadcasterName: string | null;
+    ownerTikTok: string | null;
+  }>({ isValid: false, expiresAt: null, packageType: null, daysRemaining: null, broadcasterName: null, ownerTikTok: null });
+
   // Show notification helper
   const showNotification = (type: 'success' | 'error', title: string, message: string) => {
     setNotification({ type, title, message });
@@ -42,6 +52,13 @@ export default function BroadcasterPanel() {
   const [goldMin, setGoldMin] = useState<string>('50');
   const [eliteMin, setEliteMin] = useState<string>('200');
 
+  // Gift selection state
+  const [gifts, setGifts] = useState<any[]>([]);
+  const [activeGiftIds, setActiveGiftIds] = useState<number[]>([]);
+  const [giftSearchQuery, setGiftSearchQuery] = useState('');
+  const [giftFilters, setGiftFilters] = useState({ costRange: 'all', quality: 'all' });
+  const [giftsLoaded, setGiftsLoaded] = useState(false);
+
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -52,7 +69,7 @@ export default function BroadcasterPanel() {
     s.emit("joinSession", sessionId);
 
     s.on("gameEvent", (event: { type: string; sessionId: string; data: any; timestamp: number }) => {
-      if (!socketRef.current) return; // race condition guard
+      if (!socketRef.current) return;
       if (event.sessionId !== sessionId) return;
 
       switch (event.type) {
@@ -99,6 +116,42 @@ export default function BroadcasterPanel() {
   const setDiamondThresholdsMutation = trpc.broadcaster.setDiamondThresholds.useMutation();
   const assignPendingCardMutation = trpc.broadcaster.assignPendingCard.useMutation();
 
+  // License query - fetch when license key changes
+  const licenseQuery = trpc.license.getByKey.useQuery(
+    { licenseKey },
+    { enabled: !!licenseKey, refetchOnWindowFocus: false }
+  );
+
+  // Update license info when query data changes
+  useEffect(() => {
+    if (licenseQuery.data) {
+      const license = licenseQuery.data;
+      if (license) {
+        const expiresAt = license.expiresAt ? new Date(license.expiresAt) : null;
+        const now = new Date();
+        const daysRemaining = expiresAt
+          ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+          : null;
+        setLicenseInfo({
+          isValid: true,
+          expiresAt: license.expiresAt || null,
+          packageType: license.packageType || 'basic',
+          daysRemaining,
+          broadcasterName: license.broadcasterName || null,
+          ownerTikTok: license.ownerTikTok || null,
+        });
+        // Auto-fill TikTok username from license
+        if (license.ownerTikTok) {
+          setTiktokUsername(license.ownerTikTok);
+        }
+      } else {
+        setLicenseInfo({ isValid: false, expiresAt: null, packageType: null, daysRemaining: null, broadcasterName: null, ownerTikTok: null });
+      }
+    } else if (licenseKey && !licenseQuery.isLoading) {
+      setLicenseInfo({ isValid: false, expiresAt: null, packageType: null, daysRemaining: null, broadcasterName: null, ownerTikTok: null });
+    }
+  }, [licenseQuery.data, licenseKey, licenseQuery.isLoading]);
+
   // Poll game state every second while session is active to catch pendingCard
   const gameStateQuery = trpc.game.getState.useQuery(
     { sessionId: sessionId ?? '' },
@@ -137,8 +190,13 @@ export default function BroadcasterPanel() {
   }, [settingsOpen, diamondThresholdsQuery.data]);
 
   const handleStartSession = async () => {
-    if (!licenseKey || !tiktokUsername) {
-      showNotification('error', 'Hata', 'Lütfen lisans anahtarı ve TikTok kullanıcı adı girin');
+    if (!licenseKey) {
+      showNotification('error', 'Hata', 'Lütfen lisans anahtarı girin');
+      return;
+    }
+    // TikTok kullanıcı adı lisans varsa opsionel, yoksa gerekli
+    if (!tiktokUsername && !licenseInfo.broadcasterName) {
+      showNotification('error', 'Hata', 'TikTok kullanıcı adı bulunamadı. Lütfen lisansınızı kontrol edin.');
       return;
     }
 
@@ -146,7 +204,7 @@ export default function BroadcasterPanel() {
     try {
       const result = await createSessionMutation.mutateAsync({
         licenseKey,
-        tiktokUsername,
+        tiktokUsername: tiktokUsername || licenseInfo.broadcasterName || '',
         teamSelectionMode: selectedMode === 'auto' ? 'automatic' : 'manual',
         teamNames,
       });
@@ -154,8 +212,8 @@ export default function BroadcasterPanel() {
       if (result.success && result.sessionId) {
         setSessionId(result.sessionId);
         setSessionActive(true);
-        const gameScreenUrl = `${window.location.origin}/game-screen.html?sessionId=${result.sessionId}`;
-        showNotification('success', 'Başarılı', `Oturum başlatıldı. Oyun ekranını aç: game-screen.html?sessionId=${result.sessionId}`);
+        const gameScreenUrl = window.location.origin + '/game-screen.html?sessionId=' + result.sessionId;
+        showNotification('success', 'Başarılı', 'Oturum başlatıldı. Oyun ekranını aç: game-screen.html?sessionId=' + result.sessionId);
         // Copy URL to clipboard for easier access
         navigator.clipboard.writeText(gameScreenUrl).catch(() => {});
       } else {
@@ -238,6 +296,82 @@ export default function BroadcasterPanel() {
     }
   };
 
+  // Load gifts when settings modal opens
+  useEffect(() => {
+    if (settingsOpen && !giftsLoaded) {
+      (async () => {
+        try {
+          const response = await fetch('/api/gifts?limit=500');
+          const data = await response.json();
+          setGifts(data.gifts || []);
+          setGiftsLoaded(true);
+        } catch (err) {
+          console.error('Failed to load gifts:', err);
+        }
+      })();
+    }
+  }, [settingsOpen, giftsLoaded]);
+
+  // Load session's active gift config when session starts
+  useEffect(() => {
+    if (!sessionId) return;
+    (async () => {
+      try {
+        const response = await fetch(`/api/sessions/${sessionId}/gifts`);
+        const data = await response.json();
+        setActiveGiftIds(data.activeGiftIds || []);
+      } catch (err) {
+        console.error('Failed to load gift config:', err);
+      }
+    })();
+  }, [sessionId]);
+
+  // Filter gifts based on search and filters
+  const filteredGifts = gifts.filter(gift => {
+    if (giftSearchQuery && !gift.giftName.toLowerCase().includes(giftSearchQuery.toLowerCase())) {
+      return false;
+    }
+
+    if (giftFilters.costRange !== 'all') {
+      const cost = gift.diamondCost;
+      if (giftFilters.costRange === '500+') {
+        if (cost < 500) return false;
+      } else {
+        const [min, max] = giftFilters.costRange.split('-').map(Number);
+        if (cost < min || cost > max) return false;
+      }
+    }
+
+    if (giftFilters.quality !== 'all' && gift.cardQuality !== giftFilters.quality) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Toggle gift active/inactive
+  function toggleGift(giftId: number) {
+    setActiveGiftIds(prev =>
+      prev.includes(giftId) ? prev.filter(id => id !== giftId) : [...prev, giftId]
+    );
+  }
+
+  // Save gift config to session
+  async function saveGiftConfig() {
+    if (!sessionId) return;
+    try {
+      await fetch(`/api/sessions/${sessionId}/gifts`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activeGiftIds })
+      });
+      showNotification('success', 'Başarılı', `${activeGiftIds.length} hediye aktif edildi`);
+    } catch (err) {
+      console.error('Failed to save gift config:', err);
+      showNotification('error', 'Hata', 'Gift config kaydedilemedi');
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#030a06', padding: '1rem' }}>
       <style>{`
@@ -270,15 +404,58 @@ export default function BroadcasterPanel() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem', borderBottom: '1px solid #14532d', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '36px', height: '36px', background: 'linear-gradient(135deg,#16a34a,#15803d)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 12px #16a34a44' }}>
-              <Shield size={18} color="#fff" />
-            </div>
+            <img src="/logo.svg" alt="Kadrokur" style={{ width: '38px', height: '38px' }} />
             <div>
               <div style={{ fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.08em', color: '#22c55e' }}>KADROKUR</div>
-              <div style={{ fontSize: '0.65rem', color: '#166534', letterSpacing: '0.1em' }}>YAYINCI PANELİ v3</div>
+              <div style={{ fontSize: '0.65rem', color: '#166534', letterSpacing: '0.1em' }}>
+                {licenseInfo.broadcasterName || 'Yayıncı'} <span style={{ color: '#4b5563', margin: '0 0.25rem' }}>•</span> YAYINCI PANELİ v3
+              </div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {/* License expiry badge - shown when license is entered */}
+            {licenseKey && licenseInfo.isValid && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '20px',
+                background: licenseInfo.daysRemaining && licenseInfo.daysRemaining > 7
+                  ? 'rgba(34, 197, 94, 0.1)'
+                  : licenseInfo.daysRemaining && licenseInfo.daysRemaining > 0
+                  ? 'rgba(251, 191, 36, 0.1)'
+                  : 'rgba(239, 68, 68, 0.1)',
+                border: licenseInfo.daysRemaining && licenseInfo.daysRemaining > 7
+                  ? '1px solid rgba(34, 197, 94, 0.3)'
+                  : licenseInfo.daysRemaining && licenseInfo.daysRemaining > 0
+                  ? '1px solid rgba(251, 191, 36, 0.3)'
+                  : '1px solid rgba(239, 68, 68, 0.3)',
+              }}>
+                <Calendar size={12} style={{
+                  color: licenseInfo.daysRemaining && licenseInfo.daysRemaining > 7
+                    ? '#22c55e'
+                    : licenseInfo.daysRemaining && licenseInfo.daysRemaining > 0
+                    ? '#fbbf24'
+                    : '#ef4444'
+                }} />
+                <span style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  color: licenseInfo.daysRemaining && licenseInfo.daysRemaining > 7
+                    ? '#22c55e'
+                    : licenseInfo.daysRemaining && licenseInfo.daysRemaining > 0
+                    ? '#fbbf24'
+                    : '#ef4444'
+                }}>
+                  {licenseInfo.daysRemaining !== null
+                    ? licenseInfo.daysRemaining + ' gün kaldı'
+                    : 'Lisans aktif'
+                  }
+                </span>
+              </div>
+            )}
             {/* Settings button */}
             <button className="bp-settings-btn" onClick={() => setSettingsOpen(true)} title="Ayarlar">
               <Settings size={15} />
@@ -288,7 +465,7 @@ export default function BroadcasterPanel() {
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '4px 12px', borderRadius: '20px',
               background: sessionActive ? '#16a34a22' : '#0a1a0f',
-              border: `1px solid ${sessionActive ? '#22c55e' : '#14532d'}`,
+              border: sessionActive ? '1px solid #22c55e' : '1px solid #14532d',
             }}>
               <div style={{
                 width: '7px', height: '7px', borderRadius: '50%',
@@ -325,21 +502,53 @@ export default function BroadcasterPanel() {
                     <Zap size={11} />
                   </div>
                 </div>
+                {/* License status indicator */}
+                {licenseKey && (
+                  <div style={{ marginTop: '0.4rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    {licenseQuery.isLoading ? (
+                      <span style={{ color: '#4ade80' }}>Kontrol ediliyor...</span>
+                    ) : licenseInfo.isValid ? (
+                      <span style={{ color: '#22c55e', fontWeight: 600 }}>
+                        ✓ Lisans aktif ({licenseInfo.packageType?.toUpperCase()})
+                      </span>
+                    ) : (
+                      <span style={{ color: '#ef4444', fontWeight: 600 }}>
+                        ✗ Geçersiz lisans anahtarı
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <div style={{ marginBottom: '1.25rem' }}>
                 <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4ade80', marginBottom: '0.35rem', letterSpacing: '0.04em' }}>TikTok Kullanıcı Adı</label>
                 <div style={{ position: 'relative' as const }}>
                   <input
                     type="text"
-                    value={tiktokUsername}
+                    value={tiktokUsername || licenseInfo.broadcasterName || ''}
                     onChange={(e) => setTiktokUsername(e.target.value)}
-                    placeholder="@tiktok_adiniz"
-                    style={{ width: '100%', padding: '0.55rem 0.8rem 0.55rem 2rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.82rem', outline: 'none' }}
+                    placeholder="Lisans anahtarı girin..."
+                    readOnly
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.8rem 0.55rem 2rem',
+                      background: '#0a1a0f',
+                      border: '1px solid #14532d',
+                      borderRadius: '6px',
+                      color: (tiktokUsername || licenseInfo.broadcasterName) ? '#e2e8f0' : '#4b5563',
+                      fontSize: '0.82rem',
+                      outline: 'none',
+                      cursor: 'not-allowed'
+                    }}
                   />
                   <div style={{ position: 'absolute' as const, left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#166534' }}>
                     <AtSign size={11} />
                   </div>
                 </div>
+                {(tiktokUsername || licenseInfo.broadcasterName) && (
+                  <div style={{ fontSize: '0.65rem', color: '#22c55e', marginTop: '0.25rem' }}>
+                    ✓ Lisanstan yüklendi
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleStartSession}
@@ -383,7 +592,14 @@ export default function BroadcasterPanel() {
                 <div className="bp-mode-grid">
                   <button
                     onClick={() => setSelectedMode('manual')}
-                    style={{ padding: '0.85rem', borderRadius: '7px', border: `1.5px solid ${selectedMode === 'manual' ? '#22c55e' : '#14532d'}`, background: selectedMode === 'manual' ? '#16a34a0f' : '#030a06', cursor: 'pointer', textAlign: 'left' as const }}
+                    style={{
+                      padding: '0.85rem',
+                      borderRadius: '7px',
+                      border: selectedMode === 'manual' ? '1.5px solid #22c55e' : '1.5px solid #14532d',
+                      background: selectedMode === 'manual' ? '#16a34a0f' : '#030a06',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: selectedMode === 'manual' ? '#22c55e' : '#4ade80', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.25rem' }}>
                       <Users size={12} />
@@ -393,7 +609,14 @@ export default function BroadcasterPanel() {
                   </button>
                   <button
                     onClick={() => setSelectedMode('auto')}
-                    style={{ padding: '0.85rem', borderRadius: '7px', border: `1.5px solid ${selectedMode === 'auto' ? '#22c55e' : '#14532d'}`, background: selectedMode === 'auto' ? '#16a34a0f' : '#030a06', cursor: 'pointer', textAlign: 'left' as const }}
+                    style={{
+                      padding: '0.85rem',
+                      borderRadius: '7px',
+                      border: selectedMode === 'auto' ? '1.5px solid #22c55e' : '1.5px solid #14532d',
+                      background: selectedMode === 'auto' ? '#16a34a0f' : '#030a06',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: selectedMode === 'auto' ? '#22c55e' : '#4ade80', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.25rem' }}>
                       <Zap size={12} />
@@ -409,7 +632,7 @@ export default function BroadcasterPanel() {
 
         {/* ── ACTIVE SESSION VIEW ── */}
         {sessionActive && (
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
             {/* ── PENDING CARD: team selection ── */}
             {pendingCard && (
@@ -419,7 +642,15 @@ export default function BroadcasterPanel() {
                   Kart Bekliyor — Takım Seç
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                  <div style={{ padding: '6px 14px', border: `1px solid ${pendingCard.quality === 'elite' ? '#e879f9' : pendingCard.quality === 'gold' ? '#D4AF37' : pendingCard.quality === 'silver' ? '#c0c0c0' : '#cd7f32'}`, borderRadius: '4px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.18em', color: pendingCard.quality === 'elite' ? '#e879f9' : pendingCard.quality === 'gold' ? '#D4AF37' : pendingCard.quality === 'silver' ? '#c0c0c0' : '#cd7f32' }}>
+                  <div style={{
+                    padding: '6px 14px',
+                    border: pendingCard.quality === 'elite' ? '1px solid #e879f9' : pendingCard.quality === 'gold' ? '1px solid #D4AF37' : pendingCard.quality === 'silver' ? '1px solid #c0c0c0' : '1px solid #cd7f32',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.18em',
+                    color: pendingCard.quality === 'elite' ? '#e879f9' : pendingCard.quality === 'gold' ? '#D4AF37' : pendingCard.quality === 'silver' ? '#c0c0c0' : '#cd7f32'
+                  }}>
                     {pendingCard.quality.toUpperCase()}
                   </div>
                   <div style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600 }}>
@@ -451,7 +682,7 @@ export default function BroadcasterPanel() {
                 </div>
                 <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#22c55e' }}>{stats.cardsOpened}</div>
                 <div style={{ marginTop: '0.4rem', height: '3px', background: '#14532d', borderRadius: '2px' }}>
-                  <div style={{ height: '100%', background: '#22c55e', borderRadius: '2px', width: `${Math.min(100, (stats.cardsOpened / 44) * 100)}%` }} />
+                  <div style={{ height: '100%', background: '#22c55e', borderRadius: '2px', width: Math.round(Math.min(100, (stats.cardsOpened / 44) * 100)) + '%' }} />
                 </div>
               </div>
               {/* Participants */}
@@ -507,7 +738,7 @@ export default function BroadcasterPanel() {
               </div>
               <div className="bp-spacer" />
               {/* Quick links */}
-              <a href={`/game-screen.html?sessionId=${sessionId}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '5px', color: '#4ade80', fontSize: '0.72rem', fontWeight: 600, textDecoration: 'none' }}>
+              <a href={'/game-screen.html?sessionId=' + sessionId} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '5px', color: '#4ade80', fontSize: '0.72rem', fontWeight: 600, textDecoration: 'none' }}>
                 <LayoutGrid size={11} />
                 Oyun Ekranı
               </a>
@@ -575,7 +806,14 @@ export default function BroadcasterPanel() {
               <div className="bp-mode-grid">
                 <button
                   onClick={() => sessionActive ? handleModeChange('manual') : setSelectedMode('manual')}
-                  style={{ padding: '0.85rem', borderRadius: '7px', border: `1.5px solid ${selectedMode === 'manual' ? '#22c55e' : '#14532d'}`, background: selectedMode === 'manual' ? '#16a34a0f' : '#030a06', cursor: 'pointer', textAlign: 'left' as const }}
+                  style={{
+                    padding: '0.85rem',
+                    borderRadius: '7px',
+                    border: selectedMode === 'manual' ? '1.5px solid #22c55e' : '1.5px solid #14532d',
+                    background: selectedMode === 'manual' ? '#16a34a0f' : '#030a06',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: selectedMode === 'manual' ? '#22c55e' : '#4ade80', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.25rem' }}>
                     <Users size={12} />
@@ -585,7 +823,14 @@ export default function BroadcasterPanel() {
                 </button>
                 <button
                   onClick={() => sessionActive ? handleModeChange('auto') : setSelectedMode('auto')}
-                  style={{ padding: '0.85rem', borderRadius: '7px', border: `1.5px solid ${selectedMode === 'auto' ? '#22c55e' : '#14532d'}`, background: selectedMode === 'auto' ? '#16a34a0f' : '#030a06', cursor: 'pointer', textAlign: 'left' as const }}
+                  style={{
+                    padding: '0.85rem',
+                    borderRadius: '7px',
+                    border: selectedMode === 'auto' ? '1.5px solid #22c55e' : '1.5px solid #14532d',
+                    background: selectedMode === 'auto' ? '#16a34a0f' : '#030a06',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: selectedMode === 'auto' ? '#22c55e' : '#4ade80', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.25rem' }}>
                     <Zap size={12} />
@@ -657,17 +902,229 @@ export default function BroadcasterPanel() {
               </button>
             </div>
 
-            {/* Links section */}
-            <div style={{ borderTop: '1px solid #14532d', paddingTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' as const }}>
-              <a href="/license-panel.html" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.85rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '5px', color: '#4ade80', fontSize: '0.72rem', fontWeight: 600, textDecoration: 'none' }}>
-                <Shield size={11} />
-                Lisans Paneli
-              </a>
-              <a href="/admin-dashboard.html" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.85rem', background: '#030a06', border: '1px solid #14532d', borderRadius: '5px', color: '#4ade80', fontSize: '0.72rem', fontWeight: 600, textDecoration: 'none' }}>
-                <Settings size={11} />
-                Admin Paneli
-              </a>
+            {/* ═══════════════════════════════════════════════════════════
+                GIFT SELECTION - DB'den çekilen gerçek hediye verileri
+            ═══════════════════════════════════════════════════════════ */}
+            <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: '#0a0f0a', border: '1px solid #1a2e1a', borderRadius: '8px' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Gift size={14} style={{ color: '#22c55e' }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e2e8f0', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
+                    Aktif Hediyeler
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.65rem', color: '#6b7280' }}>
+                  {activeGiftIds.length} seçili
+                </div>
+              </div>
+
+              {/* Search Input */}
+              <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+                <input
+                  type="text"
+                  placeholder="🔍 Hediye ara..."
+                  value={giftSearchQuery}
+                  onChange={(e) => setGiftSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.7rem',
+                    paddingLeft: '2rem',
+                    background: '#030a06',
+                    border: '1px solid #14532d',
+                    borderRadius: '6px',
+                    color: '#e2e8f0',
+                    fontSize: '0.75rem',
+                    outline: 'none',
+                    transition: 'border-color 0.15s'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = '#22c55e'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = '#14532d'}
+                />
+              </div>
+
+              {/* Filter Buttons */}
+              <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Tümü', value: 'all' },
+                  { label: '1-5', value: '1-5' },
+                  { label: '5-10', value: '5-10' },
+                  { label: '10-50', value: '10-50' },
+                  { label: '50-100', value: '50-100' },
+                  { label: '100+', value: '100+' }
+                ].map(filter => (
+                  <button
+                    key={filter.value}
+                    onClick={() => setGiftFilters(prev => ({ ...prev, costRange: filter.value }))}
+                    style={{
+                      padding: '0.3rem 0.6rem',
+                      background: giftFilters.costRange === filter.value ? '#22c55e' : 'transparent',
+                      border: '1px solid #14532d',
+                      borderRadius: '4px',
+                      color: giftFilters.costRange === filter.value ? '#fff' : '#6b7280',
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Quality Filter Pills */}
+              <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '0.5rem' }}>
+                {[
+                  { label: 'Tümü', value: 'all', color: '#6b7280' },
+                  { label: 'Bronze', value: 'bronze', color: '#cd7f32' },
+                  { label: 'Silver', value: 'silver', color: '#a8a9ad' },
+                  { label: 'Gold', value: 'gold', color: '#ffd700' },
+                  { label: 'Elite', value: 'elite', color: '#a855f7' }
+                ].map(qf => (
+                  <button
+                    key={qf.value}
+                    onClick={() => setGiftFilters(prev => ({ ...prev, quality: qf.value }))}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      background: giftFilters.quality === qf.value ? qf.color + '33' : 'transparent',
+                      border: `1px solid ${qf.color}66`,
+                      borderRadius: '12px',
+                      color: giftFilters.quality === qf.value ? qf.color : qf.color + '88',
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {qf.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Gift Grid */}
+              <div style={{
+                maxHeight: '200px',
+                overflowY: 'auto',
+                padding: '0.4rem',
+                background: '#030a06',
+                border: '1px solid #14532d',
+                borderRadius: '6px'
+              }}>
+                {gifts.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '1.5rem', color: '#4b5563' }}>
+                    <Gift size={20} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
+                    <div style={{ fontSize: '0.7rem' }}>Hediyeler yükleniyor...</div>
+                  </div>
+                ) : filteredGifts.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '1rem', color: '#4b5563', fontSize: '0.7rem' }}>
+                    Hediye bulunamadı
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.3rem' }}>
+                    {filteredGifts.slice(0, 50).map(gift => {
+                      const isActive = activeGiftIds.includes(gift.id);
+                      const qualityColors = {
+                        bronze: { bg: '#cd7f3222', border: '#cd7f32', text: '#cd7f32' },
+                        silver: { bg: '#a8a9ad22', border: '#a8a9ad', text: '#a8a9ad' },
+                        gold: { bg: '#ffd70022', border: '#ffd700', text: '#ffd700' },
+                        elite: { bg: '#a855f722', border: '#a855f7', text: '#a855f7' }
+                      };
+                      const qc = qualityColors[gift.cardQuality as keyof typeof qualityColors] || qualityColors.bronze;
+
+                      return (
+                        <div
+                          key={gift.id}
+                          onClick={() => toggleGift(gift.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.4rem',
+                            background: isActive ? qc.bg : 'transparent',
+                            border: `1px solid ${isActive ? qc.border : '#14532d44'}`,
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s'
+                          }}
+                        >
+                          <img
+                            src={gift.image || '/logo.svg'}
+                            alt={gift.giftName}
+                            style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = '/logo.svg'; }}
+                          />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '0.65rem', color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {gift.giftName}
+                            </div>
+                            <div style={{ fontSize: '0.6rem', color: '#6b7280' }}>
+                              {gift.diamondCost} 💎
+                            </div>
+                          </div>
+                          <div style={{
+                            fontSize: '0.55rem',
+                            fontWeight: 700,
+                            color: qc.text,
+                            padding: '0.1rem 0.3rem',
+                            background: qc.bg,
+                            borderRadius: '3px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
+                          }}>
+                            {gift.cardQuality.slice(0, 3)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #14532d' }}>
+                <div style={{ fontSize: '0.65rem', color: '#6b7280' }}>
+                  {gifts.length > 0 ? `${filteredGifts.length} / ${gifts.length} hediye` : '-'}
+                </div>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <button
+                    onClick={() => setActiveGiftIds([])}
+                    disabled={activeGiftIds.length === 0}
+                    style={{
+                      padding: '0.35rem 0.7rem',
+                      background: 'transparent',
+                      border: '1px solid #ef4444',
+                      borderRadius: '5px',
+                      color: '#ef444488',
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      cursor: activeGiftIds.length > 0 ? 'pointer' : 'not-allowed',
+                      opacity: activeGiftIds.length > 0 ? 1 : 0.4
+                    }}
+                  >
+                    Temizle
+                  </button>
+                  <button
+                    onClick={saveGiftConfig}
+                    style={{
+                      padding: '0.35rem 0.8rem',
+                      background: '#22c55e',
+                      border: 'none',
+                      borderRadius: '5px',
+                      color: '#fff',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(34, 197, 94, 0.3)'
+                    }}
+                  >
+                    Kaydet
+                  </button>
+                </div>
+              </div>
             </div>
+
+            {/* Links section removed - license panel only accessible via /licensepanel */}
           </div>
         </div>
       )}
@@ -687,7 +1144,7 @@ export default function BroadcasterPanel() {
             background: notification.type === 'success'
               ? 'linear-gradient(135deg, #15803d 0%, #166534 100%)'
               : 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)',
-            border: `1px solid ${notification.type === 'success' ? '#22c55e66' : '#ef444466'}`,
+            border: notification.type === 'success' ? '1px solid #22c55e66' : '1px solid #ef444466',
             borderRadius: '12px',
             padding: '1.5rem',
             maxWidth: '420px',

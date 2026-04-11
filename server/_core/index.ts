@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import fs from "fs";
+import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerAdminAuthRoutes } from "../admin-auth";
@@ -10,6 +12,21 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initializeSocketServer } from "../socket-server";
 import { registerPlayerRoutes } from "../player-api";
+import * as licenseManager from "../license-manager";
+import { verifyAdminToken, getAdminTokenFromRequest } from "../admin-auth";
+import { initializeTelegramBot } from "../telegram-bot";
+import { licenses as licensesTable, gameHistory, sessions, licenseLogs, appSettings, webhooks, notificationLog } from "../../drizzle/schema";
+import { getDb } from "../db";
+import { eq, desc, and, sql, like, or } from "drizzle-orm";
+
+// Middleware to require admin auth on REST endpoints
+async function requireAdmin(req: any, res: any, next: any) {
+  const token = getAdminTokenFromRequest(req);
+  if (!token || !(await verifyAdminToken(token))) {
+    return res.status(401).json({ error: "Unauthorized — admin token required" });
+  }
+  next();
+}
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -34,12 +51,38 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   initializeSocketServer(server);
+
+  // Initialize Telegram bot (if token provided)
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    initializeTelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+  }
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
   // Custom redirects
-  app.get("/licensepanel", (req, res) => res.redirect("/license-panel.html"));
+  app.get("/licensepanel", async (req, res) => {
+    // Check admin authentication
+    const { getAdminTokenFromRequest, verifyAdminToken } = await import("../admin-auth");
+    const token = getAdminTokenFromRequest(req);
+    const isAdmin = token ? await verifyAdminToken(token) : false;
+
+    if (!isAdmin) {
+      return res.redirect("/admin-login.html");
+    }
+
+    const filePath = path.resolve(import.meta.dirname, "../..", "client", "public", "license-panel.html");
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).send('Not found');
+    }
+  });
+  // Redirect old routes to licensepanel (single entry point)
+  app.get("/license-panel.html", (req, res) => res.redirect("/licensepanel"));
+  app.get("/admin-dashboard", (req, res) => res.redirect("/licensepanel"));
+  app.get("/admin-dashboard.html", (req, res) => res.redirect("/licensepanel"));
 
   // Image proxy to bypass CORS
   app.get("/api/proxy-image", async (req, res) => {
@@ -81,6 +124,621 @@ async function startServer() {
   registerAdminAuthRoutes(app);
   // Player REST API
   registerPlayerRoutes(app);
+
+  // License REST API endpoints (admin-protected)
+  app.get('/api/licenses', requireAdmin, async (req, res) => {
+    try {
+      const licenses = await licenseManager.getAllLicenses();
+      res.json(licenses);
+    } catch (err) {
+      console.error('Error getting licenses:', err);
+      res.status(500).json({ error: 'Failed to get licenses' });
+    }
+  });
+
+  app.patch('/api/licenses/:id', requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { licenseKey, username, expiresAt, usageCount, permissions, packageId } = req.body;
+      const result = await licenseManager.updateLicense(id, {
+        licenseKey,
+        username,
+        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+        usageCount,
+        permissions,
+        packageId
+      });
+      res.json(result);
+    } catch (err) {
+      console.error('Error updating license:', err);
+      res.status(500).json({ error: 'Failed to update license' });
+    }
+  });
+
+  app.post('/api/licenses', requireAdmin, async (req, res) => {
+    try {
+      const { packageType, broadcasterName, broadcasterEmail, licenseDuration, maxSessions, maxPlayers } = req.body;
+      const result = await licenseManager.createLicense(
+        packageType || 'basic',
+        broadcasterName || 'Unknown',
+        broadcasterEmail || 'unknown@example.com',
+        licenseDuration || 30,
+        maxSessions || 1,
+        maxPlayers || 11
+      );
+      res.json(result);
+    } catch (err) {
+      console.error('Error creating license:', err);
+      res.status(500).json({ error: 'Failed to create license' });
+    }
+  });
+
+  app.post('/api/licenses/:id/extend', requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { days } = req.body;
+      const result = await licenseManager.extendLicense(id, parseInt(days || 30));
+      res.json(result);
+    } catch (err) {
+      console.error('Error extending license:', err);
+      res.status(500).json({ error: 'Failed to extend license' });
+    }
+  });
+
+  app.post('/api/licenses/:id/renew', requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { days } = req.body;
+      const result = await licenseManager.extendLicense(id, parseInt(days || 30));
+      res.json(result);
+    } catch (err) {
+      console.error('Error renewing license:', err);
+      res.status(500).json({ error: 'Failed to renew license' });
+    }
+  });
+
+  app.delete('/api/licenses/:id', requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await licenseManager.revokeLicense(id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Error revoking license:', err);
+      res.status(500).json({ error: 'Failed to revoke license' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+  // ADMIN FEATURES API ROUTES
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+
+  /**
+   * GET /api/admin/sessions - List all sessions with history
+   */
+  app.get("/api/admin/sessions", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ sessions: [], total: 0 });
+
+      const { licenseId, status, limit = 50, offset = 0 } = req.query;
+
+      const whereClause = [];
+      if (licenseId) whereClause.push(eq(sessions.licenseId, Number(licenseId)));
+      if (status) whereClause.push(eq(sessions.status, status as "active" | "paused" | "ended" | "error"));
+
+      const where = whereClause.length > 0 ? and(...whereClause) : undefined;
+
+      const [sessionData, totalCount] = await Promise.all([
+        db.select().from(sessions).where(where).orderBy(desc(sessions.startedAt)).limit(Number(limit)).offset(Number(offset)),
+        db.select({ count: sql`COUNT(*)` }).from(sessions).where(where)
+      ]);
+
+      res.json({
+        sessions: sessionData,
+        total: Number(totalCount[0]?.count || 0),
+        limit: Number(limit),
+        offset: Number(offset)
+      });
+    } catch (err) {
+      console.error('[Admin] Sessions error:', err);
+      res.status(500).json({ error: 'Failed to fetch sessions' });
+    }
+  });
+
+  /**
+   * GET /api/admin/game-history - List game history with statistics
+   */
+  app.get("/api/admin/game-history", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ history: [], total: 0 });
+
+      const { licenseId, startDate, endDate, limit = 50, offset = 0 } = req.query;
+
+      const whereClause = [];
+      if (licenseId) whereClause.push(eq(gameHistory.licenseId, Number(licenseId)));
+      if (startDate) whereClause.push(sql`gameHistory.createdAt >= ${startDate}`);
+      if (endDate) whereClause.push(sql`gameHistory.createdAt <= ${endDate}`);
+
+      const where = whereClause.length > 0 ? and(...whereClause) : undefined;
+
+      const [historyData, totalCount] = await Promise.all([
+        db.select().from(gameHistory).where(where).orderBy(desc(gameHistory.createdAt)).limit(Number(limit)).offset(Number(offset)),
+        db.select({ count: sql`COUNT(*)` }).from(gameHistory).where(where)
+      ]);
+
+      res.json({
+        history: historyData,
+        total: Number(totalCount[0]?.count || 0),
+        limit: Number(limit),
+        offset: Number(offset)
+      });
+    } catch (err) {
+      console.error('[Admin] Game history error:', err);
+      res.status(500).json({ error: 'Failed to fetch game history' });
+    }
+  });
+
+  /**
+   * GET /api/admin/stats/dashboard - Dashboard statistics
+   */
+  app.get("/api/admin/stats/dashboard", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ error: "Database unavailable" });
+
+      const [licensesResult, sessionsResult, historyResult] = await Promise.all([
+        db.select({ count: sql`COUNT(*)` }).from(licensesTable),
+        db.select({ count: sql`COUNT(*)` }).from(sessions).where(eq(sessions.status, 'active')),
+        db.select({
+          totalCards: sql`SUM(totalCardsOpened)`,
+          totalSessions: sql`COUNT(*)`,
+          avgDuration: sql`AVG(durationSeconds)`
+        }).from(gameHistory)
+      ]);
+
+      const activeLicenses = await db.select().from(licensesTable).where(eq(licensesTable.status, 'active'));
+
+      res.json({
+        totalLicenses: Number(licensesResult[0]?.count || 0),
+        activeLicenses: activeLicenses.length,
+        activeSessions: Number(sessionsResult[0]?.count || 0),
+        totalGamesPlayed: Number(historyResult[0]?.totalSessions || 0),
+        totalCardsOpened: Number(historyResult[0]?.totalCards || 0),
+        avgGameDuration: Math.round(Number(historyResult[0]?.avgDuration || 0) / 60) // minutes
+      });
+    } catch (err) {
+      console.error('[Admin] Dashboard stats error:', err);
+      res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+    }
+  });
+
+  /**
+   * GET /api/admin/license-logs - License usage logs with filtering
+   */
+  app.get("/api/admin/license-logs", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ logs: [], total: 0 });
+
+      const { licenseId, action, limit = 100, offset = 0, search } = req.query;
+
+      const whereClause = [];
+      if (licenseId) whereClause.push(eq(licenseLogs.licenseId, Number(licenseId)));
+      if (action) whereClause.push(like(licenseLogs.action, `%${action}%`));
+      if (search) {
+        whereClause.push(
+          or(
+            like(licenseLogs.action, `%${search}%`),
+            like(licenseLogs.details, `%${search}%`),
+            like(licenseLogs.ipAddress, `%${search}%`)
+          )
+        );
+      }
+
+      const where = whereClause.length > 0 ? and(...whereClause) : undefined;
+
+      const [logsData, totalCount] = await Promise.all([
+        db.select().from(licenseLogs).where(where).orderBy(desc(licenseLogs.createdAt)).limit(Number(limit)).offset(Number(offset)),
+        db.select({ count: sql`COUNT(*)` }).from(licenseLogs).where(where)
+      ]);
+
+      res.json({
+        logs: logsData,
+        total: Number(totalCount[0]?.count || 0),
+        limit: Number(limit),
+        offset: Number(offset)
+      });
+    } catch (err) {
+      console.error('[Admin] License logs error:', err);
+      res.status(500).json({ error: 'Failed to fetch license logs' });
+    }
+  });
+
+  /**
+   * POST /api/admin/licenses/bulk - Bulk license operations
+   */
+  app.post("/api/admin/licenses/bulk", requireAdmin, async (req, res) => {
+    try {
+      const { action, licenseIds, data } = req.body;
+
+      if (!action || !Array.isArray(licenseIds) || licenseIds.length === 0) {
+        return res.status(400).json({ error: 'action and licenseIds are required' });
+      }
+
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'Database unavailable' });
+
+      const results = [];
+
+      for (const licenseId of licenseIds) {
+        try {
+          let result;
+          switch (action) {
+            case 'extend':
+              const days = data?.days || 30;
+              result = await db
+                .update(licensesTable)
+                .set({
+                  expiresAt: sql`DATE_ADD(expiresAt, INTERVAL ${days} DAY)`
+                })
+                .where(eq(licensesTable.id, Number(licenseId)));
+              results.push({ licenseId, success: true, action: 'extended', days });
+              break;
+
+            case 'changeStatus':
+              result = await db
+                .update(licensesTable)
+                .set({ status: data?.status })
+                .where(eq(licensesTable.id, Number(licenseId)));
+              results.push({ licenseId, success: true, action: 'statusChanged', status: data?.status });
+              break;
+
+            case 'delete':
+              result = await db
+                .delete(licensesTable)
+                .where(eq(licensesTable.id, Number(licenseId)));
+              results.push({ licenseId, success: true, action: 'deleted' });
+              break;
+
+            default:
+              results.push({ licenseId, success: false, error: 'Unknown action' });
+          }
+        } catch (err) {
+          results.push({ licenseId, success: false, error: (err as Error).message });
+        }
+      }
+
+      res.json({ results, processed: results.length, succeeded: results.filter(r => r.success).length });
+    } catch (err) {
+      console.error('[Admin] Bulk operation error:', err);
+      res.status(500).json({ error: 'Bulk operation failed' });
+    }
+  });
+
+  /**
+   * GET /api/admin/settings - Get app settings
+   */
+  app.get("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ settings: [] });
+
+      const { category, licenseId } = req.query;
+      const whereClause = [];
+      if (category) whereClause.push(eq(appSettings.category, category as string));
+      if (licenseId) whereClause.push(eq(appSettings.licenseId, Number(licenseId)));
+      // If no licenseId specified, get only global settings (NULL licenseId)
+      else whereClause.push(sql`licenseId IS NULL`);
+
+      const where = whereClause.length > 0 ? and(...whereClause) : sql`licenseId IS NULL`;
+
+      const settings = await db.select().from(appSettings).where(where).orderBy(appSettings.key);
+
+      // Convert to key-value object
+      const settingsObj: Record<string, any> = {};
+      settings.forEach((s: typeof appSettings.$inferSelect) => {
+        try {
+          settingsObj[s.key] = JSON.parse(s.value);
+        } catch {
+          settingsObj[s.key] = s.value;
+        }
+      });
+
+      res.json(settingsObj);
+    } catch (err) {
+      console.error('[Admin] Get settings error:', err);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  /**
+   * POST /api/admin/settings - Upsert app settings
+   */
+  app.post("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'Database unavailable' });
+
+      const settings = req.body; // { key: value } object
+      const results = [];
+
+      for (const [key, value] of Object.entries(settings)) {
+        const valueStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
+        const existing = await db.select().from(appSettings).where(eq(appSettings.key, key)).limit(1);
+
+        if (existing.length > 0) {
+          await db.update(appSettings)
+            .set({ value: valueStr, updatedAt: new Date() })
+            .where(eq(appSettings.key, key));
+        } else {
+          await db.insert(appSettings).values({
+            key,
+            value: valueStr,
+            category: 'general'
+          });
+        }
+        results.push(key);
+      }
+
+      res.json({ success: true, updated: results });
+    } catch (err) {
+      console.error('[Admin] Save settings error:', err);
+      res.status(500).json({ error: 'Failed to save settings' });
+    }
+  });
+
+  /**
+   * GET /api/admin/webhooks - List webhooks
+   */
+  app.get("/api/admin/webhooks", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ webhooks: [] });
+
+      const { licenseId, eventType } = req.query;
+      const whereClause = [];
+      if (licenseId) whereClause.push(eq(webhooks.licenseId, Number(licenseId)));
+      else whereClause.push(sql`licenseId IS NULL`);
+      if (eventType) whereClause.push(eq(webhooks.eventType, eventType as string));
+
+      const where = whereClause.length > 0 ? and(...whereClause) : sql`licenseId IS NULL`;
+
+      const hooks = await db.select().from(webhooks).where(where).orderBy(desc(webhooks.createdAt));
+
+      res.json({ webhooks: hooks });
+    } catch (err) {
+      console.error('[Admin] Get webhooks error:', err);
+      res.status(500).json({ error: 'Failed to fetch webhooks' });
+    }
+  });
+
+  /**
+   * POST /api/admin/webhooks - Create webhook
+   */
+  app.post("/api/admin/webhooks", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'Database unavailable' });
+
+      const { name, eventType, url, secret, headers } = req.body;
+
+      if (!name || !eventType || !url) {
+        return res.status(400).json({ error: 'name, eventType, and url are required' });
+      }
+
+      await db.insert(webhooks).values({
+        name,
+        eventType,
+        url,
+        secret: secret || null,
+        headers: headers || null
+      });
+
+      const [webhook] = await db.select().from(webhooks).where(eq(webhooks.name, name)).limit(1);
+
+      res.json({ success: true, webhook });
+    } catch (err) {
+      console.error('[Admin] Create webhook error:', err);
+      res.status(500).json({ error: 'Failed to create webhook' });
+    }
+  });
+
+  /**
+   * DELETE /api/admin/webhooks/:id - Delete webhook
+   */
+  app.delete("/api/admin/webhooks/:id", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'Database unavailable' });
+
+      await db.delete(webhooks).where(eq(webhooks.id, Number(req.params.id)));
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[Admin] Delete webhook error:', err);
+      res.status(500).json({ error: 'Failed to delete webhook' });
+    }
+  });
+
+  /**
+   * POST /api/admin/webhooks/:id/test - Test webhook
+   */
+  app.post("/api/admin/webhooks/:id/test", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'Database unavailable' });
+
+      const [webhook] = await db.select().from(webhooks).where(eq(webhooks.id, Number(req.params.id))).limit(1);
+
+      if (!webhook) {
+        return res.status(404).json({ error: 'Webhook not found' });
+      }
+
+      // Send test payload
+      const testPayload = {
+        event: 'test',
+        timestamp: new Date().toISOString(),
+        message: 'This is a test notification from Kadrokur Admin Panel'
+      };
+
+      const response = await fetch(webhook.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(webhook.headers ? JSON.parse(webhook.headers as string) : {})
+        },
+        body: JSON.stringify(testPayload)
+      });
+
+      // Log the test
+      await db.insert(notificationLog).values({
+        webhookId: webhook.id,
+        licenseId: webhook.licenseId || 0,
+        eventType: 'test',
+        payload: JSON.stringify(testPayload),
+        responseCode: response.status,
+        responseBody: await response.text(),
+        sentAt: new Date(),
+        success: response.ok
+      });
+
+      res.json({
+        success: response.ok,
+        status: response.status,
+        statusText: response.statusText
+      });
+    } catch (err) {
+      console.error('[Admin] Test webhook error:', err);
+      res.status(500).json({ error: 'Failed to test webhook' });
+    }
+  });
+
+  /**
+   * GET /api/admin/notification-log - Notification delivery log
+   */
+  app.get("/api/admin/notification-log", requireAdmin, async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ logs: [], total: 0 });
+
+      const { limit = 50, offset = 0 } = req.query;
+
+      const [logsData, totalCount] = await Promise.all([
+        db.select().from(notificationLog).orderBy(desc(notificationLog.sentAt)).limit(Number(limit)).offset(Number(offset)),
+        db.select({ count: sql`COUNT(*)` }).from(notificationLog)
+      ]);
+
+      res.json({
+        logs: logsData,
+        total: Number(totalCount[0]?.count || 0),
+        limit: Number(limit),
+        offset: Number(offset)
+      });
+    } catch (err) {
+      console.error('[Admin] Notification log error:', err);
+      res.status(500).json({ error: 'Failed to fetch notification log' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+  // END ADMIN FEATURES API ROUTES
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+  // GIFT MANAGEMENT API ROUTES
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+
+  /**
+   * GET /api/gifts - List all gifts with filtering
+   */
+  app.get("/api/gifts", requireAdmin, async (req, res) => {
+    try {
+      const { getAllGifts } = await import("../gift-manager");
+      const { search, minCost, maxCost, quality, limit, offset } = req.query;
+
+      const result = await getAllGifts({
+        search: search as string,
+        minCost: minCost ? Number(minCost) : undefined,
+        maxCost: maxCost ? Number(maxCost) : undefined,
+        quality: quality as any,
+        limit: limit ? Number(limit) : 50,
+        offset: offset ? Number(offset) : 0,
+      });
+
+      res.json(result);
+    } catch (err) {
+      console.error("Error getting gifts:", err);
+      res.status(500).json({ error: "Failed to get gifts" });
+    }
+  });
+
+  /**
+   * PATCH /api/gifts/:id - Update gift card quality
+   */
+  app.patch("/api/gifts/:id", requireAdmin, async (req, res) => {
+    try {
+      const { updateGiftQuality } = await import("../gift-manager");
+      const { id } = req.params;
+      const { cardQuality } = req.body;
+
+      if (!cardQuality || !["bronze", "silver", "gold", "elite"].includes(cardQuality)) {
+        return res.status(400).json({ error: "Invalid cardQuality. Must be: bronze, silver, gold, or elite" });
+      }
+
+      const result = await updateGiftQuality(Number(id), cardQuality);
+      res.json(result);
+    } catch (err) {
+      console.error("Error updating gift:", err);
+      res.status(500).json({ error: "Failed to update gift" });
+    }
+  });
+
+  /**
+   * GET /api/sessions/:sessionId/gifts - Get session's active gift config
+   */
+  app.get("/api/sessions/:sessionId/gifts", async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ activeGiftIds: [] });
+
+      const [session] = await db.select().from(sessions).where(eq(sessions.sessionId, req.params.sessionId)).limit(1);
+
+      if (!session) return res.status(404).json({ error: "Session not found" });
+
+      const giftConfig = session.giftConfig as any;
+      res.json({ activeGiftIds: giftConfig?.activeGiftIds || [] });
+    } catch (err) {
+      console.error("Get session gifts error:", err);
+      res.status(500).json({ error: "Failed to get session gifts" });
+    }
+  });
+
+  /**
+   * PUT /api/sessions/:sessionId/gifts - Update session's active gift config
+   */
+  app.put("/api/sessions/:sessionId/gifts", async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: "Database unavailable" });
+
+      const { activeGiftIds } = req.body;
+
+      await db.update(sessions)
+        .set({ giftConfig: { activeGiftIds } })
+        .where(eq(sessions.sessionId, req.params.sessionId));
+
+      res.json({ success: true, activeGiftIds });
+    } catch (err) {
+      console.error("Update session gifts error:", err);
+      res.status(500).json({ error: "Failed to update session gifts" });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+  // END GIFT MANAGEMENT API ROUTES
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+
   // tRPC API
   app.use(
     "/api/trpc",

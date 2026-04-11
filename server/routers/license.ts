@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, adminProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import {
   createLicense,
@@ -12,14 +12,15 @@ import {
 
 export const licenseRouter = router({
   /**
-   * Create a new license
+   * Create a new license (admin-only)
    */
-  create: publicProcedure
+  create: adminProcedure
     .input(
       z.object({
         packageType: z.enum(["basic", "pro", "premium", "unlimited"]),
         broadcasterName: z.string().min(1),
         broadcasterEmail: z.string().email(),
+        tiktokUsername: z.string().optional(),
         licenseDuration: z.number().min(1),
         maxSessions: z.number().min(1),
         maxPlayers: z.number().min(1),
@@ -32,7 +33,8 @@ export const licenseRouter = router({
         input.broadcasterEmail,
         input.licenseDuration,
         input.maxSessions,
-        input.maxPlayers
+        input.maxPlayers,
+        input.tiktokUsername
       );
 
       return result;
@@ -49,9 +51,9 @@ export const licenseRouter = router({
     }),
 
   /**
-   * Get all licenses
+   * Get all licenses (admin-only)
    */
-  getAll: publicProcedure.query(async () => {
+  getAll: adminProcedure.query(async () => {
     const licenses = await getAllLicenses();
     return licenses;
   }),
@@ -77,9 +79,9 @@ export const licenseRouter = router({
     }),
 
   /**
-   * Update license features
+   * Update license features (admin-only)
    */
-  updateFeatures: publicProcedure
+  updateFeatures: adminProcedure
     .input(
       z.object({
         packageType: z.enum(["basic", "pro", "premium", "unlimited"]),

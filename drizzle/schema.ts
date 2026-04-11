@@ -73,6 +73,7 @@ export const sessions = mysqlTable("sessions", {
   gameState: json("gameState"),
   teamSettings: json("teamSettings"),
   gameSettings: json("gameSettings"),
+  giftConfig: json("giftConfig"), // { activeGiftIds: number[], customMappings?: Record<number, CardQuality> }
   startedAt: timestamp("startedAt").defaultNow().notNull(),
   endedAt: timestamp("endedAt"),
 });
@@ -154,9 +155,101 @@ export const giftTiers = mysqlTable("giftTiers", {
   id: int("id").autoincrement().primaryKey(),
   giftName: varchar("giftName", { length: 64 }).notNull().unique(),
   giftId: int("giftId").notNull(),
+  image: text("image"),
+  diamondCost: int("diamondCost").notNull().default(0),
   tierLevel: mysqlEnum("tierLevel", ["1", "2", "3"]).notNull(),
   cardQuality: mysqlEnum("cardQuality", ["bronze", "silver", "gold", "elite"]).notNull(),
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════════════
+// ADMIN FEATURES - NEW TABLES
+// ═══════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Card Packs - Custom card sets with filters
+ * Allows admins to create curated card packs (e.g., "Süper Lig Special", "Elite Only")
+ */
+export const cardPacks = mysqlTable("cardPacks", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  description: text("description"),
+  // Filters stored as JSON: { qualities: [], leagues: [], positions: [], minOverall: 0, maxOverall: 99 }
+  filters: json("filters").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CardPack = typeof cardPacks.$inferSelect;
+export type InsertCardPack = typeof cardPacks.$inferInsert;
+
+/**
+ * License Card Packs - Link licenses to available card packs
+ * Determines which packs a license can use
+ */
+export const licenseCardPacks = mysqlTable("licenseCardPacks", {
+  id: int("id").autoincrement().primaryKey(),
+  licenseId: int("licenseId").notNull(),
+  packId: int("packId").notNull(),
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+});
+
+export type LicenseCardPack = typeof licenseCardPacks.$inferSelect;
+export type InsertLicenseCardPack = typeof licenseCardPacks.$inferInsert;
+
+/**
+ * App Settings - Global and per-license settings
+ * Stores team names, colors, thresholds, theme options
+ */
+export const appSettings = mysqlTable("appSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  key: varchar("key", { length: 128 }).notNull().unique(),
+  value: text("value").notNull(), // JSON string for complex values
+  category: varchar("category", { length: 64 }).notNull(), // 'theme', 'teams', 'thresholds', 'notifications'
+  licenseId: int("licenseId"), // NULL = global setting, INT = per-license override
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AppSetting = typeof appSettings.$inferSelect;
+export type InsertAppSetting = typeof appSettings.$inferInsert;
+
+/**
+ * Webhooks - For notifications and integrations
+ * Send events to Discord, Telegram, Slack, or custom endpoints
+ */
+export const webhooks = mysqlTable("webhooks", {
+  id: int("id").autoincrement().primaryKey(),
+  licenseId: int("licenseId"), // NULL = global webhook
+  name: varchar("name", { length: 128 }).notNull(),
+  eventType: varchar("eventType", { length: 64 }).notNull(), // 'license.expiring', 'session.started', 'card.opened', etc.
+  url: text("url").notNull(),
+  secret: varchar("secret", { length: 128 }), // HMAC signature for security
+  isActive: boolean("isActive").default(true).notNull(),
+  headers: json("headers"), // Custom headers
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Webhook = typeof webhooks.$inferSelect;
+export type InsertWebhook = typeof webhooks.$inferInsert;
+
+/**
+ * Notification Log - Track webhook/notification deliveries
+ */
+export const notificationLog = mysqlTable("notificationLog", {
+  id: int("id").autoincrement().primaryKey(),
+  webhookId: int("webhookId"),
+  licenseId: int("licenseId").notNull(),
+  eventType: varchar("eventType", { length: 64 }).notNull(),
+  payload: json("payload"), // Request body sent
+  responseCode: int("responseCode"), // HTTP status code
+  responseBody: text("responseBody"),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  success: boolean("success").notNull(),
+});
+
+export type NotificationLogEntry = typeof notificationLog.$inferSelect;
+export type InsertNotificationLogEntry = typeof notificationLog.$inferInsert;
 
 export type GiftTier = typeof giftTiers.$inferSelect;
 export type InsertGiftTier = typeof giftTiers.$inferInsert;

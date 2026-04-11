@@ -5,6 +5,131 @@ import { eq, like, sql, and, or, desc, asc } from "drizzle-orm";
 
 export function registerPlayerRoutes(app: Express) {
   /**
+   * GET /api/players/stats
+   * Oyuncu istatistikleri (kart sayıları vb.)
+   */
+  app.get("/api/players/stats", async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ stats: [], leagues: [] });
+
+      const stats = await db
+        .select({
+          cardQuality: players.cardQuality,
+          count: sql<number>`count(*)`.as('count'),
+          avgOverall: sql<number>`avg(${players.overall})`.as('avgOverall'),
+        })
+        .from(players)
+        .groupBy(players.cardQuality);
+
+      const leagues = await db
+        .select({
+          league: players.league,
+          count: sql<number>`count(*)`.as('count'),
+        })
+        .from(players)
+        .where(sql`league IS NOT NULL`)
+        .groupBy(players.league)
+        .orderBy(desc(sql`count(*)`));
+
+      return res.json({
+        stats: stats.map(s => ({ ...s, count: Number(s.count), avgOverall: Number(s.avgOverall) })),
+        leagues: leagues.map(l => ({ ...l, count: Number(l.count) })),
+      });
+    } catch (error) {
+      console.error("[API] /api/players/stats error:", error);
+      return res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
+  /**
+   * GET /api/players/leagues
+   * Lig listesi
+   */
+  app.get("/api/players/leagues", async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json([]);
+
+      const leagues = await db
+        .select({
+          league: players.league,
+          count: sql<number>`count(*)`.as('count'),
+        })
+        .from(players)
+        .where(sql`league IS NOT NULL`)
+        .groupBy(players.league)
+        .orderBy(desc(sql`count(*)`));
+
+      return res.json(leagues.map(l => ({ ...l, count: Number(l.count) })));
+    } catch (error) {
+      console.error("[API] /api/players/leagues error:", error);
+      return res.status(500).json({ error: "Failed to fetch leagues" });
+    }
+  });
+
+  /**
+   * GET /api/players/image-stats
+   * Fotoğraf coverage istatistikleri
+   */
+  app.get("/api/players/image-stats", async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) return res.json({ total: 0, withImage: 0 });
+
+      const totalResult = await db
+        .select({ count: sql<number>`count(*)`.as('count') })
+        .from(players);
+
+      const withImageResult = await db
+        .select({ count: sql<number>`count(*)`.as('count') })
+        .from(players)
+        .where(sql`faceImageUrl IS NOT NULL AND faceImageUrl != ''`);
+
+      return res.json({
+        total: Number(totalResult[0]?.count || 0),
+        withImage: Number(withImageResult[0]?.count || 0),
+      });
+    } catch (error) {
+      console.error("[API] /api/players/image-stats error:", error);
+      return res.status(500).json({ error: "Failed to fetch image stats" });
+    }
+  });
+
+  /**
+   * GET /api/players/:id
+   * Tekil oyuncu detayını getir
+   */
+  app.get("/api/players/:id", async (req, res) => {
+    try {
+      const db = await getDb();
+      if (!db) {
+        return res.status(500).json({ error: "Database not available" });
+      }
+
+      const playerId = parseInt(req.params.id);
+      if (isNaN(playerId)) {
+        return res.status(400).json({ error: "Invalid player ID" });
+      }
+
+      const playerList = await db
+        .select()
+        .from(players)
+        .where(eq(players.id, playerId))
+        .limit(1);
+
+      if (!playerList || playerList.length === 0) {
+        return res.status(404).json({ error: "Player not found" });
+      }
+
+      return res.json(playerList[0]);
+    } catch (error) {
+      console.error("[PlayerAPI] Error fetching player:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  /**
    * GET /api/players
    * Query params: cardQuality, league, position, search, page, limit, sortBy, sortOrder
    */
@@ -89,96 +214,6 @@ export function registerPlayerRoutes(app: Express) {
       });
     } catch (error) {
       console.error("[API] /api/players error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  /**
-   * GET /api/players/stats
-   * Returns card quality distribution and league counts
-   */
-  app.get("/api/players/stats", async (req, res) => {
-    try {
-      const db = await getDb();
-      if (!db) return res.json({ stats: [], leagues: [] });
-
-      const stats = await db
-        .select({
-          cardQuality: players.cardQuality,
-          count: sql<number>`COUNT(*)`,
-          avgOverall: sql<number>`ROUND(AVG(overall))`,
-        })
-        .from(players)
-        .groupBy(players.cardQuality);
-
-      const leagues = await db
-        .select({
-          league: players.league,
-          count: sql<number>`COUNT(*)`,
-        })
-        .from(players)
-        .groupBy(players.league)
-        .orderBy(desc(sql`COUNT(*)`))
-        .limit(20);
-
-      res.json({
-        stats: stats.map(s => ({ ...s, count: Number(s.count), avgOverall: Number(s.avgOverall) })),
-        leagues: leagues.map(l => ({ ...l, count: Number(l.count) })),
-      });
-    } catch (error) {
-      console.error("[API] /api/players/stats error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  /**
-   * GET /api/players/leagues
-   * Returns distinct league names
-   */
-  app.get("/api/players/leagues", async (req, res) => {
-    try {
-      const db = await getDb();
-      if (!db) return res.json([]);
-
-      const result = await db
-        .selectDistinct({ league: players.league })
-        .from(players)
-        .where(sql`${players.league} IS NOT NULL AND ${players.league} != ''`)
-        .orderBy(asc(players.league));
-
-      res.json(result.map(r => r.league).filter(Boolean));
-    } catch (error) {
-      console.error("[API] /api/players/leagues error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  /**
-   * GET /api/players/image-stats
-   * Returns count of players with and without working images
-   */
-  app.get("/api/players/image-stats", async (req, res) => {
-    try {
-      const db = await getDb();
-      if (!db) return res.json({ withImage: 0, withoutImage: 0, total: 0 });
-
-      const total = await db.select({ count: sql<number>`COUNT(*)` }).from(players);
-      const withImg = await db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(players)
-        .where(sql`${players.faceImageUrl} IS NOT NULL AND ${players.faceImageUrl} != ''`);
-      const withoutImg = await db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(players)
-        .where(sql`${players.faceImageUrl} IS NULL OR ${players.faceImageUrl} = ''`);
-
-      res.json({
-        withImage: Number(withImg[0]?.count) || 0,
-        withoutImage: Number(withoutImg[0]?.count) || 0,
-        total: Number(total[0]?.count) || 0,
-      });
-    } catch (error) {
-      console.error("[API] /api/players/image-stats error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

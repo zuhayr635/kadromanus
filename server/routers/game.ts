@@ -35,18 +35,41 @@ export const gameRouter = router({
     }),
 
   /**
-   * Get final game scores
+   * Get final game scores (read-only — does NOT end the game)
    */
   getFinalScores: publicProcedure
     .input(z.object({ sessionId: z.string() }))
     .query(({ input }) => {
-      const result = endGame(input.sessionId);
+      const gameState = getGameState(input.sessionId);
 
-      if (!result) {
+      if (!gameState || !gameState.endedAt) {
         return null;
       }
 
-      return result;
+      // Compute scores from already-ended game state
+      const finalScores = gameState.teams.map((team) => ({
+        teamName: team.name,
+        score: team.score,
+        players: team.players.length,
+      }));
+
+      const statistics = {
+        totalCardsOpened: gameState.openedCards.length,
+        totalParticipants: gameState.participants.size,
+        durationSeconds: Math.floor((gameState.endedAt - gameState.startedAt) / 1000),
+      };
+
+      return { finalScores, statistics };
+    }),
+
+  /**
+   * End game manually (mutation)
+   */
+  endGame: publicProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(({ input }) => {
+      const result = endGame(input.sessionId);
+      return result || { finalScores: [], statistics: { totalCardsOpened: 0, totalParticipants: 0, durationSeconds: 0 } };
     }),
 
   /**

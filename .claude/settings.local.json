@@ -13,7 +13,10 @@
       "WebFetch(domain:www.npmjs.com)",
       "Skill(update-config)",
       "mcp__plugin_telegram_telegram__reply",
-      "WebFetch(domain:sofifa.com)"
+      "WebFetch(domain:sofifa.com)",
+      "WebFetch(domain:upload.wikimedia.org)",
+      "WebFetch(domain:www.thesportsdb.com)",
+      "Skill(claude-md-management:revise-claude-md)"
     ]
   }
 }

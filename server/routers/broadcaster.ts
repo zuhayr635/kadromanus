@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, adminProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import {
   createBroadcasterSession,
@@ -32,15 +32,8 @@ export const broadcasterRouter = router({
       );
 
       if (result.success && result.sessionId) {
-        try {
-          await startSession(result.sessionId, input.tiktokUsername, input.teamNames);
-        } catch (error) {
-          console.error(`[${result.sessionId}] startSession hatası:`, error);
-          // Clean up the session so license slots are not wasted
-          await endBroadcasterSession(result.sessionId);
-          const msg = error instanceof Error ? (error.message || String(error)) : String(error);
-          throw new Error(`TikTok bağlantısı başlatılamadı: ${msg || "Bilinmeyen hata"}`);
-        }
+        // startSession artık TikTok hatası olsa da demo moduna düşer, throw etmez
+        await startSession(result.sessionId, input.tiktokUsername, input.teamNames);
       }
 
       return result;
@@ -121,9 +114,9 @@ export const broadcasterRouter = router({
   }),
 
   /**
-   * Set like threshold
+   * Set like threshold (admin-only)
    */
-  setLikeThreshold: publicProcedure
+  setLikeThreshold: adminProcedure
     .input(z.object({ threshold: z.number().min(1).max(100000) }))
     .mutation(({ input }) => {
       setLikeThreshold(input.threshold);
@@ -138,9 +131,9 @@ export const broadcasterRouter = router({
   }),
 
   /**
-   * Set diamond thresholds
+   * Set diamond thresholds (admin-only)
    */
-  setDiamondThresholds: publicProcedure
+  setDiamondThresholds: adminProcedure
     .input(
       z.object({
         silver: z.number().int().min(1),
@@ -152,4 +145,6 @@ export const broadcasterRouter = router({
       setDiamondThresholds(input);
       return { success: true };
     }),
+
 });
+

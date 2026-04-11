@@ -36,12 +36,24 @@ export async function verifyAdminToken(token: string): Promise<boolean> {
 
 // --- Password check ---
 
+// Admin credentials (email is optional but accepted for login form)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@kadrokur.com";
+
 export function checkPassword(provided: string): boolean {
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (!adminPassword) return false;
   const expected = createHash("sha256").update(adminPassword).digest();
   const input = createHash("sha256").update(provided).digest();
   return timingSafeEqual(expected, input);
+}
+
+export function checkEmail(email: string): boolean {
+  // Email check is optional - if ADMIN_EMAIL is set, validate against it
+  // Otherwise, accept any email format
+  if (!process.env.ADMIN_EMAIL) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+  return email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
 // --- Cookie helper ---
@@ -56,21 +68,32 @@ export function getAdminTokenFromRequest(req: Request): string {
 
 // --- Express route handlers ---
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: true,
-  sameSite: "strict" as const,
+  secure: !isDev,
+  sameSite: isDev ? ("lax" as const) : ("strict" as const),
   path: "/",
 };
 
 export function registerAdminAuthRoutes(app: Express): void {
   // POST /api/admin/login
   app.post("/api/admin/login", async (req: Request, res: Response) => {
-    const { password } = req.body as { password?: string };
+    const { email, password } = req.body as { email?: string; password?: string };
+
+    // Check email format (and match if ADMIN_EMAIL is set)
+    if (email && !checkEmail(email)) {
+      res.status(401).json({ error: "unauthorized" });
+      return;
+    }
+
+    // Check password
     if (!password || !checkPassword(password)) {
       res.status(401).json({ error: "unauthorized" });
       return;
     }
+
     const token = await signAdminToken();
     res.cookie("admin_token", token, {
       ...COOKIE_OPTIONS,
