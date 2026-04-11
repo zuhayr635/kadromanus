@@ -12,6 +12,9 @@ import {
   cleanupGame,
 } from "./game-engine";
 import type { GameState, PendingCard } from "./game-engine";
+import { getDb } from "./db";
+import { sessions } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 import {
   startTikTokConnection,
   stopTikTokConnection,
@@ -116,6 +119,31 @@ class SocketServer {
       // Hata yönetimi
       socket.on("error", (error: any) => {
         console.error(`[Socket.io] Hata (${socket.id}):`, error);
+      });
+
+      // Gift config güncelleme (broadcaster'dan gelir)
+      socket.on("gift-config-update", async (data: { sessionId: string; activeGiftIds: number[] }) => {
+        try {
+          const { sessionId, activeGiftIds } = data;
+          const db = await getDb();
+
+          if (!db) {
+            console.warn(`[${sessionId}] Gift config update: DB unavailable`);
+            return;
+          }
+
+          // Session'ın giftConfig'ini güncelle
+          await db.update(sessions)
+            .set({ giftConfig: { activeGiftIds } })
+            .where(eq(sessions.sessionId, sessionId));
+
+          // Session'daki tüm client'lara broadcast et
+          this.io.to(`session:${sessionId}`).emit("gift-config-updated", { activeGiftIds });
+
+          console.log(`[${sessionId}] Gift config güncellendi: ${activeGiftIds.length} aktif hediye`);
+        } catch (err) {
+          console.error("Gift config update hatası:", err);
+        }
       });
     });
   }
@@ -240,15 +268,86 @@ class SocketServer {
   // Oturum başlat: game-engine'i hazırla, TikTok bağlantısı aç, gameStarted yayınla
   async startSession(sessionId: string, tiktokUsername: string, teamNames: string[]) {
     initializeGame(sessionId, teamNames);
-    await startTikTokConnection(sessionId, tiktokUsername, (event) =>
-      this.handleTikTokEvent(sessionId, event)
-    );
+
+    // TikTok bağlantısı — başarısız olursa demo/simülasyon modunda devam et
+    try {
+      await startTikTokConnection(sessionId, tiktokUsername, (event) =>
+        this.handleTikTokEvent(sessionId, event)
+      );
+    } catch (err) {
+      console.warn(`[${sessionId}] ⚠️ TikTok bağlantısı başarısız, DEMO modunda devam ediyor`);
+      console.warn(`[${sessionId}] Hata:`, err instanceof Error ? err.message : err);
+      // Demo mode: Simüle edilmiş TikTok event'leri gönder
+      this.startDemoMode(sessionId);
+    }
+
     this.broadcastGameStarted(sessionId, getGameState(sessionId));
   }
+
+  // Demo modu: TikTok erişilemezken simülasyon event'leri gönder
+  private startDemoMode(sessionId: string) {
+    console.log(`[${sessionId}] 🎮 DEMO MODE aktif — Her 5 saniyede simüle edilmiş hediye/beğeni`);
+
+    const mockUsers = ["@demo_ali", "@demo_veli", "@demo_ayse", "@demo_fatma", "@demo_mehmet"];
+    const mockGifts: Array<{ name: string; diamonds: number }> = [
+      { name: "Rose", diamonds: 1 },
+      { name: "TikTok", diamonds: 1 },
+      { name: "GG", diamonds: 10 },
+      { name: "Ice Cream Cone", diamonds: 25 },
+      { name: "Drama Queen", diamonds: 200 },
+      { name: "Lion", diamonds: 500 },
+    ];
+
+    const interval = setInterval(() => {
+      const gameState = getGameState(sessionId);
+      if (!gameState) {
+        clearInterval(interval);
+        return;
+      }
+
+      const user = mockUsers[Math.floor(Math.random() * mockUsers.length)];
+      const roll = Math.random();
+
+      if (roll < 0.4) {
+        // Like event (40% chance)
+        const likeCount = Math.floor(Math.random() * 200) + 50;
+        this.handleTikTokEvent(sessionId, {
+          type: "like",
+          data: { username: user, likeCount },
+          timestamp: Date.now(),
+        });
+      } else {
+        // Gift event (60% chance)
+        const gift = mockGifts[Math.floor(Math.random() * mockGifts.length)];
+        this.handleTikTokEvent(sessionId, {
+          type: "gift",
+          data: {
+            username: user,
+            giftName: gift.name,
+            diamondCount: gift.diamonds,
+          },
+          timestamp: Date.now(),
+        });
+      }
+    }, 5000); // Her 5 saniyede bir
+
+    // Cleanup interval when session stops
+    this.demoIntervals = this.demoIntervals || new Map();
+    this.demoIntervals.set(sessionId, interval);
+  }
+
+  private demoIntervals: Map<string, NodeJS.Timeout> | undefined;
 
   // Oturum durdur: TikTok bağlantısını kapat, oyunu bitir, yayınla, temizle
   async stopSession(sessionId: string) {
     await stopTikTokConnection(sessionId);
+
+    // Demo mod interval temizle
+    if (this.demoIntervals?.has(sessionId)) {
+      clearInterval(this.demoIntervals.get(sessionId)!);
+      this.demoIntervals.delete(sessionId);
+    }
+
     const result = endGame(sessionId);
 
     if (result) {

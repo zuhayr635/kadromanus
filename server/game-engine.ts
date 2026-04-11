@@ -1,6 +1,6 @@
 import { getDb } from "./db";
-import { giftTiers, players } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { giftTiers, players, sessions } from "../drizzle/schema";
+import { eq, and } from "drizzle-orm";
 
 export interface GameState {
   sessionId: string;
@@ -273,7 +273,8 @@ export async function processLikeEvent(
 }
 
 /**
- * Process gift event — creates a pending card based on diamond count.
+ * Process gift event — creates a pending card based on gift config.
+ * Checks session's activeGiftIds filter, uses DB cardQuality if available.
  * Team assignment happens later via confirmPendingCard.
  */
 export async function processGiftEvent(
@@ -291,7 +292,62 @@ export async function processGiftEvent(
   // Already waiting for team selection — don't queue another pending card
   if (gameState.pendingCard) return null;
 
-  const quality = qualityFromDiamonds(diamondCount);
+  const db = await getDb();
+  let quality: CardQuality = "bronze"; // Default fallback
+  let shouldProcess = true; // Gift filtering flag
+
+  // Session gift config kontrolü
+  if (db) {
+    try {
+      // Session'ı getir
+      const [sessionData] = await db
+        .select()
+        .from(sessions)
+        .where(eq(sessions.sessionId, sessionId))
+        .limit(1);
+
+      if (sessionData?.giftConfig) {
+        const giftConfig = sessionData.giftConfig as { activeGiftIds?: number[]; customMappings?: Record<number, CardQuality> };
+
+        // Gift'i DB'den bul
+        const [giftData] = await db
+          .select()
+          .from(giftTiers)
+          .where(eq(giftTiers.giftName, giftName))
+          .limit(1);
+
+        // Eğer activeGiftIds listesi varsa, filtrelenecek
+        if (giftConfig.activeGiftIds && Array.isArray(giftConfig.activeGiftIds) && giftConfig.activeGiftIds.length > 0) {
+          // Gift DB'de yok veya listede yoksa yok say
+          if (!giftData || !giftConfig.activeGiftIds.includes(giftData.id)) {
+            console.log(`[${sessionId}] Gift "${giftName}" bu oturumda aktif değil, yok sayılıyor`);
+            return null;
+          }
+        }
+
+        // DB'den cardQuality kullan (eğer gift varsa)
+        if (giftData) {
+          quality = giftData.cardQuality as CardQuality;
+        } else {
+          // Gift DB'de yoksa fallback: diamond threshold
+          quality = qualityFromDiamonds(diamondCount);
+        }
+      } else {
+        // Session gift config yoksa fallback: diamond threshold
+        quality = qualityFromDiamonds(diamondCount);
+      }
+    } catch (error) {
+      console.error(`[${sessionId}] Gift config okuma hatası:`, error);
+      // Hata durumunda fallback: diamond threshold
+      quality = qualityFromDiamonds(diamondCount);
+    }
+  } else {
+    // DB yoksa fallback: diamond threshold
+    quality = qualityFromDiamonds(diamondCount);
+  }
+
+  if (!shouldProcess) return null;
+
   const player = await getRandomPlayer();
   if (!player) return null;
 
