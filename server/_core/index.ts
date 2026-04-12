@@ -8,6 +8,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerAdminAuthRoutes } from "../admin-auth";
 import { appRouter } from "../routers";
+import { migrate } from "drizzle-orm/mysql2/migrator";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initializeSocketServer } from "../socket-server";
@@ -49,6 +50,20 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  try {
+    // Run migrations on startup
+    console.log("[Server] Running database migrations...");
+    const { getDb } = await import("../db");
+    const db = await getDb();
+    if (db) {
+      const migrationsFolder = path.resolve(import.meta.dirname, "..", "..", "drizzle");
+      await migrate(db, { migrationsFolder });
+      console.log("[Server] ✓ Migrations completed");
+    }
+  } catch (err) {
+    console.error("[Server] Migration warning (non-fatal):", err);
+  }
+
   const app = express();
   const server = createServer(app);
   initializeSocketServer(server);
