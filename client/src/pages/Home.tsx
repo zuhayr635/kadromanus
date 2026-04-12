@@ -396,7 +396,7 @@ export default function Home() {
         <div className="hp-footer-links">
           <a href="/broadcaster" className="hp-footer-link">Yayıncı Paneli</a>
           <a href="/game-screen.html" target="_blank" rel="noopener noreferrer" className="hp-footer-link">Oyun Ekranı</a>
-          <a href="/license-panel.html" className="hp-footer-link">Lisans Paneli</a>
+          <a href="/licensepanel" className="hp-footer-link">Lisans Paneli</a>
           <a href="https://t.me/luanamobile" target="_blank" rel="noopener noreferrer" className="hp-footer-link">Telegram</a>
           <a href="https://luanawork.com" target="_blank" rel="noopener noreferrer" className="hp-footer-link">luanawork.com</a>
         </div>
