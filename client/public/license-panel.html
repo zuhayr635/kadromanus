@@ -1252,7 +1252,7 @@
 
   function openLicModal(id, event) {
     if (event) event.stopPropagation();
-    const lic = allLicenses.find(l => l.id === id);
+    const lic = allLicenses.find(l => String(l.id) === String(id));
     if (!lic) return;
 
     document.getElementById('modal-lic-id').textContent = 'ID: ' + id;
@@ -1264,12 +1264,18 @@
     document.getElementById('edit-lic-usage').value = lic.usageCount || 0;
     document.getElementById('edit-lic-auto').checked = lic.permissions?.autoMode || false;
 
-    // Paketleri doldur
+    // Paketleri doldur (DB plan types)
+    const DB_PLANS = [
+      { id: 'basic', name: 'Basic' },
+      { id: 'pro', name: 'Pro' },
+      { id: 'premium', name: 'Premium' },
+      { id: 'unlimited', name: 'Unlimited' },
+    ];
     const pkgSelect = document.getElementById('edit-lic-package');
-    pkgSelect.innerHTML = '<option value="">Seçiniz...</option>';
-    packages.forEach(p => {
-      pkgSelect.innerHTML += `<option value="${p.id}" ${lic.packageId === p.id ? 'selected' : ''}>${p.name}</option>`;
-    });
+    const currentPlan = lic.packageType || 'basic';
+    pkgSelect.innerHTML = DB_PLANS.map(p =>
+      `<option value="${p.id}" ${currentPlan === p.id ? 'selected' : ''}>${p.name}</option>`
+    ).join('');
 
     document.getElementById('lic-edit-modal').classList.add('open');
   }
@@ -1280,11 +1286,10 @@
 
   async function saveLicense() {
     const id = document.getElementById('edit-lic-id').value;
-    const idx = allLicenses.findIndex(l => l.id === id);
+    const idx = allLicenses.findIndex(l => String(l.id) === String(id));
     if (idx === -1) return;
 
-    const pkgId = document.getElementById('edit-lic-package').value;
-    const pkg = packages.find(p => p.id === pkgId);
+    const planType = document.getElementById('edit-lic-package').value;
 
     const updated = {
       licenseKey: document.getElementById('edit-lic-key').value.trim(),
@@ -1293,8 +1298,8 @@
       expiresAt: new Date(document.getElementById('edit-lic-expires').value).toISOString(),
       usageCount: parseInt(document.getElementById('edit-lic-usage').value) || 0,
       permissions: { autoMode: document.getElementById('edit-lic-auto').checked },
-      packageId: pkgId,
-      packageType: pkg?.name || allLicenses[idx].packageType
+      planType,
+      packageType: planType,
     };
 
     try {
@@ -1727,7 +1732,24 @@
         return;
       }
 
-      tbody.innerHTML = licenses.map(l => {
+      // Normalize and merge into allLicenses so openLicModal can find by id
+      const normalized = licenses.map(l => ({
+        ...l,
+        id: l.id,
+        licenseKey: l.key || l.licenseKey,
+        username: l.broadcasterName || '—',
+        tiktokUsername: l.ownerTikTok || '',
+        packageType: l.packageType || 'basic',
+        expiresAt: l.expiresAt,
+        usageCount: l.usageCount || 0,
+        permissions: { autoMode: l.features?.autoMode || false },
+      }));
+      normalized.forEach(n => {
+        const idx = allLicenses.findIndex(a => a.id === n.id);
+        if (idx === -1) allLicenses.push(n); else allLicenses[idx] = n;
+      });
+
+      tbody.innerHTML = normalized.map(l => {
         const expiresAt = new Date(l.expiresAt);
         const isExpired = expiresAt < new Date();
         const statusBadge = isExpired
@@ -1738,13 +1760,16 @@
 
         return `
           <tr>
-            <td><code class="admin-code">${l.key || l.licenseKey || '—'}</code></td>
-            <td>${l.broadcasterName || '—'}</td>
+            <td><code class="admin-code">${l.licenseKey || '—'}</code></td>
+            <td>${l.username || '—'}</td>
             <td>${pkgBadge}</td>
             <td>${statusBadge}</td>
             <td>${expiresAt.toLocaleDateString('tr-TR')}</td>
             <td>${l.maxSessions || 1}</td>
-            <td><button class="admin-btn admin-btn-danger" onclick="copyAdminKey('${l.key || l.licenseKey}')">Kopyala</button></td>
+            <td style="display:flex;gap:4px;flex-wrap:wrap">
+              <button class="admin-btn" onclick="openLicModal(${l.id})">Düzenle</button>
+              <button class="admin-btn admin-btn-danger" onclick="copyAdminKey('${l.licenseKey}')">Kopyala</button>
+            </td>
           </tr>
         `;
       }).join('');

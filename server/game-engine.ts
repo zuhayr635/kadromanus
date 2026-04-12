@@ -6,12 +6,23 @@ export interface GameState {
   sessionId: string;
   teams: Team[];
   openedCards: OpenedCard[];
-  pendingCard: PendingCard | null;
+  pendingCard: PendingCard | null;  // currently displayed card (being assigned to a team)
+  cardQueue: PendingCard[];         // queued cards waiting to be shown
   totalLikes: number;
   totalGifts: number;
+  likeCardCount: number; // tracks only like-triggered cards (independent of gift cards)
   participants: Set<string>;
   startedAt: number;
   endedAt?: number;
+  isPaused: boolean;
+  topViewers: Map<string, { displayName: string; total: number }>;
+  winSettings?: WinSettings;
+}
+
+export interface WinSettings {
+  mode: 'cards' | 'score';
+  cardsTarget: number;
+  scoreTarget: number;
 }
 
 export interface Team {
@@ -43,7 +54,10 @@ export interface OpenedCard {
 
 export interface PendingCard {
   username: string;
+  displayName?: string;
+  profilePic?: string;
   quality: CardQuality;
+  source?: 'like' | 'gift';
   player: { id: number; name: string; position: string; overall?: number; faceImageUrl?: string; nation?: string; team?: string };
   timestamp: number;
 }
@@ -62,6 +76,25 @@ let diamondThresholds = { silver: 10, gold: 50, elite: 200 };
 export function getDiamondThresholds() { return { ...diamondThresholds }; }
 export function setDiamondThresholds(t: { silver: number; gold: number; elite: number }) {
   diamondThresholds = { silver: Math.max(1, t.silver), gold: Math.max(1, t.gold), elite: Math.max(1, t.elite) };
+}
+
+/**
+ * Set win settings for a game session
+ */
+export function setWinSettings(sessionId: string, settings: WinSettings): boolean {
+  const gameState = gameStates.get(sessionId);
+  if (!gameState) return false;
+  gameState.winSettings = settings;
+  console.log(`[${sessionId}] Win settings updated:`, settings);
+  return true;
+}
+
+/**
+ * Get win settings for a game session
+ */
+export function getWinSettings(sessionId: string): WinSettings | undefined {
+  const gameState = gameStates.get(sessionId);
+  return gameState?.winSettings;
 }
 function qualityFromDiamonds(diamonds: number): CardQuality {
   if (diamonds >= diamondThresholds.elite) return "elite";
@@ -89,10 +122,15 @@ export function initializeGame(
     teams,
     openedCards: [],
     pendingCard: null,
+    cardQueue: [],
     totalLikes: 0,
     totalGifts: 0,
+    likeCardCount: 0,
     participants: new Set(),
     startedAt: Date.now(),
+    isPaused: false,
+    topViewers: new Map(),
+    winSettings: { mode: 'cards', cardsTarget: 44, scoreTarget: 500 },
   };
 
   gameStates.set(sessionId, gameState);
@@ -205,14 +243,9 @@ export async function openCard(
   // Add player to team
   team.players.push(teamPlayer);
 
-  // Calculate score based on quality
-  const scoreMap: Record<CardQuality, number> = {
-    bronze: 10,
-    silver: 25,
-    gold: 50,
-    elite: 100,
-  };
-  team.score += scoreMap[quality];
+  // Score = player overall rating (mc-rat value), fallback to quality tier
+  const qualityFallback: Record<CardQuality, number> = { bronze: 10, silver: 25, gold: 50, elite: 100 };
+  team.score += player.overall ?? qualityFallback[quality];
 
   // Track opened card
   const openedCard: OpenedCard = {
@@ -234,67 +267,138 @@ export async function openCard(
 }
 
 /**
+ * Internal: dequeue next card from queue → set as pendingCard.
+ * Returns the new pendingCard, or null if queue empty or already busy.
+ */
+function tryDequeue(gameState: GameState): PendingCard | null {
+  if (gameState.pendingCard || gameState.cardQueue.length === 0) return null;
+  gameState.pendingCard = gameState.cardQueue.shift()!;
+  return gameState.pendingCard;
+}
+
+/** Pause/resume the game for a session */
+export function pauseGame(sessionId: string): boolean {
+  const gs = gameStates.get(sessionId);
+  if (!gs) return false;
+  gs.isPaused = true;
+  console.log(`[${sessionId}] Oyun duraklatıldı`);
+  return true;
+}
+
+export function resumeGame(sessionId: string): boolean {
+  const gs = gameStates.get(sessionId);
+  if (!gs) return false;
+  gs.isPaused = false;
+  console.log(`[${sessionId}] Oyun devam ediyor`);
+  return true;
+}
+
+/** Get top viewers sorted by total contribution */
+export function getTopViewers(sessionId: string): Array<{ username: string; displayName: string; total: number }> {
+  const gs = gameStates.get(sessionId);
+  if (!gs) return [];
+  return Array.from(gs.topViewers.entries())
+    .map(([username, data]) => ({ username, displayName: data.displayName, total: data.total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+}
+
+/** Exported variant for socket-server to call after confirmPendingCard */
+export function dequeueNextCard(sessionId: string): PendingCard | null {
+  const gs = gameStates.get(sessionId);
+  if (!gs) return null;
+  return tryDequeue(gs);
+}
+
+/**
  * Process like event — creates a pending card when threshold is reached.
  * Team assignment happens later via confirmPendingCard.
  */
 export async function processLikeEvent(
   sessionId: string,
   username: string,
-  likeCount: number
+  likeCount: number,
+  profilePic?: string,
+  displayName?: string
 ): Promise<PendingCard | null> {
   const gameState = gameStates.get(sessionId);
   if (!gameState) return null;
 
+  if (gameState.isPaused) return null;
+
   gameState.totalLikes += likeCount;
   gameState.participants.add(username);
 
-  // Already waiting for team selection — don't create another pending card
-  if (gameState.pendingCard) return null;
+  // Update top viewers
+  const existing = gameState.topViewers.get(username);
+  if (existing) {
+    existing.total += likeCount;
+    if (displayName) existing.displayName = displayName;
+  } else {
+    gameState.topViewers.set(username, { displayName: displayName ?? username, total: likeCount });
+  }
 
   // likeThreshold likes = 1 card (configurable via setLikeThreshold)
+  // Compare only against like-triggered cards — gift cards must not block like cards
   const cardsToOpen = Math.floor(gameState.totalLikes / likeThreshold);
-  const existingCards = gameState.openedCards.length;
 
-  if (cardsToOpen > existingCards) {
+  // Loop: handles batched like events that cross multiple thresholds at once
+  while (cardsToOpen > gameState.likeCardCount) {
     const player = await getRandomPlayer();
-    if (!player) return null;
+    if (!player) break;
+    gameState.likeCardCount++;
     const pending: PendingCard = {
       username,
+      displayName,
+      profilePic,
       quality: "bronze",
+      source: "like",
       player: { id: player.id, name: player.name, position: player.position, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team },
       timestamp: Date.now(),
     };
-    gameState.pendingCard = pending;
-    console.log(`[${sessionId}] Beğeni eşiği: bekleyen kart oluşturuldu (${username})`);
-    return pending;
+    // Queue the card; show immediately if nothing is pending
+    gameState.cardQueue.push(pending);
+    console.log(`[${sessionId}] Beğeni eşiği: kart kuyruğa eklendi (${username}), kuyruk=${gameState.cardQueue.length}, likeCardCount=${gameState.likeCardCount}`);
   }
 
-  return null;
+  return tryDequeue(gameState);
 }
 
 /**
  * Process gift event — creates a pending card based on gift config.
- * Checks session's activeGiftIds filter, uses DB cardQuality if available.
+ * Checks session's giftTriggerMode:
+ *   'diamond' (default): all gifts trigger cards, quality from diamond thresholds
+ *   'specific': only activeGiftIds gifts trigger cards, quality from DB
  * Team assignment happens later via confirmPendingCard.
  */
 export async function processGiftEvent(
   sessionId: string,
   giftName: string,
   diamondCount: number,
-  username: string
+  username: string,
+  profilePic?: string,
+  displayName?: string
 ): Promise<PendingCard | null> {
+  console.log(`[${sessionId}] DEBUG processGiftEvent: profilePic="${profilePic}" displayName="${displayName}" username="${username}"`);
   const gameState = gameStates.get(sessionId);
   if (!gameState) return null;
+
+  if (gameState.isPaused) return null;
 
   gameState.totalGifts += diamondCount;
   gameState.participants.add(username);
 
-  // Already waiting for team selection — don't queue another pending card
-  if (gameState.pendingCard) return null;
+  // Update top viewers
+  const existingViewer = gameState.topViewers.get(username);
+  if (existingViewer) {
+    existingViewer.total += diamondCount;
+    if (displayName) existingViewer.displayName = displayName;
+  } else {
+    gameState.topViewers.set(username, { displayName: displayName ?? username, total: diamondCount });
+  }
 
   const db = await getDb();
   let quality: CardQuality = "bronze"; // Default fallback
-  let shouldProcess = true; // Gift filtering flag
 
   // Session gift config kontrolü
   if (db) {
@@ -307,7 +411,8 @@ export async function processGiftEvent(
         .limit(1);
 
       if (sessionData?.giftConfig) {
-        const giftConfig = sessionData.giftConfig as { activeGiftIds?: number[]; customMappings?: Record<number, CardQuality> };
+        const giftConfig = sessionData.giftConfig as { activeGiftIds?: number[]; giftTriggerMode?: string; customMappings?: Record<number, CardQuality> };
+        const triggerMode = giftConfig.giftTriggerMode ?? 'diamond';
 
         // Gift'i DB'den bul
         const [giftData] = await db
@@ -316,20 +421,24 @@ export async function processGiftEvent(
           .where(eq(giftTiers.giftName, giftName))
           .limit(1);
 
-        // Eğer activeGiftIds listesi varsa, filtrelenecek
-        if (giftConfig.activeGiftIds && Array.isArray(giftConfig.activeGiftIds) && giftConfig.activeGiftIds.length > 0) {
-          // Gift DB'de yok veya listede yoksa yok say
-          if (!giftData || !giftConfig.activeGiftIds.includes(giftData.id)) {
-            console.log(`[${sessionId}] Gift "${giftName}" bu oturumda aktif değil, yok sayılıyor`);
-            return null;
-          }
+        if (triggerMode === 'disabled') {
+          console.log(`[${sessionId}] Gift "${giftName}" → hediye sistemi devre dışı, yok sayılıyor`);
+          return null;
         }
 
-        // DB'den cardQuality kullan (eğer gift varsa)
-        if (giftData) {
-          quality = giftData.cardQuality as CardQuality;
+        if (triggerMode === 'specific') {
+          // Tekil mod: sadece seçili hediyeler kart tetikler
+          const activeIds = giftConfig.activeGiftIds;
+          if (Array.isArray(activeIds) && activeIds.length > 0) {
+            if (!giftData || !activeIds.includes(giftData.id)) {
+              console.log(`[${sessionId}] Gift "${giftName}" tekil hediye listesinde değil, yok sayılıyor`);
+              return null;
+            }
+          }
+          // Tekil modda DB'den kalite kullan
+          quality = giftData ? (giftData.cardQuality as CardQuality) : qualityFromDiamonds(diamondCount);
         } else {
-          // Gift DB'de yoksa fallback: diamond threshold
+          // Jeton modu (varsayılan): jeton miktarına göre kalite, activeGiftIds yok sayılır
           quality = qualityFromDiamonds(diamondCount);
         }
       } else {
@@ -346,20 +455,32 @@ export async function processGiftEvent(
     quality = qualityFromDiamonds(diamondCount);
   }
 
-  if (!shouldProcess) return null;
-
   const player = await getRandomPlayer();
   if (!player) return null;
 
   const pending: PendingCard = {
     username,
+    displayName,
+    profilePic,
     quality,
+    source: "gift",
     player: { id: player.id, name: player.name, position: player.position, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team },
     timestamp: Date.now(),
   };
-  gameState.pendingCard = pending;
-  console.log(`[${sessionId}] Hediye: ${giftName} (${diamondCount} jeton) → ${quality} bekleyen kart (${username})`);
-  return pending;
+  // Queue the card; show immediately if nothing is pending
+  gameState.cardQueue.push(pending);
+  console.log(`[${sessionId}] Hediye: ${giftName} (${diamondCount} jeton) → ${quality} kuyruğa eklendi (${username}), kuyruk=${gameState.cardQueue.length}`);
+  return tryDequeue(gameState);
+}
+
+/**
+ * Skip (discard) the current pending card and dequeue the next one.
+ */
+export function skipPendingCard(sessionId: string): PendingCard | null {
+  const gameState = gameStates.get(sessionId);
+  if (!gameState || !gameState.pendingCard) return null;
+  gameState.pendingCard = null;
+  return tryDequeue(gameState);
 }
 
 /**
@@ -380,8 +501,8 @@ export async function confirmPendingCard(
   const team = gameState.teams[teamId];
   team.players.push({ playerId: player.id, name: player.name, position: player.position, quality, openedBy: username, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team });
 
-  const scoreMap: Record<CardQuality, number> = { bronze: 10, silver: 25, gold: 50, elite: 100 };
-  team.score += scoreMap[quality];
+  const qualityFallback: Record<CardQuality, number> = { bronze: 10, silver: 25, gold: 50, elite: 100 };
+  team.score += player.overall ?? qualityFallback[quality];
 
   const openedCard: OpenedCard = { playerId: player.id, quality, teamId, openedBy: username, timestamp: Date.now() };
   gameState.openedCards.push(openedCard);
@@ -391,25 +512,37 @@ export async function confirmPendingCard(
 }
 
 /**
- * Check if game is complete (all teams have 11 players)
+ * Check if game is complete based on win settings
+ * - cards mode: total cards reach target (default 44)
+ * - score mode: any team reaches target score (default 500)
  */
 export function isGameComplete(sessionId: string): boolean {
   const gameState = gameStates.get(sessionId);
   if (!gameState) return false;
 
-  // Check if all teams have 11 players (full squad)
-  const allTeamsFull = gameState.teams.every((team) => team.players.length >= 11);
+  const settings = gameState.winSettings || { mode: 'cards' as const, cardsTarget: 44, scoreTarget: 500 };
 
-  return allTeamsFull;
+  if (settings.mode === 'cards') {
+    const totalCards = gameState.teams.reduce((sum, team) => sum + team.players.length, 0);
+    return totalCards >= settings.cardsTarget;
+  } else {
+    // score mode: any team reaches target score
+    const winner = gameState.teams.find(team => team.score >= settings.scoreTarget);
+    if (winner) {
+      console.log(`[${sessionId}] 🏆 Hedef puana ulaşıldı: ${winner.name} = ${winner.score} (hedef: ${settings.scoreTarget})`);
+    }
+    return !!winner;
+  }
 }
 
 /**
- * End game and return final scores
+ * End game and return final scores + winner
  */
 export function endGame(
   sessionId: string
 ): {
   finalScores: Array<{ teamName: string; score: number; players: number }>;
+  winner: { teamName: string; score: number; players: number };
   statistics: {
     totalCardsOpened: number;
     totalParticipants: number;
@@ -427,6 +560,10 @@ export function endGame(
     players: team.players.length,
   }));
 
+  // Kazanan: en yüksek puana sahip takım
+  const sorted = [...finalScores].sort((a, b) => b.score - a.score);
+  const winner = sorted[0];
+
   const statistics = {
     totalCardsOpened: gameState.openedCards.length,
     totalParticipants: gameState.participants.size,
@@ -435,9 +572,9 @@ export function endGame(
     ),
   };
 
-  console.log(`[${sessionId}] Oyun bitti:`, finalScores);
+  console.log(`[${sessionId}] Oyun bitti! Kazanan: ${winner.teamName} (${winner.score} puan)`, finalScores);
 
-  return { finalScores, statistics };
+  return { finalScores, winner, statistics };
 }
 
 /**

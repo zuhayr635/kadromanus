@@ -11,9 +11,17 @@
 
 ## Commands
 `pnpm dev` - Start dev server (tsx watch on server/_core/index.ts)
+`pnpm build` - Production build (Vite + esbuild)
 `pnpm test` - Run Vitest tests
 `pnpm check` - TypeScript type check
 `pnpm db:push` - Drizzle migrations
+
+## Environment Variables
+- `DATABASE_URL` - MySQL/TiDB connection string (required)
+- `JWT_SECRET` - Admin JWT signing secret (required)
+- `TELEGRAM_BOT_TOKEN` - Telegram bot token (optional)
+- `TELEGRAM_CHAT_ID` - Telegram group/channel ID (optional)
+- `TIKTOK_SESSION_ID` - TikTok session cookie (optional)
 
 ## Path Aliases
 `@/*` → client/src/*
@@ -24,11 +32,23 @@
 - `server/game-engine.ts` - Game mechanics (4 teams × 11 players)
 - `server/socket-server.ts` - WebSocket + TikTok event handling + Demo mode
 - `server/tiktok-integration.ts` - TikTok Live connector (real + demo mode)
+- `server/gift-manager.ts` - Gift DB queries with filters (search, cost, quality)
+- `server/game-end-workflow.ts` - End-game screenshot + Telegram send flow
+- `server/session-history.ts` - Game session history & replay
+- `server/storage.ts` - File/media storage helpers
+- `server/telegram-bot.ts` - Telegram bot (send messages/photos)
 - `server/screenshot-service.ts` - Puppeteer screenshot → Telegram
 - `server/admin-auth.ts` - JWT auth for admin routes
 - `server/license-manager.ts` - License validation
 - `server/broadcaster-session.ts` - Session lifecycle
-- `drizzle/schema.ts` - DB schema (8 tables: users, licenses, sessions, gameHistory, players, giftTiers, usedPlayers, licenseLogs)
+- `drizzle/schema.ts` - DB schema (13 tables: users, licenses, licenseLogs, sessions, gameHistory, usedPlayers, players, giftTiers, cardPacks, licenseCardPacks, appSettings, webhooks, notificationLog)
+
+## tRPC Routers
+- `server/routers/admin.ts` - Admin operations
+- `server/routers/broadcaster.ts` - Broadcaster session control
+- `server/routers/game.ts` - Game state & card actions
+- `server/routers/license.ts` - License CRUD & validation
+- `server/routers/players.ts` - Player pool management
 
 ## Architecture Status
 - ✅ Socket.io → Game Engine: Fully connected (`socket-server.ts` imports game-engine functions)
@@ -59,9 +79,22 @@
 - Auto mode: viewers use `!1`-`!4` chat commands (parsing ready, UI pending)
 
 ## Static HTML Pages (OBS browser sources)
-- `client/public/broadcaster-panel.html` - Game control
+- `client/src/pages/BroadcasterPanel.tsx` - Game control (React app, NOT static HTML)
 - `client/public/game-screen.html` - OBS display
 - `client/public/license-panel.html` - License viewer
+- `client/public/admin-dashboard.html` - Admin UI (static)
+- `client/public/admin-login.html` - Admin login (static)
+
+## Deployment
+- `Dockerfile` + `docker-compose.yml` mevcut — Coolify uyumlu
+- Port: 3000 (bağlı değilse otomatik artar)
+
+## Gotchas
+- `server/` içindeki `.mjs` dosyaları (30+) seed/migration scriptleridir — oyun kodu değil, dokunma
+- `pnpm` zorunlu — npm/yarn kullanma (lockfile uyumsuzluğu yaratır)
+- Demo mode: TikTok bağlantısı başarısız olursa otomatik devreye girer (her 3-5s mock gift/like)
+- Auto Mode (`!1`-`!4`): Parser hazır (`socket-server.ts:383`), UI bağlantısı henüz eksik
+- `broadcaster-panel.html` artık yok — React sayfası `BroadcasterPanel.tsx` kullanılıyor
 
 ## Missing Features (Low Priority)
 - Player substitution (oyuncu değiştirme)

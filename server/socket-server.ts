@@ -7,9 +7,19 @@ import {
   processGiftEvent,
   processLikeEvent,
   confirmPendingCard,
+  skipPendingCard,
+  dequeueNextCard,
   isGameComplete,
   endGame,
   cleanupGame,
+  setLikeThreshold,
+  getLikeThreshold,
+  pauseGame,
+  resumeGame,
+  getTopViewers,
+  setWinSettings,
+  getWinSettings,
+  type WinSettings,
 } from "./game-engine";
 import type { GameState, PendingCard } from "./game-engine";
 import { getDb } from "./db";
@@ -38,6 +48,7 @@ class SocketServer {
   private io: SocketIOServer;
   private sessionSockets: Map<string, Set<string>> = new Map();
   private socketSessions: Map<string, string> = new Map();
+  private tiktokConnectedMap: Map<string, boolean> = new Map();
 
   constructor(httpServer: HTTPServer) {
     this.io = new SocketIOServer(httpServer, {
@@ -70,6 +81,17 @@ class SocketServer {
         // Mevcut oyun durumunu gönder
         const gameState = getGameState(sessionId);
         socket.emit("gameStateUpdate", gameState);
+
+        // BroadcasterPanel sadece gameEvent dinler — mevcut istatistikleri hemen gönder
+        const currentStats = this.serializeStats(sessionId);
+        if (Object.keys(currentStats).length > 0) {
+          socket.emit("gameEvent", {
+            type: "statsUpdated",
+            sessionId,
+            data: currentStats,
+            timestamp: Date.now(),
+          } as GameEvent);
+        }
 
         // Diğer istemcilere katılımı bildir
         socket.to(`session:${sessionId}`).emit("participantJoined", {
@@ -121,6 +143,24 @@ class SocketServer {
         console.error(`[Socket.io] Hata (${socket.id}):`, error);
       });
 
+      // Beğeni eşiğini güncelle
+      socket.on("set-like-threshold", (data: { threshold: number }) => {
+        const n = Math.max(1, Number(data.threshold) || 100);
+        setLikeThreshold(n);
+        console.log(`[Socket.io] Beğeni eşiği güncellendi: ${n}`);
+        socket.emit("like-threshold-updated", { threshold: n });
+      });
+
+      // Oyunu duraklat / devam ettir
+      socket.on("pause-game", (data: { sessionId: string }) => {
+        const ok = pauseGame(data.sessionId);
+        if (ok) this.broadcastStatsUpdated(data.sessionId, this.serializeStats(data.sessionId));
+      });
+      socket.on("resume-game", (data: { sessionId: string }) => {
+        const ok = resumeGame(data.sessionId);
+        if (ok) this.broadcastStatsUpdated(data.sessionId, this.serializeStats(data.sessionId));
+      });
+
       // Gift config güncelleme (broadcaster'dan gelir)
       socket.on("gift-config-update", async (data: { sessionId: string; activeGiftIds: number[] }) => {
         try {
@@ -143,6 +183,19 @@ class SocketServer {
           console.log(`[${sessionId}] Gift config güncellendi: ${activeGiftIds.length} aktif hediye`);
         } catch (err) {
           console.error("Gift config update hatası:", err);
+        }
+      });
+
+      // Win settings güncelleme (oyun bitirme koşulu)
+      socket.on("updateWinSettings", (data: { sessionId: string; mode: 'cards' | 'score'; cardsTarget: number; scoreTarget: number }) => {
+        const { sessionId, mode, cardsTarget, scoreTarget } = data;
+        const ok = setWinSettings(sessionId, { mode, cardsTarget, scoreTarget });
+        if (ok) {
+          // Session'daki tüm client'lara broadcast et
+          this.io.to(`session:${sessionId}`).emit("win-settings-updated", { mode, cardsTarget, scoreTarget });
+          console.log(`[${sessionId}] Win settings güncellendi: mode=${mode}, cardsTarget=${cardsTarget}, scoreTarget=${scoreTarget}`);
+        } else {
+          console.warn(`[${sessionId}] Win settings güncellenemedi: session bulunamadı`);
         }
       });
     });
@@ -218,10 +271,12 @@ class SocketServer {
 
   // Bekleyen kart event'i (takım seçimi bekleniyor)
   public broadcastPendingCard(sessionId: string, pending: PendingCard, teams: { id: number; name: string }[]) {
+    const gs = getGameState(sessionId);
+    const queueLength = gs ? gs.cardQueue.length : 0;
     this.broadcastGameEvent({
       type: "pendingCard",
       sessionId,
-      data: { pending, teams },
+      data: { pending, teams, queueLength },
       timestamp: Date.now(),
     });
   }
@@ -250,7 +305,20 @@ class SocketServer {
 
     if (isGameComplete(sessionId)) {
       await this.stopSession(sessionId);
+      return true;
     }
+
+    // Auto-show next queued card (if any)
+    const nextPending = dequeueNextCard(sessionId);
+    if (nextPending) {
+      const updatedState = getGameState(sessionId);
+      this.broadcastPendingCard(
+        sessionId,
+        nextPending,
+        (updatedState?.teams ?? []).map(t => ({ id: t.id, name: t.name }))
+      );
+    }
+
     return true;
   }
 
@@ -275,9 +343,8 @@ class SocketServer {
         this.handleTikTokEvent(sessionId, event)
       );
     } catch (err) {
-      console.warn(`[${sessionId}] ⚠️ TikTok bağlantısı başarısız, DEMO modunda devam ediyor`);
+      console.warn(`[${sessionId}] ⚠️ TikTok bağlantısı başarısız, demo moduna geçiliyor`);
       console.warn(`[${sessionId}] Hata:`, err instanceof Error ? err.message : err);
-      // Demo mode: Simüle edilmiş TikTok event'leri gönder
       this.startDemoMode(sessionId);
     }
 
@@ -288,7 +355,13 @@ class SocketServer {
   private startDemoMode(sessionId: string) {
     console.log(`[${sessionId}] 🎮 DEMO MODE aktif — Her 5 saniyede simüle edilmiş hediye/beğeni`);
 
-    const mockUsers = ["@demo_ali", "@demo_veli", "@demo_ayse", "@demo_fatma", "@demo_mehmet"];
+    const mockUsers = [
+      { username: "@demo_ali", displayName: "Ali Yılmaz" },
+      { username: "@demo_veli", displayName: "Veli Kaya" },
+      { username: "@demo_ayse", displayName: "Ayşe Demir" },
+      { username: "@demo_fatma", displayName: "Fatma Şahin" },
+      { username: "@demo_mehmet", displayName: "Mehmet Çelik" },
+    ];
     const mockGifts: Array<{ name: string; diamonds: number }> = [
       { name: "Rose", diamonds: 1 },
       { name: "TikTok", diamonds: 1 },
@@ -313,7 +386,7 @@ class SocketServer {
         const likeCount = Math.floor(Math.random() * 200) + 50;
         this.handleTikTokEvent(sessionId, {
           type: "like",
-          data: { username: user, likeCount },
+          data: { username: user.username, displayName: user.displayName, likeCount },
           timestamp: Date.now(),
         });
       } else {
@@ -322,7 +395,8 @@ class SocketServer {
         this.handleTikTokEvent(sessionId, {
           type: "gift",
           data: {
-            username: user,
+            username: user.username,
+            displayName: user.displayName,
             giftName: gift.name,
             diamondCount: gift.diamonds,
           },
@@ -340,6 +414,7 @@ class SocketServer {
 
   // Oturum durdur: TikTok bağlantısını kapat, oyunu bitir, yayınla, temizle
   async stopSession(sessionId: string) {
+    this.tiktokConnectedMap.delete(sessionId);
     await stopTikTokConnection(sessionId);
 
     // Demo mod interval temizle
@@ -353,6 +428,7 @@ class SocketServer {
     if (result) {
       this.broadcastGameEnded(sessionId, {
         finalScores: result.finalScores,
+        winner: result.winner,
         statistics: result.statistics,
       });
 
@@ -379,13 +455,20 @@ class SocketServer {
     const gameState = getGameState(sessionId);
     if (!gameState) return;
 
+    // DEBUG: event data'yı logla
+    if (event.type === "gift" || event.type === "like") {
+      console.log(`[${sessionId}] handleTikTokEvent ${event.type}: profilePic="${event.data.profilePic}" profilePicBase64="${event.data.profilePicBase64 ? 'BASE64_DATA(' + String(event.data.profilePicBase64).length + ' chars)' : 'NONE'}"`);
+    }
+
     switch (event.type) {
       case "gift": {
         const pending = await processGiftEvent(
           sessionId,
           event.data.giftName as string,
           event.data.diamondCount as number,
-          event.data.username as string
+          event.data.username as string,
+          (event.data.profilePicBase64 as string) || (event.data.profilePic as string) || undefined,
+          event.data.displayName as string | undefined
         );
         if (pending) {
           this.broadcastPendingCard(sessionId, pending, gameState.teams.map(t => ({ id: t.id, name: t.name })));
@@ -397,11 +480,24 @@ class SocketServer {
         const pending = await processLikeEvent(
           sessionId,
           event.data.username as string,
-          event.data.likeCount as number
+          event.data.likeCount as number,
+          (event.data.profilePicBase64 as string) || (event.data.profilePic as string) || undefined,
+          event.data.displayName as string | undefined
         );
         if (pending) {
           this.broadcastPendingCard(sessionId, pending, gameState.teams.map(t => ({ id: t.id, name: t.name })));
         }
+        // Beğeni event'ini game screen'e yayınla
+        this.io.to(`session:${sessionId}`).emit("gameEvent", {
+          type: "like",
+          data: {
+            username: event.data.username,
+            displayName: event.data.displayName,
+            profilePic: event.data.profilePic,
+            likeCount: event.data.likeCount,
+            totalLikes: gameState.totalLikes,
+          },
+        });
         this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
         break;
       }
@@ -414,13 +510,12 @@ class SocketServer {
         break;
       }
       case "connected":
-        this.broadcastStatsUpdated(sessionId, { tiktokConnected: true });
+        this.tiktokConnectedMap.set(sessionId, true);
+        this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
         break;
       case "disconnected":
-        this.broadcastStatsUpdated(sessionId, {
-          tiktokConnected: false,
-          reason: event.data.reason,
-        });
+        this.tiktokConnectedMap.set(sessionId, false);
+        this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
         break;
       case "error":
         console.error(`[${sessionId}] TikTok hatası:`, event.data);
@@ -438,14 +533,24 @@ class SocketServer {
   }
 
   // GameState'i JSON-serializable stats nesnesine dönüştür
-  private serializeStats(sessionId: string) {
+  public serializeStats(sessionId: string) {
     const state = getGameState(sessionId);
     if (!state) return {};
+    const threshold = getLikeThreshold();
     return {
       cardsOpened: state.openedCards.length,
       participants: state.participants.size,
       totalLikes: state.totalLikes,
       totalGifts: state.totalGifts,
+      teamScores: state.teams.map(t => ({ id: t.id, name: t.name, score: t.score, playerCount: t.players.length })),
+      queueLength: state.cardQueue.length,
+      likeProgress: state.totalLikes % threshold,
+      likeThreshold: threshold,
+      isPaused: state.isPaused,
+      topViewers: getTopViewers(sessionId),
+      startedAt: state.startedAt,
+      tiktokConnected: this.tiktokConnectedMap.get(sessionId) ?? false,
+      winSettings: state.winSettings || { mode: 'cards', cardsTarget: 44, scoreTarget: 500 },
     };
   }
 }
@@ -477,6 +582,19 @@ export async function stopSession(sessionId: string): Promise<void> {
 
 export async function assignPendingCard(sessionId: string, teamId: number): Promise<boolean> {
   return socketServer?.assignPendingCard(sessionId, teamId) ?? false;
+}
+
+export function skipPendingCardSocket(sessionId: string): boolean {
+  if (!socketServer) return false;
+  const next = skipPendingCard(sessionId);
+  // cardRevealed ile client'a "kart geçildi" bildir
+  socketServer.broadcastCardRevealed(sessionId, null, "");
+  socketServer.broadcastStatsUpdated(sessionId, socketServer.serializeStats(sessionId));
+  if (next) {
+    const gs = getGameState(sessionId);
+    socketServer.broadcastPendingCard(sessionId, next, (gs?.teams ?? []).map(t => ({ id: t.id, name: t.name })));
+  }
+  return true;
 }
 
 export type { GameEvent };

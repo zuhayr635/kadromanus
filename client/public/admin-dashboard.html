@@ -568,6 +568,57 @@
 
   </div>
 
+  <!-- Edit License Modal -->
+  <div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center">
+    <div style="background:#0c1309;border:1px solid rgba(212,175,55,.25);padding:2rem;width:min(520px,95vw);max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+        <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:#D4AF37;font-weight:600">Lisansı Düzenle</span>
+        <button onclick="closeEditModal()" style="background:none;border:none;color:rgba(248,246,243,.4);font-size:1.2rem;cursor:pointer">✕</button>
+      </div>
+      <input type="hidden" id="editLicenseId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Yayıncı Adı</label>
+          <input type="text" id="editUsername" placeholder="Ahmet Yayıncı">
+        </div>
+        <div class="form-group">
+          <label>TikTok Kullanıcı Adı</label>
+          <input type="text" id="editTiktokUsername" placeholder="@kullanici">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Lisans Anahtarı</label>
+          <input type="text" id="editLicenseKey" placeholder="HIRA-XXXX-XXXX-XXXX">
+        </div>
+        <div class="form-group">
+          <label>Paket Türü</label>
+          <select id="editPlanType">
+            <option value="basic">Basic</option>
+            <option value="pro">Pro</option>
+            <option value="premium">Premium</option>
+            <option value="unlimited">Unlimited</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Bitiş Tarihi</label>
+          <input type="date" id="editExpiresAt">
+        </div>
+        <div class="form-group">
+          <label>Max Oturum</label>
+          <input type="number" id="editMaxSessions" min="1" max="100">
+        </div>
+      </div>
+      <div id="editError" style="display:none;color:#e31c23;font-size:.75rem;margin-bottom:1rem"></div>
+      <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem">
+        <button class="btn" onclick="closeEditModal()" style="border-color:rgba(248,246,243,.2);color:rgba(248,246,243,.5)">İptal</button>
+        <button class="btn btn-primary" onclick="saveLicenseEdit()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Auth guard
     (async () => {
@@ -701,14 +752,20 @@
           const packageBadge = `<span class="badge ${license.packageType}">${license.packageType.toUpperCase()}</span>`;
 
           const row = document.createElement('tr');
+          const licId = license.id;
+          const licKey = license.licenseKey || license.key;
+          const expiresIso = expiresAt.toISOString().split('T')[0];
           row.innerHTML = `
-            <td><code>${license.licenseKey || license.key}</code></td>
+            <td><code>${licKey}</code></td>
             <td>${license.broadcasterName || '—'}</td>
             <td>${packageBadge}</td>
             <td>${statusBadge}</td>
             <td>${expiresAt.toLocaleDateString('tr-TR')}</td>
             <td>${license.maxSessions}</td>
-            <td><button class="btn btn-danger" onclick="deleteLicense('${license.licenseKey || license.key}')">Sil</button></td>
+            <td style="display:flex;gap:6px">
+              <button class="btn btn-secondary" onclick='openEditModal(${JSON.stringify({id:licId,licenseKey:licKey,username:license.broadcasterName,tiktokUsername:license.ownerTikTok||"",planType:license.packageType,expiresAt:expiresIso,maxSessions:license.maxSessions})})'>Düzenle</button>
+              <button class="btn btn-danger" onclick="deleteLicense('${licKey}')">Sil</button>
+            </td>
           `;
           tbody.appendChild(row);
         });
@@ -722,6 +779,59 @@
         alert('Lisans silme işlemi henüz uygulanmadı');
       }
     }
+
+    function openEditModal(license) {
+      document.getElementById('editLicenseId').value = license.id;
+      document.getElementById('editLicenseKey').value = license.licenseKey || '';
+      document.getElementById('editUsername').value = license.username || '';
+      document.getElementById('editTiktokUsername').value = license.tiktokUsername || '';
+      document.getElementById('editPlanType').value = license.planType || 'basic';
+      document.getElementById('editExpiresAt').value = license.expiresAt || '';
+      document.getElementById('editMaxSessions').value = license.maxSessions || 1;
+      document.getElementById('editError').style.display = 'none';
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function saveLicenseEdit() {
+      const id = document.getElementById('editLicenseId').value;
+      const body = {
+        licenseKey: document.getElementById('editLicenseKey').value.trim(),
+        username: document.getElementById('editUsername').value.trim(),
+        tiktokUsername: document.getElementById('editTiktokUsername').value.trim(),
+        planType: document.getElementById('editPlanType').value,
+        expiresAt: document.getElementById('editExpiresAt').value,
+        usageCount: undefined,
+      };
+      const errEl = document.getElementById('editError');
+      errEl.style.display = 'none';
+      try {
+        const r = await fetch(`/api/licenses/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          errEl.textContent = err.error || 'Kaydetme hatası';
+          errEl.style.display = 'block';
+          return;
+        }
+        closeEditModal();
+        loadLicenses();
+      } catch (e) {
+        errEl.textContent = 'Bağlantı hatası: ' + e.message;
+        errEl.style.display = 'block';
+      }
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('editModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('editModal')) closeEditModal();
+    });
 
     async function loadStatistics() {
       try {

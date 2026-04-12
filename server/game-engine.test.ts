@@ -59,7 +59,7 @@ describe("Game Engine", () => {
     expect(gameState.participants.size).toBe(2);
   });
 
-  it("should check if game is complete when teams have 11 players", () => {
+  it("should check if game is complete when total cards reach 44", () => {
     const gameState = gameEngine.initializeGame(sessionId, teamNames);
 
     expect(gameEngine.isGameComplete(sessionId)).toBe(false);
@@ -75,7 +75,7 @@ describe("Game Engine", () => {
       });
     }
 
-    // Add 11 players to second team
+    // Add 11 players to second team (22 total - not enough)
     for (let i = 0; i < 11; i++) {
       gameState.teams[1].players.push({
         playerId: i + 11,
@@ -83,6 +83,46 @@ describe("Game Engine", () => {
         position: "FW",
         quality: "bronze",
         openedBy: "user2",
+      });
+    }
+
+    // Still not complete (need 44 total = 4 teams × 11 players)
+    expect(gameEngine.isGameComplete(sessionId)).toBe(false);
+
+    // Add third team (33 total)
+    gameState.teams.push({
+      id: 2,
+      name: "Takım 3",
+      players: [],
+      score: 0,
+    });
+    for (let i = 0; i < 11; i++) {
+      gameState.teams[2].players.push({
+        playerId: i + 22,
+        name: `Player ${i + 22}`,
+        position: "FW",
+        quality: "bronze",
+        openedBy: "user3",
+      });
+    }
+
+    // Still not complete (need 44 total)
+    expect(gameEngine.isGameComplete(sessionId)).toBe(false);
+
+    // Add 11 players to fourth team (44 total - complete!)
+    gameState.teams.push({
+      id: 3,
+      name: "Takım 4",
+      players: [],
+      score: 0,
+    });
+    for (let i = 0; i < 11; i++) {
+      gameState.teams[3].players.push({
+        playerId: i + 33,
+        name: `Player ${i + 33}`,
+        position: "FW",
+        quality: "bronze",
+        openedBy: "user4",
       });
     }
 

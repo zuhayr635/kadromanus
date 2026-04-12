@@ -44,7 +44,7 @@ export default function Home() {
         .hp-section-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(1.9rem, 4vw, 2.75rem); font-weight: 700; color: #F8F6F3; line-height: 1.15; margin-bottom: 3.5rem; }
 
         /* FEATURES GRID */
-        .hp-features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: rgba(212,175,55,0.08); outline: 1px solid rgba(212,175,55,0.08); }
+        .hp-features-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(212,175,55,0.08); outline: 1px solid rgba(212,175,55,0.08); }
         .hp-feature-item { background: #080c09; padding: 2.5rem; transition: background 0.2s; }
         .hp-feature-item:hover { background: #0c130d; }
         .hp-feature-num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2rem; font-weight: 700; color: rgba(212,175,55,0.2); line-height: 1; margin-bottom: 1.25rem; }
@@ -85,7 +85,7 @@ export default function Home() {
 
         @media (max-width: 900px) {
           .hp-nav { padding: 1rem 1.25rem; }
-          .hp-features-grid { grid-template-columns: 1fr 1fr; }
+          .hp-features-grid { grid-template-columns: repeat(2,1fr); }
           .hp-pricing-grid { grid-template-columns: 1fr 1fr; }
           .hp-stats-bar { grid-template-columns: 1fr 1fr; }
           .hp-stat-item:nth-child(2) { border-right: none; }
@@ -103,7 +103,10 @@ export default function Home() {
 
       {/* NAV */}
       <nav className="hp-nav">
-        <div className="hp-logo-text">Kadrokur<span className="hp-logo-dot" /></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <img src="/logo.svg" alt="Kadrokur" style={{ width: '32px', height: 'auto' }} />
+          <span className="hp-logo-text">Kadrokur<span className="hp-logo-dot" /></span>
+        </div>
         <a href="/broadcaster" className="hp-nav-btn">Paneli Aç</a>
       </nav>
 
@@ -111,6 +114,10 @@ export default function Home() {
       <section className="hp-hero">
         <div>
           <div className="hp-hero-eyebrow">TikTok Live × Futbol Kartları</div>
+          {/* LOGO */}
+          <div style={{ marginBottom: '2rem' }}>
+            <img src="/logo.svg" alt="Kadrokur Logo" style={{ width: '140px', height: 'auto', filter: 'drop-shadow(0 0 30px rgba(212,175,55,0.3))' }} />
+          </div>
           <h1 className="hp-hero-h1">
             Canlı Yayında<br />
             <em>Kadro Kur</em>
@@ -127,25 +134,136 @@ export default function Home() {
         </div>
       </section>
 
+      {/* GAME PREVIEW */}
+      <section style={{ background: '#030504', padding: '5rem 2rem', borderBottom: '1px solid rgba(212,175,55,0.08)' }}>
+        <div className="hp-section">
+          <div className="hp-section-eyebrow">Oyun İçi Görünüm</div>
+          <h2 className="hp-section-title">4 Takım, 44 Kart,<br />1 Kazanan</h2>
+        </div>
+        {/* Card Preview */}
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem 4rem' }}>
+          <style>{`
+            .hp-card-preview { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; }
+            .hp-preview-card { position: relative; }
+            .hp-card-outer { position: relative; width: 100%; aspect-ratio: 3/4; background: linear-gradient(145deg, #1a1f1a, #0d0f0d); border-radius: 12px; padding: 4px; }
+            .hp-card-inner { width: 100%; height: 100%; background: linear-gradient(180deg, #1e251e 0%, #141914 100%); border-radius: 10px; overflow: hidden; position: relative; }
+            .hp-card-bg { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0.3; }
+            .hp-card-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%); }
+            .hp-card-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem; }
+            .hp-card-rating { position: absolute; top: 8px; right: 8px; font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 700; }
+            .hp-card-pos { position: absolute; top: 8px; left: 8px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 3px; }
+            .hp-card-name { font-size: 0.85rem; font-weight: 700; color: #F8F6F3; margin-bottom: 0.15rem; }
+            .hp-card-nation { font-size: 0.6rem; color: #6b7a6b; }
+            .hp-team-label { font-size: 0.55rem; letter-spacing: 0.15em; color: #D4AF37; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem; text-align: center; }
+            /* Quality colors */
+            .hp-card-bronze .hp-card-outer { border-color: #cd7f32; box-shadow: 0 0 20px rgba(205,127,50,0.2); }
+            .hp-card-bronze .hp-card-rating { color: #cd7f32; }
+            .hp-card-bronze .hp-card-pos { background: rgba(205,127,50,0.2); color: #cd7f32; }
+            .hp-card-silver .hp-card-outer { border-color: #c0c0c0; box-shadow: 0 0 20px rgba(192,192,192,0.25); }
+            .hp-card-silver .hp-card-rating { color: #c0c0c0; }
+            .hp-card-silver .hp-card-pos { background: rgba(192,192,192,0.2); color: #c0c0c0; }
+            .hp-card-gold .hp-card-outer { border-color: #ffd700; box-shadow: 0 0 30px rgba(255,215,0,0.3); }
+            .hp-card-gold .hp-card-rating { color: #ffd700; }
+            .hp-card-gold .hp-card-pos { background: rgba(255,215,0,0.2); color: #ffd700; }
+            .hp-card-elite .hp-card-outer { border-color: #e31c23; box-shadow: 0 0 40px rgba(227,28,35,0.4); animation: eliteGlow 2s ease-in-out infinite; }
+            .hp-card-elite .hp-card-rating { color: #e31c23; }
+            .hp-card-elite .hp-card-pos { background: rgba(227,28,35,0.2); color: #e31c23; }
+            @keyframes eliteGlow {
+              0%, 100% { box-shadow: 0 0 40px rgba(227,28,35,0.4); }
+              50% { box-shadow: 0 0 60px rgba(227,28,35,0.7); }
+            }
+            @media (max-width: 768px) {
+              .hp-card-preview { grid-template-columns: repeat(2,1fr); }
+            }
+          `}</style>
+          <div className="hp-card-preview">
+            {/* Bronze */}
+            <div className="hp-preview-card hp-card-bronze">
+              <div className="hp-team-label">TAKIM 1</div>
+              <div className="hp-card-outer">
+                <div className="hp-card-inner">
+                  <div className="hp-card-bg" style={{ backgroundImage: 'linear-gradient(135deg, #2a1f1a 0%, #1a1510 100%)' }} />
+                  <div className="hp-card-overlay" />
+                  <div className="hp-card-pos">FW</div>
+                  <div className="hp-card-rating">67</div>
+                  <div className="hp-card-content">
+                    <div className="hp-card-name">Ahmet Yılmaz</div>
+                    <div className="hp-card-nation">🇹🇷 Türkiye</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Silver */}
+            <div className="hp-preview-card hp-card-silver">
+              <div className="hp-team-label">TAKIM 2</div>
+              <div className="hp-card-outer">
+                <div className="hp-card-inner">
+                  <div className="hp-card-bg" style={{ backgroundImage: 'linear-gradient(135deg, #2a2a35 0%, #1a1a25 100%)' }} />
+                  <div className="hp-card-overlay" />
+                  <div className="hp-card-pos">MF</div>
+                  <div className="hp-card-rating">78</div>
+                  <div className="hp-card-content">
+                    <div className="hp-card-name">Mehmet Demir</div>
+                    <div className="hp-card-nation">🇹🇷 Türkiye</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Gold */}
+            <div className="hp-preview-card hp-card-gold">
+              <div className="hp-team-label">TAKIM 3</div>
+              <div className="hp-card-outer">
+                <div className="hp-card-inner">
+                  <div className="hp-card-bg" style={{ backgroundImage: 'linear-gradient(135deg, #352a1a 0%, #251a0a 100%)' }} />
+                  <div className="hp-card-overlay" />
+                  <div className="hp-card-pos">GK</div>
+                  <div className="hp-card-rating">88</div>
+                  <div className="hp-card-content">
+                    <div className="hp-card-name">Ali Şahin</div>
+                    <div className="hp-card-nation">🇹🇷 Türkiye</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Elite */}
+            <div className="hp-preview-card hp-card-elite">
+              <div className="hp-team-label">TAKIM 4</div>
+              <div className="hp-card-outer">
+                <div className="hp-card-inner">
+                  <div className="hp-card-bg" style={{ backgroundImage: 'linear-gradient(135deg, #351a1a 0%, #250a0a 100%)' }} />
+                  <div className="hp-card-overlay" />
+                  <div className="hp-card-pos">ST</div>
+                  <div className="hp-card-rating">99</div>
+                  <div className="hp-card-content">
+                    <div className="hp-card-name">Arda Güler</div>
+                    <div className="hp-card-nation">🇪🇸 İspanya</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* STATEMENT */}
       <section className="hp-statement">
-        <p className="hp-statement-text">"Yayın bitmeden kimse oturumu kapatmıyor."</p>
-        <div className="hp-statement-attr">Gerçek yayıncılardan</div>
+        <p className="hp-statement-text">"44 kart açılana kadar yayın kapanmıyor, izleyici sabırsızlanıyor."</p>
+        <div className="hp-statement-attr">TikTok yayıncılarından geri bildirim</div>
       </section>
 
       {/* STATS */}
       <div className="hp-stats-bar">
         <div className="hp-stat-item">
-          <div className="hp-stat-num">550+</div>
+          <div className="hp-stat-num">435</div>
           <div className="hp-stat-label">Futbolcu Kartı</div>
         </div>
         <div className="hp-stat-item">
-          <div className="hp-stat-num">4</div>
-          <div className="hp-stat-label">Takım Kadrosu</div>
+          <div className="hp-stat-num">44</div>
+          <div className="hp-stat-label">Toplam Kart</div>
         </div>
         <div className="hp-stat-item">
-          <div className="hp-stat-num">4K</div>
-          <div className="hp-stat-label">Kart Kalitesi</div>
+          <div className="hp-stat-num">4</div>
+          <div className="hp-stat-label">Takım</div>
         </div>
         <div className="hp-stat-item">
           <div className="hp-stat-num">RT</div>
@@ -176,16 +294,26 @@ export default function Home() {
             </div>
             <div className="hp-feature-item">
               <div className="hp-feature-num">04</div>
-              <div className="hp-feature-title">4 Takım, 11 Oyuncu</div>
-              <div className="hp-feature-desc">Her takım 11 oyuncuyu tamamladığında oyun biter. Manuel ya da otomatik takım seçim modu.</div>
+              <div className="hp-feature-title">44 Kart = Oyun Biter</div>
+              <div className="hp-feature-desc">Toplam 44 kart açıldığında oyun otomatik biter. Kazanan takım gösterilir, Telegram'a sonuç gönderilir.</div>
             </div>
             <div className="hp-feature-item">
               <div className="hp-feature-num">05</div>
+              <div className="hp-feature-title">Otomatik Mod (!1-!4)</div>
+              <div className="hp-feature-desc">İzleyiciler yorumda !1, !2, !3, !4 yazarak takım seçebilir. Yayıncı onayı gerekmez.</div>
+            </div>
+            <div className="hp-feature-item">
+              <div className="hp-feature-num">06</div>
+              <div className="hp-feature-title">Demo Modu</div>
+              <div className="hp-feature-desc">TikTok bağlantısı başarısız olursa otomatik demo moduna geçer. Test için ideal.</div>
+            </div>
+            <div className="hp-feature-item">
+              <div className="hp-feature-num">07</div>
               <div className="hp-feature-title">OBS Browser Source</div>
               <div className="hp-feature-desc">1920×1080 optimize oyun ekranı. OBS'e direkt Browser Source olarak ekle, yayında göster.</div>
             </div>
             <div className="hp-feature-item">
-              <div className="hp-feature-num">06</div>
+              <div className="hp-feature-num">08</div>
               <div className="hp-feature-title">Telegram Sonuç Paylaşımı</div>
               <div className="hp-feature-desc">Oyun bittiğinde final ekranının ekran görüntüsü otomatik olarak Telegram grubuna gönderilir.</div>
             </div>
@@ -261,9 +389,13 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="hp-footer">
-        <div className="hp-footer-logo">Kadrokur</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+          <img src="/logo.svg" alt="Kadrokur" style={{ width: '28px', height: 'auto' }} />
+          <span className="hp-footer-logo">Kadrokur</span>
+        </div>
         <div className="hp-footer-links">
           <a href="/broadcaster" className="hp-footer-link">Yayıncı Paneli</a>
+          <a href="/game-screen.html" target="_blank" rel="noopener noreferrer" className="hp-footer-link">Oyun Ekranı</a>
           <a href="/license-panel.html" className="hp-footer-link">Lisans Paneli</a>
           <a href="https://t.me/luanamobile" target="_blank" rel="noopener noreferrer" className="hp-footer-link">Telegram</a>
           <a href="https://luanawork.com" target="_blank" rel="noopener noreferrer" className="hp-footer-link">luanawork.com</a>

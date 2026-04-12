@@ -7,7 +7,7 @@ import {
   updateTeamSelectionMode,
   processTeamSelectionCommand,
 } from "../broadcaster-session";
-import { startSession, stopSession, assignPendingCard } from "../socket-server";
+import { startSession, stopSession, assignPendingCard, skipPendingCardSocket } from "../socket-server";
 import { getLikeThreshold, setLikeThreshold, getDiamondThresholds, setDiamondThresholds } from "../game-engine";
 
 export const broadcasterRouter = router({
@@ -104,6 +104,16 @@ export const broadcasterRouter = router({
     .mutation(async ({ input }) => {
       const success = await assignPendingCard(input.sessionId, input.teamId);
       return { success, message: success ? "Kart takıma atandı" : "Bekleyen kart bulunamadı" };
+    }),
+
+  /**
+   * Skip (discard) the current pending card
+   */
+  skipPendingCard: publicProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(({ input }) => {
+      const success = skipPendingCardSocket(input.sessionId);
+      return { success };
     }),
 
   /**
