@@ -27,6 +27,7 @@ RUN apk add --no-cache \
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV NODE_ENV=production
 
 WORKDIR /app
 
@@ -37,10 +38,14 @@ RUN npm install -g pnpm && pnpm install --frozen-lockfile --prod
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/client/dist ./client/dist
+COPY --from=builder /app/client/public ./client/public
 COPY --from=builder /app/drizzle ./drizzle
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
+# Create uploads directory with proper permissions
+RUN mkdir -p /app/uploads && chown -R nodejs:nodejs /app/uploads
 
 USER nodejs
 

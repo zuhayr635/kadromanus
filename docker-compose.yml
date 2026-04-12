@@ -1,3 +1,6 @@
+# Required environment variables should be set via .env file or --env-file flag
+# See .env.example for documentation
+
 version: '3.8'
 
 services:
@@ -6,10 +9,10 @@ services:
     image: mysql:8.0
     container_name: kadrokur-db
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: kadrokur
-      MYSQL_USER: kadrokur_user
-      MYSQL_PASSWORD: kadrokur_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change_in_production}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-kadrokur}
+      MYSQL_USER: ${MYSQL_USER:-kadrokur_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change_in_production}
     ports:
       - "3306:3306"
     volumes:
@@ -48,7 +51,7 @@ services:
     volumes:
       - ./uploads:/app/uploads
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
       interval: 30s
       timeout: 10s
       retries: 3

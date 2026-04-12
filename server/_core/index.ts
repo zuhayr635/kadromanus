@@ -53,6 +53,11 @@ async function startServer() {
   const server = createServer(app);
   initializeSocketServer(server);
 
+  // Health check endpoint for Docker/Kubernetes
+  app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   // Initialize Telegram bot (if token provided)
   if (process.env.TELEGRAM_BOT_TOKEN) {
     initializeTelegramBot(process.env.TELEGRAM_BOT_TOKEN);
