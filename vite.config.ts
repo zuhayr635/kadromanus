@@ -171,6 +171,8 @@ export default defineConfig({
   server: {
     host: true,
     allowedHosts: [
+      ".luanawork.com",
+      "kadro.luanawork.com",
       ".manuspre.computer",
       ".manus.computer",
       ".manus-asia.computer",
