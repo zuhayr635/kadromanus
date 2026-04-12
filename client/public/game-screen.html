@@ -2201,6 +2201,21 @@ playSound=function(type){
   _origPlaySound(type);
 };
 
+// Demo winner screen test
+if(new URLSearchParams(location.search).has('demo_end')){
+  setTimeout(()=>{
+    handleGameEnd({
+      winner:{teamName:'Fenerbahçe',score:150},
+      finalScores:[
+        {teamName:'Fenerbahçe',score:150,players:11},
+        {teamName:'Galatasaray',score:135,players:11},
+        {teamName:'Beşiktaş',score:120,players:11},
+        {teamName:'Trabzonspor',score:95,players:9}
+      ]
+    });
+  },1000);
+}
+
 connectSocket();
 </script>
 </body>
