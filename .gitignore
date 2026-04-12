@@ -111,3 +111,32 @@ temp/
 
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json
+
+# Environment files with secrets
+.env
+.env.local
+.env.production
+
+# Build outputs
+dist/
+client/dist/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/
+
+# Manu specific
+.manus-logs/
