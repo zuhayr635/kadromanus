@@ -1,13 +1,73 @@
-import { TikTokLiveConnection } from "tiktok-live-connector";
-const EVENTS = {
-  CONNECTED: "connected",
-  DISCONNECTED: "disconnected",
-  LIKE: "like",
-  GIFT: "gift",
-  COMMENT: "comment",
-  ERROR: "error",
-};
+import { WebcastPushConnection, SignConfig } from "tiktok-live-connector";
 import { EventEmitter } from "events";
+import https from "https";
+import http from "http";
+
+// Optional sign API key for better reliability
+if (process.env.TIKTOK_SIGN_API_KEY) {
+  SignConfig.apiKey = process.env.TIKTOK_SIGN_API_KEY;
+}
+
+// ═══════════════════════════════════════════
+// PROFİL RESMİ CACHE & BASE64 İNDİRME
+// ═══════════════════════════════════════════
+const imageCache = new Map<string, string>();
+
+function fetchImageAsBase64(url: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    if (!url || !url.startsWith("http")) return resolve(null);
+
+    const client = url.startsWith("https") ? https : http;
+
+    client.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Referer": "https://www.tiktok.com/",
+      }
+    }, (response) => {
+      // Redirect varsa takip et
+      if ((response.statusCode === 301 || response.statusCode === 302) && response.headers.location) {
+        return fetchImageAsBase64(response.headers.location).then(resolve);
+      }
+      if (response.statusCode !== 200) return resolve(null);
+
+      const chunks: Buffer[] = [];
+      response.on("data", (chunk: Buffer) => chunks.push(chunk));
+      response.on("end", () => {
+        const buffer = Buffer.concat(chunks);
+        if (buffer.length < 100) return resolve(null); // Çok küçük = hatalı
+        const contentType = response.headers["content-type"] || "image/jpeg";
+        const base64 = `data:${contentType};base64,${buffer.toString("base64")}`;
+        resolve(base64);
+      });
+    }).on("error", () => resolve(null));
+  });
+}
+
+async function getProfileImage(userId: string, profileUrl: string): Promise<string | null> {
+  if (!profileUrl) return null;
+  if (imageCache.has(userId)) return imageCache.get(userId)!;
+
+  const base64 = await fetchImageAsBase64(profileUrl);
+  if (base64) {
+    imageCache.set(userId, base64);
+    // 10 dakika sonra temizle
+    setTimeout(() => imageCache.delete(userId), 10 * 60 * 1000);
+    console.log(`[TikTok] Profil resmi indirildi: ${userId} (${Math.round(base64.length / 1024)}KB)`);
+  }
+  return base64;
+}
+
+/** Kullanıcıdan profil resmi URL'sini çıkar */
+function extractProfilePicUrl(user: any): string {
+  return user?.profilePictureUrl ||
+         user?.userDetails?.profilePictureUrls?.[0] ||
+         user?.avatarMedium ||
+         user?.avatarThumb ||
+         user?.profilePicture?.urls?.[0] ||
+         user?.profilePicture?.url?.[0] ||
+         "";
+}
 
 interface TikTokEvent {
   type: "like" | "gift" | "comment" | "connected" | "disconnected" | "error";
@@ -16,270 +76,257 @@ interface TikTokEvent {
 }
 
 interface TikTokConnectionManager {
-  connection: TikTokLiveConnection | null;
+  connection: WebcastPushConnection | null;
   eventEmitter: EventEmitter;
   isConnected: boolean;
+  reconnectTimer?: ReturnType<typeof setTimeout>;
 }
 
 const connections = new Map<string, TikTokConnectionManager>();
 
+// Debug sayaçlarını sıfırla (type-safe initialization)
+if (typeof globalThis._likeLogCount === 'undefined') {
+  globalThis._likeLogCount = 0;
+}
+if (typeof globalThis._giftLogCount === 'undefined') {
+  globalThis._giftLogCount = 0;
+}
+
 /**
- * Start TikTok Live connection for a broadcaster session
- * @param sessionId - Unique session identifier
- * @param tiktokUsername - TikTok username (without @)
- * @param onEvent - Callback function for events
+ * Start TikTok Live connection for a broadcaster session.
+ * Uses WebcastPushConnection (same approach as TikTok-Chat-Reader).
  */
 export async function startTikTokConnection(
   sessionId: string,
   tiktokUsername: string,
   onEvent: (event: TikTokEvent) => void
 ): Promise<void> {
-  // Demo mode: if username starts with "test" or "demo", use mock connection
-  const isDemoMode = tiktokUsername.toLowerCase().startsWith("test") ||
-                     tiktokUsername.toLowerCase().startsWith("demo");
-
-  if (isDemoMode) {
-    console.log(`[${sessionId}] Demo mode aktivelendi: ${tiktokUsername}`);
-    const eventEmitter = new EventEmitter();
-    const manager: TikTokConnectionManager = {
-      connection: null,
-      eventEmitter,
-      isConnected: true,
-    };
-    connections.set(sessionId, manager);
-
-    // Send connected event for demo
-    const event: TikTokEvent = {
-      type: "connected",
-      data: { username: tiktokUsername, roomId: null, demoMode: true },
-      timestamp: Date.now(),
-    };
-    onEvent(event);
-    console.log(`[${sessionId}] Demo bağlantısı başarılı (WebSocket yok, mock events)`);
-
-    // Generate mock events periodically
-    const mockUsers = ["demo_ali", "demo_veli", "demo_ayse", "demo_fatma", "demo_mehmet"];
-    const mockGifts = [
-      { name: "Rose", diamonds: 1 },
-      { name: "GG", diamonds: 10 },
-      { name: "Sunglasses", diamonds: 50 },
-      { name: "Drama Queen", diamonds: 200 },
-      { name: "Lion", diamonds: 500 },
-    ];
-
-    const interval = setInterval(() => {
-      const mgr = connections.get(sessionId);
-      if (!mgr || !mgr.isConnected) {
-        clearInterval(interval);
-        return;
-      }
-
-      const user = mockUsers[Math.floor(Math.random() * mockUsers.length)];
-      const roll = Math.random();
-
-      if (roll < 0.6) {
-        // 60% chance: like event
-        const likeCount = Math.floor(Math.random() * 50) + 10;
-        onEvent({
-          type: "like",
-          data: {
-            userId: user,
-            username: user,
-            displayName: user.replace("demo_", "").toUpperCase(),
-            likeCount,
-            totalLikeCount: likeCount,
-            profilePic: "",
-          },
-          timestamp: Date.now(),
-        });
-      } else {
-        // 40% chance: gift event
-        const gift = mockGifts[Math.floor(Math.random() * mockGifts.length)];
-        onEvent({
-          type: "gift",
-          data: {
-            userId: user,
-            username: user,
-            displayName: user.replace("demo_", "").toUpperCase(),
-            giftId: gift.name.toLowerCase(),
-            giftName: gift.name,
-            giftCount: 1,
-            diamondCount: gift.diamonds,
-            totalValue: gift.diamonds,
-            profilePic: "",
-          },
-          timestamp: Date.now(),
-        });
-      }
-    }, 3000); // Every 3 seconds
-
-    // Store interval reference for cleanup
-    eventEmitter.on("cleanup", () => clearInterval(interval));
-    return;
+  // Clean up existing connection
+  if (connections.has(sessionId)) {
+    await stopTikTokConnection(sessionId);
   }
 
-  try {
-    // Clean up existing connection if any
-    if (connections.has(sessionId)) {
-      await stopTikTokConnection(sessionId);
-    }
+  const eventEmitter = new EventEmitter();
+  const manager: TikTokConnectionManager = {
+    connection: null,
+    eventEmitter,
+    isConnected: false,
+  };
+  connections.set(sessionId, manager);
 
-    const connection = new TikTokLiveConnection(tiktokUsername);
-    const eventEmitter = new EventEmitter();
-
-    const manager: TikTokConnectionManager = {
-      connection,
-      eventEmitter,
-      isConnected: false,
+  function createConnection(): WebcastPushConnection {
+    const options: Record<string, unknown> = {
+      enableExtendedGiftInfo: true,
     };
 
-    connections.set(sessionId, manager);
+    if (process.env.TIKTOK_SESSION_ID) {
+      options.sessionId = process.env.TIKTOK_SESSION_ID;
+    }
 
-    // Connected event
-    (connection as any).on("connected", (data: any) => {
-      manager.isConnected = true;
-      const event: TikTokEvent = {
+    return new WebcastPushConnection(tiktokUsername, options as any);
+  }
+
+  async function connect(isReconnect = false): Promise<void> {
+    const current = connections.get(sessionId);
+    if (!current) return;
+
+    if (isReconnect) {
+      console.log(`[${sessionId}] Yeniden bağlanılıyor: ${tiktokUsername}`);
+    }
+
+    const conn = createConnection();
+    current.connection = conn;
+
+    // === CONNECTED ===
+    conn.on("connected" as any, (state: any) => {
+      current.isConnected = true;
+      onEvent({
         type: "connected",
-        data: {
-          username: tiktokUsername,
-          roomId: data.roomId || null,
-        },
+        data: { username: tiktokUsername, roomId: state?.roomId ?? null },
         timestamp: Date.now(),
-      };
-      onEvent(event);
-      console.log(`[${sessionId}] TikTok bağlantısı başarılı: ${tiktokUsername}`);
+      });
+      console.log(`[${sessionId}] ✅ TikTok bağlantısı başarılı: @${tiktokUsername} (roomId: ${state?.roomId})`);
     });
 
-    // Disconnected event
-    (connection as any).on("disconnected", (reason: any) => {
-      manager.isConnected = false;
-      const event: TikTokEvent = {
+    // === DISCONNECTED — auto-reconnect ===
+    conn.on("disconnected" as any, (reason: any) => {
+      current.isConnected = false;
+      onEvent({
         type: "disconnected",
-        data: {
-          username: tiktokUsername,
-          reason: reason || "unknown",
-        },
+        data: { username: tiktokUsername, reason: reason ?? "unknown" },
         timestamp: Date.now(),
-      };
-      onEvent(event);
-      console.log(`[${sessionId}] TikTok bağlantısı koptu: ${reason}`);
+      });
+      console.warn(`[${sessionId}] ⚠️ TikTok bağlantısı koptu: ${reason}`);
+
+      // Reconnect after 5 seconds if session still exists
+      const timer = setTimeout(() => {
+        if (connections.has(sessionId)) {
+          connect(true).catch((err) => {
+            console.error(`[${sessionId}] Yeniden bağlanma başarısız:`, err?.message ?? err);
+          });
+        }
+      }, 5000);
+      current.reconnectTimer = timer;
     });
 
-    // Like event - captures combo likes
-    (connection as any).on("like", (data: any) => {
-      const event: TikTokEvent = {
+    // === ERROR ===
+    conn.on("error" as any, (err: any) => {
+      console.error(`[${sessionId}] TikTok hatası:`, err?.message ?? err);
+      onEvent({
+        type: "error",
+        data: { message: err?.message ?? String(err), code: err?.code ?? "unknown" },
+        timestamp: Date.now(),
+      });
+    });
+
+    // === LIKE ===
+    conn.on("like" as any, async (data: any) => {
+      // DEBUG: Tüm data objesini logla (ilk 2 kez)
+      if (typeof globalThis._likeLogCount === 'undefined') {
+        globalThis._likeLogCount = 0;
+      }
+      if (globalThis._likeLogCount < 2) {
+        console.log('[TikTok Like] FULL DATA OBJECT:', JSON.stringify(data, null, 2).substring(0, 3000));
+        globalThis._likeLogCount++;
+      }
+
+      const userId = data.userId ?? data.user?.userId ?? data.uniqueId ?? "";
+      const username = data.uniqueId ?? data.user?.uniqueId ?? "";
+
+      // simplifyObject flatlıyor, user objesindeki propertyler data'da
+      const profilePicUrl = data.profilePictureUrl ||
+                           extractProfilePicUrl(data.user) ||
+                           extractProfilePicUrl(data) ||
+                           "";
+
+      // Profil resmini Base64 olarak indir
+      const profilePicBase64 = await getProfileImage(userId, profilePicUrl);
+
+      onEvent({
         type: "like",
         data: {
-          userId: data.userId || data.user?.id,
-          username: data.uniqueId || data.user?.uniqueId,
-          displayName: data.nickname || data.user?.nickname,
-          likeCount: data.likeCount || 1, // Combo sayısı
-          totalLikeCount: data.totalLikeCount || data.likeCount || 1,
-          profilePic: data.profilePictureUrl || data.user?.avatarLarge || "",
+          userId,
+          username,
+          displayName: data.user?.nickname ?? data.nickname,
+          likeCount: data.likeCount ?? 1,
+          totalLikeCount: data.totalLikeCount ?? data.likeCount ?? 1,
+          profilePic: profilePicUrl,
+          profilePicBase64,
         },
         timestamp: Date.now(),
-      };
-      onEvent(event);
+      });
     });
 
-    // Gift event - handles streakable gifts
-    (connection as any).on("gift", (data: any) => {
-      // Only process gift when streak ends or it's a non-streakable gift
-      if (data.repeatEnd || !data.gift?.repeatable) {
-        const event: TikTokEvent = {
-          type: "gift",
-          data: {
-            userId: data.userId || data.user?.id,
-            username: data.uniqueId || data.user?.uniqueId,
-            displayName: data.nickname || data.user?.nickname,
-            giftId: data.giftId || data.gift?.id,
-            giftName: data.giftName || data.gift?.name,
-            giftCount: data.repeatCount || 1,
-            diamondCount: data.diamondCount || data.gift?.diamondCount || 0,
-            totalValue: (data.diamondCount || 0) * (data.repeatCount || 1),
-            profilePic: data.profilePictureUrl || data.user?.avatarLarge || "",
-          },
-          timestamp: Date.now(),
-        };
-        onEvent(event);
-      }
+    // === GIFT ===
+    // Only fire when streak ends (repeatEnd=1) or gift is non-streakable (giftType=1)
+    conn.on("gift" as any, async (data: any) => {
+      const giftType = data.giftDetails?.giftType ?? data.gift?.giftType ?? 1;
+      const repeatEnd = data.repeatEnd; // number: 1 = streak ended
+
+      // Skip mid-streak events (repeatable gifts streaming)
+      if (giftType !== 1 && repeatEnd !== 1) return;
+
+      const diamondCount = data.giftDetails?.diamondCount ?? data.gift?.diamondCount ?? data.diamondCount ?? 0;
+      const giftName = data.giftDetails?.giftName ?? data.gift?.giftName ?? data.giftName ?? "Unknown";
+      const repeatCount = data.repeatCount ?? data.comboCount ?? 1;
+
+      const userId = data.userId ?? data.user?.userId ?? data.uniqueId ?? "";
+      const username = data.uniqueId ?? data.user?.uniqueId ?? "";
+
+      // DEBUG: Her gift'te profil resmi logla
+      console.log('[TikTok Gift] profilePictureUrl:', data.profilePictureUrl, '| data.user?.profilePictureUrl:', data.user?.profilePictureUrl, '| data.userDetails?.profilePictureUrls:', data.userDetails?.profilePictureUrls);
+
+      // simplifyObject flatlıyor — propertyler hem data hem data.user'da olabilir
+      const profilePicUrl = data.profilePictureUrl ||
+                           extractProfilePicUrl(data.user) ||
+                           extractProfilePicUrl(data) ||
+                           "";
+
+      // Profil resmini Base64 olarak indir
+      const profilePicBase64 = await getProfileImage(userId, profilePicUrl);
+
+      onEvent({
+        type: "gift",
+        data: {
+          userId,
+          username,
+          displayName: data.user?.nickname ?? data.nickname,
+          giftId: data.giftId ?? data.giftDetails?.id,
+          giftName,
+          giftCount: repeatCount,
+          diamondCount,
+          totalValue: diamondCount * repeatCount,
+          profilePic: profilePicUrl,
+          profilePicBase64,
+        },
+        timestamp: Date.now(),
+      });
     });
 
-    // Comment event
-    (connection as any).on("comment", (data: any) => {
-      const event: TikTokEvent = {
+    // === CHAT (comment) — library emits "chat", not "comment" ===
+    conn.on("chat" as any, async (data: any) => {
+      const userId = data.user?.userId ?? data.userId;
+      const username = data.user?.uniqueId ?? data.uniqueId;
+      const profilePicUrl = extractProfilePicUrl(data.user);
+
+      // Profil resmini Base64 olarak indir
+      const profilePicBase64 = await getProfileImage(userId, profilePicUrl);
+
+      onEvent({
         type: "comment",
         data: {
-          userId: data.userId || data.user?.id,
-          username: data.uniqueId || data.user?.uniqueId,
-          displayName: data.nickname || data.user?.nickname,
-          comment: data.comment || data.text,
-          profilePic: data.profilePictureUrl || data.user?.avatarLarge || "",
+          userId,
+          username,
+          displayName: data.user?.nickname ?? data.nickname,
+          comment: data.comment ?? data.text ?? "",
+          profilePic: profilePicUrl,
+          profilePicBase64,
         },
         timestamp: Date.now(),
-      };
-      onEvent(event);
+      });
     });
 
-    // Error event
-    (connection as any).on("error", (error: any) => {
-      const event: TikTokEvent = {
-        type: "error",
-        data: {
-          message: error?.message || String(error),
-          code: error?.code || "unknown",
-        },
-        timestamp: Date.now(),
-      };
-      onEvent(event);
-      console.error(`[${sessionId}] TikTok hatası:`, error);
-    });
-
-    // Connect to TikTok Live
+    // === CONNECT ===
     try {
-      await connection.connect();
-      console.log(`[${sessionId}] TikTok Live bağlantısı başarılı`);
-    } catch (wsError) {
-      console.error(`[${sessionId}] TikTok WebSocket hatası:`, wsError);
-      throw wsError;
-    }
-  } catch (error) {
-    console.error(`[${sessionId}] TikTok bağlantı hatası:`, error);
+      await conn.connect();
+    } catch (error: any) {
+      console.error(`[${sessionId}] Bağlantı hatası:`, error?.message ?? error);
 
-    // FetchIsLiveError calls super() with no message — extract from .errors array
-    let message: string;
-    if (error instanceof Error && error.constructor.name === "FetchIsLiveError") {
-      const subErrors: Error[] = (error as any).errors ?? [];
-      const details = subErrors.map((e) => e.message).filter(Boolean).join(" | ");
-      message = details || "Kullanıcı canlı yayında değil veya TikTok'a erişilemiyor";
-    } else if (error instanceof Error && error.constructor.name === "UserOfflineError") {
-      message = "Kullanıcı şu anda canlı yayında değil";
-    } else if (error instanceof Error && error.message?.includes("Websocket connection failed")) {
-      message = "WebSocket bağlantısı başarısız. Lütfen kullanıcı adını kontrol edip tekrar deneyin. TikTok yayını aktif olmalıdır.";
-    } else if (error instanceof Error && error.message) {
-      message = error.message;
-    } else {
-      message = String(error) || "TikTok bağlantısı kurulamadı";
-    }
+      let message: string;
+      const name = error?.constructor?.name ?? "";
+      if (name === "FetchIsLiveError") {
+        const subErrors: Error[] = error.errors ?? [];
+        const details = subErrors.map((e: any) => e.message).filter(Boolean).join(" | ");
+        message = details || "Kullanıcı canlı yayında değil veya TikTok'a erişilemiyor";
+      } else if (name === "UserOfflineError") {
+        message = "Kullanıcı şu anda canlı yayında değil";
+      } else if (error?.message?.includes("Websocket connection failed")) {
+        message = "WebSocket bağlantısı başarısız. TikTok yayını aktif olmalıdır.";
+      } else {
+        message = error?.message ?? String(error) ?? "TikTok bağlantısı kurulamadı";
+      }
 
-    const event: TikTokEvent = {
-      type: "error",
-      data: { message },
-      timestamp: Date.now(),
-    };
-    onEvent(event);
-    throw new Error(message);
+      onEvent({ type: "error", data: { message }, timestamp: Date.now() });
+      throw new Error(message);
+    }
   }
+
+  // Cleanup on stop
+  eventEmitter.once("cleanup", () => {
+    const current = connections.get(sessionId);
+    if (current?.reconnectTimer) clearTimeout(current.reconnectTimer);
+  });
+
+  await connect();
 }
 
 /**
  * Stop TikTok Live connection for a session
- * @param sessionId - Unique session identifier
  */
 export async function stopTikTokConnection(sessionId: string): Promise<void> {
   const manager = connections.get(sessionId);
   if (manager) {
-    // Stop demo mode mock events
+    if (manager.reconnectTimer) clearTimeout(manager.reconnectTimer);
     manager.isConnected = false;
     manager.eventEmitter.emit("cleanup");
 
@@ -287,42 +334,24 @@ export async function stopTikTokConnection(sessionId: string): Promise<void> {
       try {
         await manager.connection.disconnect();
         console.log(`[${sessionId}] TikTok bağlantısı kapatıldı`);
-      } catch (error) {
-        console.error(`[${sessionId}] TikTok bağlantı kapatma hatası:`, error);
+      } catch {
+        // ignore disconnect errors
       }
     }
   }
   connections.delete(sessionId);
 }
 
-/**
- * Check if a session has an active TikTok connection
- * @param sessionId - Unique session identifier
- */
 export function isConnected(sessionId: string): boolean {
-  const manager = connections.get(sessionId);
-  return manager?.isConnected || false;
+  return connections.get(sessionId)?.isConnected ?? false;
 }
 
-/**
- * Get connection status for a session
- * @param sessionId - Unique session identifier
- */
 export function getConnectionStatus(sessionId: string) {
   const manager = connections.get(sessionId);
-  return {
-    connected: manager?.isConnected || false,
-    exists: !!manager,
-  };
+  return { connected: manager?.isConnected ?? false, exists: !!manager };
 }
 
-/**
- * Cleanup all connections (useful for graceful shutdown)
- */
 export async function cleanupAllConnections(): Promise<void> {
-  const promises = Array.from(connections.keys()).map((sessionId) =>
-    stopTikTokConnection(sessionId)
-  );
-  await Promise.all(promises);
+  await Promise.all(Array.from(connections.keys()).map((id) => stopTikTokConnection(id)));
   console.log("Tüm TikTok bağlantıları kapatıldı");
 }

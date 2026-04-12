@@ -18,6 +18,7 @@ import { initializeTelegramBot } from "../telegram-bot";
 import { licenses as licensesTable, gameHistory, sessions, licenseLogs, appSettings, webhooks, notificationLog } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { eq, desc, and, sql, like, or } from "drizzle-orm";
+import { getAllGifts, updateGiftQuality } from "../gift-manager";
 
 // Middleware to require admin auth on REST endpoints
 async function requireAdmin(req: any, res: any, next: any) {
@@ -118,6 +119,68 @@ async function startServer() {
     }
   });
 
+  // TikTok profil resmini getir (username'den) - proxy ile
+  app.get("/api/tiktok-profile-pic", async (req, res) => {
+    const { username } = req.query;
+    if (!username || typeof username !== 'string') {
+      return res.status(400).json({ error: 'Missing username parameter' });
+    }
+
+    try {
+      const cleanUsername = username.replace(/^@/, '');
+
+      // HTTPS proxy kullanarak TikTok'a eriş (proxy-cheap-server gibi)
+      const proxyHost = 'https://proxy.smartproxy.com:1000'; // örnek proxy
+      const tiktokUrl = 'https://www.tiktok.com/@' + cleanUsername;
+
+      // Proxy olmadan direkt fetch (CORS bypass için proxy header)
+      const response = await fetch(tiktokUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+        }
+      });
+
+      if (!response.ok) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const html = await response.text();
+
+      // HTML'den profil resmi URL'sini çıkar (tiktokcdn.com)
+      const imgMatch = html.match(/(https:\/\/[a-z0-9\-\.]*tiktokcdn\.com\/[a-zA-Z0-9\-_\/\.]+\.(jpg|jpeg|png|webp))/);
+
+      if (imgMatch) {
+        const picUrl = imgMatch[1];
+
+        // Resmi proxy ile döndür
+        const imgResponse = await fetch(picUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+            'Referer': tiktokUrl
+          }
+        });
+
+        if (imgResponse.ok) {
+          const buffer = await imgResponse.arrayBuffer();
+          res.setHeader('Content-Type', imgResponse.headers.get('content-type') || 'image/jpeg');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          res.send(Buffer.from(buffer));
+        } else {
+          res.status(404).json({ error: 'Profile image not found' });
+        }
+      } else {
+        res.status(404).json({ error: 'Profile image URL not found in page' });
+      }
+    } catch (error) {
+      console.error('TikTok profile pic error:', error);
+      res.status(500).json({ error: 'Failed to fetch TikTok profile' });
+    }
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // Admin JWT auth routes: /api/admin/login, /api/admin/logout, /api/admin/me
@@ -139,15 +202,18 @@ async function startServer() {
   app.patch('/api/licenses/:id', requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { licenseKey, username, expiresAt, usageCount, permissions, packageId } = req.body;
-      const result = await licenseManager.updateLicense(id, {
-        licenseKey,
-        username,
-        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
-        usageCount,
-        permissions,
-        packageId
-      });
+      const { licenseKey, username, tiktokUsername, expiresAt, usageCount, permissions, packageId } = req.body;
+
+      const updateData: Record<string, unknown> = {};
+      if (licenseKey !== undefined) updateData.licenseKey = licenseKey;
+      if (username !== undefined) updateData.username = username;
+      if (tiktokUsername !== undefined) updateData.tiktokUsername = tiktokUsername;
+      if (expiresAt !== undefined) updateData.expiresAt = new Date(expiresAt);
+      if (usageCount !== undefined) updateData.usageCount = usageCount;
+      if (permissions !== undefined) updateData.permissions = permissions;
+      if (packageId !== undefined) updateData.packageId = packageId;
+
+      const result = await licenseManager.updateLicense(id, updateData as any);
       res.json(result);
     } catch (err) {
       console.error('Error updating license:', err);
@@ -650,6 +716,29 @@ async function startServer() {
   // ═══════════════════════════════════════════════════════════════════════════════════════
 
   /**
+   * GET /api/gifts/public - List gifts without auth (for game screen settings)
+   */
+  app.get("/api/gifts/public", async (req, res) => {
+    try {
+      const { search, minCost, maxCost, quality, limit, offset } = req.query;
+
+      const result = await getAllGifts({
+        search: search as string,
+        minCost: minCost ? Number(minCost) : undefined,
+        maxCost: maxCost ? Number(maxCost) : undefined,
+        quality: quality as "bronze" | "silver" | "gold" | "elite" | undefined,
+        limit: limit ? Number(limit) : 500,
+        offset: offset ? Number(offset) : 0,
+      });
+
+      res.json(result);
+    } catch (err) {
+      console.error("Error getting gifts (public):", err);
+      res.status(500).json({ error: "Failed to get gifts" });
+    }
+  });
+
+  /**
    * GET /api/gifts - List all gifts with filtering
    */
   app.get("/api/gifts", requireAdmin, async (req, res) => {
@@ -678,7 +767,6 @@ async function startServer() {
    */
   app.patch("/api/gifts/:id", requireAdmin, async (req, res) => {
     try {
-      const { updateGiftQuality } = await import("../gift-manager");
       const { id } = req.params;
       const { cardQuality } = req.body;
 
@@ -732,6 +820,66 @@ async function startServer() {
     } catch (err) {
       console.error("Update session gifts error:", err);
       res.status(500).json({ error: "Failed to update session gifts" });
+    }
+  });
+
+  /**
+   * GET /api/public/gifts - Public endpoint for listing gifts (read-only, no auth required)
+   * Used by game-screen.html for the gift gallery demo feature
+   */
+  app.get("/api/public/gifts", async (req, res) => {
+    const { search, minCost, maxCost, quality, limit, offset } = req.query;
+
+    const getQuality = (cost: number): string => {
+      if (cost >= 200) return "elite";
+      if (cost >= 50) return "gold";
+      if (cost >= 10) return "silver";
+      return "bronze";
+    };
+
+    const serveFromJson = () => {
+      const giftsDbPath = path.resolve(import.meta.dirname, "../../gifts-db.json");
+      const raw = JSON.parse(fs.readFileSync(giftsDbPath, "utf-8")) as Record<string, { id: number; name: string; image: string; diamondCost: number }>;
+      let items = Object.values(raw).map(g => ({
+        id: g.id,
+        giftName: g.name || `Gift #${g.id}`,
+        image: g.image,
+        diamondCost: g.diamondCost,
+        cardQuality: getQuality(g.diamondCost),
+      }));
+      if (search) items = items.filter(g => g.giftName.toLowerCase().includes((search as string).toLowerCase()));
+      if (minCost) items = items.filter(g => g.diamondCost >= Number(minCost));
+      if (maxCost) items = items.filter(g => g.diamondCost <= Number(maxCost));
+      if (quality) items = items.filter(g => g.cardQuality === quality);
+      items.sort((a, b) => b.diamondCost - a.diamondCost);
+      const lim = limit ? Number(limit) : 500;
+      const off = offset ? Number(offset) : 0;
+      return { gifts: items.slice(off, off + lim), total: items.length, limit: lim, offset: off };
+    };
+
+    try {
+      const { getAllGifts } = await import("../gift-manager");
+      const result = await getAllGifts({
+        search: search as string,
+        minCost: minCost ? Number(minCost) : undefined,
+        maxCost: maxCost ? Number(maxCost) : undefined,
+        quality: quality as any,
+        limit: limit ? Number(limit) : 500,
+        offset: offset ? Number(offset) : 0,
+      });
+
+      if (result.gifts.length > 0) {
+        return res.json(result);
+      }
+    } catch (err) {
+      console.warn("[Gifts] DB sorgusu başarısız, gifts-db.json'a düşülüyor:", (err as Error).message);
+    }
+
+    try {
+      res.json(serveFromJson());
+    } catch (err) {
+      console.error("Error getting public gifts:", err);
+      res.status(500).json({ error: "Failed to get gifts" });
     }
   });
 
