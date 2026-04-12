@@ -394,11 +394,6 @@ export default function Home() {
           <span className="hp-footer-logo">Kadrokur</span>
         </div>
         <div className="hp-footer-links">
-          <a href="/broadcaster" className="hp-footer-link">Yayıncı Paneli</a>
-          <a href="/game-screen.html" target="_blank" rel="noopener noreferrer" className="hp-footer-link">Oyun Ekranı</a>
-          <a href="/licensepanel" className="hp-footer-link">Lisans Paneli</a>
-          <a href="https://t.me/luanamobile" target="_blank" rel="noopener noreferrer" className="hp-footer-link">Telegram</a>
-          <a href="https://luanawork.com" target="_blank" rel="noopener noreferrer" className="hp-footer-link">luanawork.com</a>
         </div>
         <div className="hp-footer-copy">© 2026 Kadrokur · TikTok Live Futbol Kartları Oyunu</div>
       </footer>
