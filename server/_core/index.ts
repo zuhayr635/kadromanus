@@ -78,13 +78,8 @@ async function startServer() {
       return res.redirect("/admin-login.html");
     }
 
-    // In production, dist/index.js is in /app/dist, so we need to go up to /app first
-    const isProduction = process.env.NODE_ENV === "production";
-    const filePath = path.resolve(
-      import.meta.dirname,
-      isProduction ? "../.." : "../../..",  // Production: /app/dist -> /app, Dev: /app/dist/server -> /app
-      "client/public/license-panel.html"
-    );
+    // import.meta.dirname = /app/dist in production → go up one level to /app
+    const filePath = path.resolve(import.meta.dirname, "..", "client", "public", "license-panel.html");
     if (fs.existsSync(filePath)) {
       res.sendFile(filePath);
     } else {
