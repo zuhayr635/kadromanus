@@ -2203,6 +2203,14 @@ playSound=function(type){
 
 // Demo winner screen test
 if(new URLSearchParams(location.search).has('demo_end')){
+  // GS.teams mock data oluştur
+  GS.teams=[
+    {name:'Fenerbahçe',players:[{name:'Oğuz',overall:85},{name:'Arda',overall:82},{name:'Semih',overall:79},{name:'Mert',overall:76},{name:'Emre',overall:74},{name:'Can',overall:71},{name:'Kerem',overall:68},{name:'Tolga',overall:65},{name:'Yusuf',overall:62},{name:'Ali',overall:59},{name:'Veli',overall:56},{name:'Burak',overall:53}]},
+    {name:'Galatasaray',players:[{name:'Batur',overall:84},{name:'Cenk',overall:81},{name:'Sadio',overall:78},{name:'Nicolas',overall:75},{name:'Mauro',overall:72},{name:'Sofiane',overall:69},{name:'Dusan',overall:66},{name:'Christian',overall:63},{name:'Ryan',overall:60},{name:'Victor',overall:57},{name:'Fred',overall:54}]},
+    {name:'Beşiktaş',players:[{name:'Rıdvan',overall:83},{name:'Cyle',overall:80},{name:'Jackson',overall:77},{name:'Nathan',overall:74},{name:'Gedson',overall:71},{name:'Arthur',overall:68},{name:'Tomas',overall:65},{name:'Valentin',overall:62},{name:'Racine',overall:59},{name:'Milan',overall:56},{name:'Salih',overall:53}]},
+    {name:'Trabzonspor',players:[{name:'Bakasetas',overall:82},{name:'Abdülkadir',overall:79},{name:'Enes',overall:76},{name:'Florian',overall:73},{name:'Marius',overall:70},{name:'Andreas',overall:67},{name:'Max',overall:64},{name:'Paul',overall:61},{name:'Lewis',overall:58},{name:'Oliver',overall:55},{name:'Chris',overall:52}]}
+  ];
+
   setTimeout(()=>{
     handleGameEnd({
       winner:{teamName:'Fenerbahçe',score:150},
@@ -2213,7 +2221,7 @@ if(new URLSearchParams(location.search).has('demo_end')){
         {teamName:'Trabzonspor',score:95,players:9}
       ]
     });
-  },1000);
+  },500);
 }
 
 connectSocket();
