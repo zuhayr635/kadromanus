@@ -502,11 +502,7 @@ class SocketServer {
         break;
       }
       case "comment": {
-        // Altyapı kurulu; !1-!4 parsing hazır ama UI bağlantısı sonraki sprint
-        const comment = event.data.comment as string;
-        if (/^![1-4]$/.test(comment)) {
-          // TODO: auto-mod aktifse teamId bu komuttan alınacak
-        }
+        // Comment event handling disabled (auto mode removed)
         break;
       }
       case "connected":
@@ -524,6 +520,7 @@ class SocketServer {
   }
 
   // En az oyuncuya sahip takım indeksini döndürür (round-robin denge)
+  // Not: Auto mode removed - currently unused
   private getLeastFilledTeamId(gameState: GameState): number {
     return gameState.teams.reduce(
       (minIdx, team, i, arr) =>

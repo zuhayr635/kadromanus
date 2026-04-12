@@ -56,7 +56,7 @@
 - ✅ Puppeteer Screenshot: Implemented (`screenshot-service.ts` generates HTML, takes screenshot, sends to Telegram)
 - ✅ Admin JWT Auth: Implemented (`admin-auth.ts` with sign/verify + cookie management)
 - ✅ Demo Mode: Auto-fallback when TikTok connection fails (sends mock gifts/likes every 3-5s)
-- ⚠️ Auto Mode (!1-!4): Parsing ready at `socket-server.ts:383`, UI connection pending
+- ❌ Auto Mode (!1-!4): Removed - only Manual mode is supported
 - Turkish language preferred in UI/communications
 
 ## Testing
@@ -75,8 +75,7 @@
 - Card tiers: Bronze(10p), Silver(25p), Gold(50p), Elite(100p)
 - 100 likes = 1 auto Bronze card (configurable via `setLikeThreshold`)
 - TikTok gifts map to card tiers via diamond count (silver≥10, gold≥50, elite≥200)
-- Manual mode: broadcaster selects team via button
-- Auto mode: viewers use `!1`-`!4` chat commands (parsing ready, UI pending)
+- Manual mode: broadcaster selects team via button (only supported mode)
 
 ## Static HTML Pages (OBS browser sources)
 - `client/src/pages/BroadcasterPanel.tsx` - Game control (React app, NOT static HTML)
@@ -93,7 +92,7 @@
 - `server/` içindeki `.mjs` dosyaları (30+) seed/migration scriptleridir — oyun kodu değil, dokunma
 - `pnpm` zorunlu — npm/yarn kullanma (lockfile uyumsuzluğu yaratır)
 - Demo mode: TikTok bağlantısı başarısız olursa otomatik devreye girer (her 3-5s mock gift/like)
-- Auto Mode (`!1`-`!4`): Parser hazır (`socket-server.ts:383`), UI bağlantısı henüz eksik
+- Auto Mode kaldırıldı — sadece Manual mode destekleniyor
 - `broadcaster-panel.html` artık yok — React sayfası `BroadcasterPanel.tsx` kullanılıyor
 
 ## Missing Features (Low Priority)

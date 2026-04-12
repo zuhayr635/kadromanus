@@ -9,7 +9,8 @@ export default function BroadcasterPanel() {
   const [tiktokUsername, setTiktokUsername] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionActive, setSessionActive] = useState(false);
-  const [teamSelectionMode, setTeamSelectionMode] = useState<'manual' | 'automatic'>('manual');
+  // Auto mode removed - always manual mode
+  const teamSelectionMode = 'manual' as const;
   const [teamNames, setTeamNames] = useState(['Takım 1', 'Takım 2', 'Takım 3', 'Takım 4']);
   const [stats, setStats] = useState({
     cardsOpened: 0,
@@ -325,7 +326,7 @@ export default function BroadcasterPanel() {
       const result = await createSessionMutation.mutateAsync({
         licenseKey,
         tiktokUsername: tiktokUsername || licenseInfo.broadcasterName || '',
-        teamSelectionMode: teamSelectionMode === 'automatic' ? 'automatic' : 'manual',
+        teamSelectionMode: 'manual', // Auto mode removed
         teamNames,
       });
 
