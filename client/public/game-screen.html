@@ -275,19 +275,50 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .rays{position:absolute;top:50%;left:50%;width:0;height:0}
 .ray{position:absolute;width:3px;height:300px;transform-origin:top center;background:linear-gradient(to bottom,var(--accent-yellow),transparent)}
 
-.go-ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.96);display:none;align-items:center;justify-content:center}
+.go-ov{position:fixed;inset:0;z-index:500;background:linear-gradient(135deg,rgba(10,10,10,.98) 0%,rgba(30,30,30,.98) 100%);display:none;align-items:center;justify-content:center}
 .go-ov.on{display:flex}
-.go-box{text-align:center;max-width:700px;width:95%}
-.go-title{font-family:'Anton',sans-serif;font-size:2.5rem;color:var(--accent-red);letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;-webkit-text-stroke:2px var(--ink)}
-.go-sub{font-size:.75rem;color:rgba(255,255,255,.4);letter-spacing:4px;text-transform:uppercase;margin-bottom:20px}
+.go-box{text-align:center;max-width:900px;width:95%;position:relative}
 
-.winner-box{background:var(--accent-red);border:4px solid var(--ink);padding:20px;margin-bottom:20px;clip-path:polygon(0 0,calc(100% - 24px) 0,100% 24px,100% 100%,24px 100%,0 calc(100% - 24px))}
-.w-crown{font-size:2rem;display:block;margin-bottom:8px}
-.w-lbl{font-size:.6rem;color:rgba(0,0,0,.5);letter-spacing:3px}
-.w-nm{font-family:'Anton',sans-serif;font-size:1.8rem;color:var(--ink);margin-bottom:4px}
-.w-pw{font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--ink)}
+/* LUANAWORK.COM Watermark - minimal overlay */
+.go-watermark{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.15);letter-spacing:3px;text-transform:uppercase;pointer-events:none;z-index:10}
 
-.ranks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.go-title{font-family:'Anton',sans-serif;font-size:2.2rem;color:var(--accent-red);letter-spacing:4px;text-transform:uppercase;margin-bottom:20px;-webkit-text-stroke:2px var(--ink);opacity:0;animation:fadeInDown .8s ease-out .2s forwards}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:translateY(0)}}
+
+.go-sub{font-size:.7rem;color:rgba(255,255,255,.35);letter-spacing:4px;text-transform:uppercase;margin-bottom:30px;opacity:0;animation:fadeInUp .6s ease-out .3s forwards}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* FIFA Tarzı Kart Sıralama */
+.team-ranks{display:flex;gap:12px;align-items:flex-end;justify-content:center;margin-bottom:24px;perspective:1000px;min-height:160px}
+
+.team-card{width:85px;height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid;background:linear-gradient(135deg,#1a1a1a,#2a2a2a);position:relative;transform-style:preserve-3d;animation:cardFlipIn .8s cubic-bezier(.34,1.56,.64,1) backwards;cursor:default;transition:transform .3s}
+.team-card:hover{transform:rotateY(0) scale(1.05)}
+@keyframes cardFlipIn{0%{transform:rotateY(180deg) scale(.3);opacity:0}60%{transform:rotateY(0) scale(1.05);opacity:1}100%{transform:rotateY(0) scale(1);opacity:1}}
+
+.team-card.rank1{border-color:#ffc72c;background:linear-gradient(135deg,#ffc72c11,#ffc72c33);box-shadow:0 0 30px rgba(212,175,55,.4),0 10px 40px rgba(0,0,0,.5);z-index:10;animation-delay:0s;transform:scale(1.15)}
+.team-card.rank2{border-color:#c0c0c0;background:linear-gradient(135deg,#c0c0c011,#c0c0c033);animation-delay:.2s}
+.team-card.rank3{border-color:#cd7f32;background:linear-gradient(135deg,#cd7f3211,#cd7f3233);animation-delay:.35s}
+.team-card.rank4{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.03);animation-delay:.5s}
+
+.team-icon{width:28px;height:28px;margin-bottom:8px;opacity:0;animation:iconFadeIn .5s ease-out .6s forwards}
+@keyframes iconFadeIn{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+
+.team-name{font-family:'Anton',sans-serif;font-size:.9rem;color:#f4f1ea;text-transform:uppercase;letter-spacing:1px;font-weight:600;text-align:center;line-height:1.1;padding:0 4px}
+.team-card.rank1 .team-name{color:#ffc72c;font-size:1.1rem}
+
+.team-score{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:#ffc72c;margin-top:4px;opacity:0;animation:scoreFadeIn .4s ease-out .7s forwards;font-weight:600}
+.team-card.rank2 .team-score,.team-card.rank3 .team-score,.team-card.rank4 .team-score{color:rgba(255,255,255,.5)}
+@keyframes scoreFadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* Winner highlight */
+.winner-highlight{position:absolute;top:-15px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#e31c23,#ffc72c);padding:6px 16px;font-size:.7rem;font-weight:bold;color:#0a0a0a;letter-spacing:2px;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);animation:highlightPulse 1.5s ease-in-out infinite;opacity:0;animation-delay:1s}
+@keyframes highlightPulse{0%,100%{box-shadow:0 0 10px rgba(227,28,35,.6)}50%{box-shadow:0 0 25px rgba(227,28,35,1),0 0 40px rgba(255,199,44,.5)}}
+
+/* SVG Icons */
+.icon-crown,.icon-trophy,.icon-medal{width:100%;height:100%}
+
+/* Legacy styles - still used for bottom ranking display */
+.ranks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px;opacity:0;animation:fadeInUp .6s ease-out 1.2s forwards}
 .rk{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:10px;text-align:left}
 .rk.r1{border-color:var(--accent-yellow);background:rgba(212,175,55,.1)}
 .rk.r2{border-color:#C0C0C0}
@@ -572,14 +603,21 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   </div>
 </div>
   <div class="go-box">
+    <div class="go-watermark">LUANAWORK.COM</div>
     <div class="go-title">OYUN SONA ERDİ</div>
     <div class="go-sub">FİNAL SONUÇLARI</div>
-    <div class="winner-box">
-      <span class="w-crown">👑</span>
-      <div class="w-lbl">KAZANAN</div>
-      <div class="w-nm" id="wNm">-</div>
-      <div class="w-pw" id="wPw">⚡ 0</div>
+
+    <!-- FIFA Tarzı Kart Sıralama -->
+    <div class="team-ranks" id="teamRanksEl"></div>
+
+    <!-- Winner highlight -->
+    <div style="font-size:1rem;color:#ffc72c;letter-spacing:3px;text-transform:uppercase;margin:16px 0;opacity:0;animation:fadeInUp .5s ease-out 1s forwards">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:8px">
+        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+      </svg>
+      Kazanan
     </div>
+
     <div class="ranks" id="ranksEl"></div>
     <div class="best-title">⭐ EN İYİ 5 KART</div>
     <div class="best-grid" id="bestEl"></div>
@@ -1549,16 +1587,44 @@ function updateHeader(){
 function handleGameEnd(data){
   const sorted=[...data.finalScores].sort((a,b)=>b.score-a.score);
   const w=data.winner||sorted[0];
-  document.getElementById('wNm').textContent=w.teamName;
-  document.getElementById('wPw').textContent='⚡ PUAN: '+w.score;
+
+  // FIFA Tarzı Kart Sıralaması oluştur
+  const teamRanksEl=document.getElementById('teamRanksEl');
+  teamRanksEl.innerHTML='';
+
+  const rankIcons=['🥇','🥈','🥉','4️⃣'];
+  const svgIcons=[
+    // Gold Medal
+    '<svg viewBox="0 0 24 24" class="icon-crown"><path fill="#ffc72c" d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>',
+    // Silver Medal
+    '<svg viewBox="0 0 24 24" class="icon-medal"><path fill="#c0c0c0" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>',
+    // Bronze Medal
+    '<svg viewBox="0 0 24 24" class="icon-medal"><path fill="#cd7f32" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>',
+    // Trophy icon
+    '<svg viewBox="0 0 24 24" class="icon-trophy"><path fill="rgba(255,255,255,.3)" d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v-2h5v-3c1.63-.33 2.98-1.46 3.61-2.96C18.08 12.63 20 10.55 20 8V7c0-1.1-.9-2-2-2zM5 8V7c0-.55.45-1 1-1h1c.55 0 1 .45 1 1v1c0 1.65 1.35 3 3 3s3-1.35 3-3v-1c0-.55.45-1 1-1h1c.55 0 1-.45 1-1V7zm14 0V7c0-.55-.45-1-1-1h-1c-.55 0-1 .45-1 1v1c0 1.65-1.35 3-3 3s-3-1.35-3-3v-1c0-.55-.45-1-1-1h-1c-.55 0-1 .45-1 1v1c0 2.55-1.92 4.63-4.39 4.94z"/></svg>'
+  ];
+
+  sorted.forEach((tp,i)=>{
+    const d=document.createElement('div');
+    d.className='team-card rank'+(i+1);
+    d.innerHTML=`
+      <div class="team-icon">${svgIcons[i]}</div>
+      <div class="team-name">${tp.teamName.substring(0,10)}</div>
+      <div class="team-score">⚡${tp.score}</div>
+      ${i===0?'<div class="winner-highlight">KAZANAN</div>':''}
+    `;
+    teamRanksEl.appendChild(d);
+  });
+
+  // Legacy alt sıralama
   const rEl=document.getElementById('ranksEl');rEl.innerHTML='';
-  ['🥇','🥈','🥉','4️⃣'].forEach((em,i)=>{
-    if(!sorted[i])return;
-    const tp=sorted[i];
+  sorted.forEach((tp,i)=>{
     const d=document.createElement('div');d.className='rk r'+(i+1);
-    d.innerHTML='<span class="rk-em">'+em+'</span><div class="rk-nm">'+tp.teamName+'</div><div class="rk-pw">⚡'+tp.score+'</div><div class="rk-cnt">'+tp.players+'/11</div>';
+    d.innerHTML='<span class="rk-em">'+rankIcons[i]+'</span><div class="rk-nm">'+tp.teamName+'</div><div class="rk-pw">⚡'+tp.score+'</div><div class="rk-cnt">'+tp.players+'/11</div>';
     rEl.appendChild(d);
   });
+
+  // En iyi 5 kart
   const allP=GS.teams.flatMap(t=>(t.players||[]).map(p=>({...p,teamName:t.name})));
   allP.sort((a,b)=>(b.overall||0)-(a.overall||0));
   const bEl=document.getElementById('bestEl');bEl.innerHTML='';
@@ -1567,7 +1633,9 @@ function handleGameEnd(data){
     d.innerHTML='<div class="bi-r">'+(p.overall||'??')+'</div><div class="bi-n">'+p.name+'</div><div class="bi-t">'+p.teamName+'</div>';
     bEl.appendChild(d);
   });
-  playSound('winner');spawnCnf('elite');
+
+  playSound('winner');
+  spawnCnf('elite');
   setTimeout(()=>spawnCnf('gold'),400);
   setTimeout(()=>spawnCnf('silver'),800);
   document.getElementById('goOv').classList.add('on');
