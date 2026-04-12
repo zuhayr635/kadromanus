@@ -3,14 +3,23 @@ import * as tiktokIntegration from "./tiktok-integration";
 
 // Mock the tiktok-live-connector module
 vi.mock("tiktok-live-connector", () => {
-  const mockConnection = {
-    on: vi.fn(),
-    connect: vi.fn().mockResolvedValue(undefined),
-    disconnect: vi.fn().mockResolvedValue(undefined),
-  };
+  class MockWebcastPushConnection {
+    on(event: string, callback: Function) {
+      return this;
+    }
+    connect() {
+      return Promise.resolve();
+    }
+    disconnect() {
+      return Promise.resolve();
+    }
+  }
 
   return {
-    TikTokLiveConnection: vi.fn(() => mockConnection),
+    WebcastPushConnection: MockWebcastPushConnection,
+    SignConfig: {
+      apiKey: undefined
+    }
   };
 });
 
