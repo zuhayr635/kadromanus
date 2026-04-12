@@ -59,12 +59,14 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath =
-    process.env.NODE_ENV === "development"
-      ? path.resolve(import.meta.dirname, "../..", "dist", "public")
-      : path.resolve(import.meta.dirname, "..", "public");
+  // In production: import.meta.dirname = /app/dist (esbuild output)
+  // dist/public  → /app/dist/public
+  // client/public → /app/client/public
+  const distPath = path.resolve(import.meta.dirname, "public");
+  const clientPublicPath = path.resolve(import.meta.dirname, "..", "client", "public");
 
-  const clientPublicPath = path.resolve(import.meta.dirname, "../..", "client", "public");
+  console.log(`[Static] distPath: ${distPath}`);
+  console.log(`[Static] clientPublicPath: ${clientPublicPath}`);
 
   if (!fs.existsSync(distPath)) {
     console.error(
@@ -74,9 +76,11 @@ export function serveStatic(app: Express) {
 
   // Serve client/public static files first (admin-login.html, game-screen.html, etc.)
   if (fs.existsSync(clientPublicPath)) {
+    console.log(`[Static] Serving client/public from: ${clientPublicPath}`);
     app.use(express.static(clientPublicPath));
   }
 
+  console.log(`[Static] Serving dist/public from: ${distPath}`);
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
