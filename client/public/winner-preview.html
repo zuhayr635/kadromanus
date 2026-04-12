@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Winner Screen Preview</title>
+<style>
+body{margin:0;background:#0a0a0a;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif}
+button{padding:16px 40px;background:#e31c23;color:#fff;border:none;font-size:18px;font-weight:bold;cursor:pointer;letter-spacing:2px;text-transform:uppercase}
+button:hover{background:#ffc72c;color:#0a0a0a}
+</style>
+</head>
+<body>
+<button onclick="preview()">WINNER SCREEN'İ TEST ET</button>
+<script>
+function preview(){
+  // game-screen.html'yi iframe olarak açıp handleGameEnd'i tetikle
+  const w = window.open('game-screen.html','_blank','width=1280,height=720');
+  // Socket bağlantısı olmadan test için query param
+  const url = new URL('game-screen.html', window.location.href);
+  url.searchParams.set('demo_end', '1');
+  window.open(url.toString(), '_blank', 'width=1280,height=720');
+}
+</script>
+</body>
+</html>

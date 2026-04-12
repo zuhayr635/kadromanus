@@ -33,6 +33,23 @@
         "COOLIFY_BASE_URL": "https://panelc.luanawork.com",
         "COOLIFY_ACCESS_TOKEN": "3|HPhUiMoAF2f4I2KS6Hb67GUnN8LHb09M5AgiopkBdda46a9e"
       }
+    },
+    "coolify-panel": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@masonator/coolify-mcp"],
+      "env": {
+        "COOLIFY_BASE_URL": "https://panelc.luanawork.com",
+        "COOLIFY_ACCESS_TOKEN": "3|HPhUiMoAF2f4I2KS6Hb67GUnN8LHb09M5AgiopkBdda46a9e"
+      }
+    },
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+      }
     }
   }
 }

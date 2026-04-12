@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Kadrokur — Kazanan Ekran Seçenekleri</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#f4f1ea;font-family:sans-serif;display:grid;grid-template-columns:1fr 1fr;height:100vh;overflow:hidden;gap:2px}
+.mockup{position:relative;overflow:hidden;background:#1a1a1a;border:2px solid #333;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;text-align:center;cursor:pointer;transition:border-color .3s}
+.mockup:hover{border-color:#e31c23}
+.mockup.selected{border-color:#ffc72c;border-width:4px}
+.lbl{position:absolute;top:10px;left:10px;background:#e31c23;color:#fff;padding:4px 10px;font-size:11px;font-weight:bold;z-index:10;font-family:monospace}
+.info{position:absolute;bottom:10px;font-size:11px;color:rgba(255,255,255,0.4);font-family:monospace}
+/* A */
+.a-crown{font-size:64px;animation:bounce 0.8s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+.a-name{font-size:42px;font-weight:bold;color:#ffc72c;text-transform:uppercase;letter-spacing:4px;text-shadow:0 0 30px rgba(255,199,44,.9),0 0 60px rgba(255,199,44,.5);margin:15px 0;animation:textPulse 1.5s ease-in-out infinite}
+@keyframes textPulse{0%,100%{letter-spacing:4px}50%{letter-spacing:6px}}
+.a-score{font-size:28px;color:#e31c23}
+.a-sub{font-size:13px;color:rgba(255,255,255,.5);margin-top:8px}
+.cnf{position:absolute;width:8px;height:8px;animation:fall linear forwards}
+@keyframes fall{from{transform:translateY(-50px) rotate(0);opacity:1}to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+/* B */
+#mb{background:linear-gradient(135deg,#1a1a2e 0%,#0d0d1a 100%)}
+.b-outer{animation:lolReveal 1.5s ease-out}
+@keyframes lolReveal{0%{opacity:0;filter:blur(20px);transform:scale(.3)}60%{opacity:1;filter:blur(0);transform:scale(1.1)}100%{transform:scale(1)}}
+.b-box{background:linear-gradient(135deg,#e31c23,#ffc72c);padding:24px 48px;animation:glow 1.5s ease-in-out infinite;margin:16px 0}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(227,28,35,.6)}50%{box-shadow:0 0 50px rgba(227,28,35,1),0 0 80px rgba(255,199,44,.5)}}
+.b-name{font-size:38px;font-weight:bold;color:#0a0a0a;text-transform:uppercase;letter-spacing:3px}
+.b-tag{font-size:13px;color:#00a651;letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;animation:blink 1s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.b-score{font-size:20px;color:#ffc72c;margin-top:12px}
+.bpart{position:absolute;width:4px;height:4px;border-radius:50%;background:#ffc72c;animation:floatUp 2s ease-out forwards}
+@keyframes floatUp{from{opacity:1;transform:translateY(0) translateX(0)}to{opacity:0;transform:translateY(-200px) translateX(40px)}}
+/* C */
+#mc{background:linear-gradient(to bottom,#111 0%,#222 100%)}
+.c-cards{display:flex;gap:12px;align-items:flex-end;justify-content:center;margin-bottom:16px}
+.c-card{width:80px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid;font-weight:bold;position:relative;animation:cardReveal .6s cubic-bezier(.68,-.55,.265,1.55) backwards}
+@keyframes cardReveal{0%{transform:rotateY(180deg) scale(0);opacity:0}100%{transform:rotateY(0) scale(1);opacity:1}}
+.c-card.p1{background:linear-gradient(135deg,#ffc72c,#e31c23);border-color:#ffc72c;transform:scale(1.2);box-shadow:0 10px 40px rgba(255,199,44,.6);animation-delay:0s;z-index:10}
+.c-card.p2{background:linear-gradient(135deg,#aaa,#666);border-color:#ccc;animation-delay:.2s}
+.c-card.p3{background:linear-gradient(135deg,#cd7f32,#a0522d);border-color:#cd7f32;animation-delay:.3s}
+.c-card.p4{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.2);animation-delay:.4s}
+.c-rank{font-size:22px}
+.c-cname{font-size:8px;color:#0a0a0a;text-transform:uppercase;position:absolute;bottom:4px;font-weight:bold}
+.c-card.p4 .c-cname{color:rgba(255,255,255,.6)}
+.c-winner-txt{font-size:20px;font-weight:bold;color:#ffc72c;text-transform:uppercase;letter-spacing:2px;animation:rankBounce .8s ease-in-out infinite}
+@keyframes rankBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.c-sub{font-size:13px;color:rgba(255,255,255,.5);margin-top:6px}
+/* D */
+#md{background:#111}
+.d-glow{position:absolute;width:300px;height:300px;background:radial-gradient(circle,rgba(227,28,35,.25) 0%,transparent 70%);border-radius:50%;animation:pulseGlow 2s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{transform:scale(.8);opacity:.5}50%{transform:scale(1.3);opacity:1}}
+.d-box{background:linear-gradient(135deg,#e31c23 0%,#900 100%);padding:22px 44px;clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px));box-shadow:0 8px 40px rgba(0,0,0,.9),inset 0 0 20px rgba(255,255,255,.08);animation:slideUp .8s cubic-bezier(.34,1.56,.64,1);position:relative;z-index:1}
+@keyframes slideUp{0%{opacity:0;transform:translateY(80px) scale(.8)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.d-crown{font-size:52px;animation:crownSpin 1.2s ease-in-out;margin-bottom:8px}
+@keyframes crownSpin{0%{transform:rotateY(0)}50%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+.d-name{font-size:34px;font-weight:bold;color:#ffc72c;text-transform:uppercase;letter-spacing:2px;text-shadow:0 2px 8px rgba(0,0,0,.8);margin:8px 0}
+.d-score{font-size:20px;color:#fff}
+/* RANKS bottom row */
+.d-ranks{display:flex;gap:8px;margin-top:16px;position:relative;z-index:1}
+.d-rank{text-align:center;padding:6px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-size:11px;font-family:monospace;animation:slideUp .8s backwards}
+.d-rank.r1{animation-delay:.3s;border-color:#ffc72c}
+.d-rank.r2{animation-delay:.4s}
+.d-rank.r3{animation-delay:.5s}
+.d-rank.r4{animation-delay:.6s}
+.d-rank .dr-nm{color:#f4f1ea;font-weight:bold;font-size:12px}
+.d-rank .dr-sc{color:#ffc72c}
+/* SELECTOR bar */
+.sel-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.95);border-top:2px solid #e31c23;display:flex;justify-content:center;gap:8px;padding:12px 20px;z-index:100}
+.sel-btn{padding:10px 24px;border:2px solid #e31c23;background:transparent;color:#f4f1ea;font-size:13px;font-weight:bold;font-family:monospace;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s}
+.sel-btn:hover{background:#e31c23;transform:translateY(-2px)}
+.sel-btn.active{background:#ffc72c;border-color:#ffc72c;color:#0a0a0a}
+.sel-note{font-size:11px;color:rgba(255,255,255,.4);display:flex;align-items:center;padding:0 16px;font-family:monospace}
+</style>
+</head>
+<body>
+
+<!-- A: FULL-SCREEN OVERLAY -->
+<div class="mockup" id="ma" onclick="select('A')">
+  <div class="lbl">A — FULL-SCREEN OVERLAY</div>
+  <div class="a-crown">👑</div>
+  <div class="a-name">Fenerbahçe</div>
+  <div class="a-score">⚡ 150 PUAN</div>
+  <div class="a-sub">11/11 Oyuncu · Konfeti + Bounce + Glow</div>
+  <div class="info">Zoom animasyonu + Renkli konfeti yağmuru + Glow efekti</div>
+</div>
+
+<!-- B: LEAGUE OF LEGENDS TARZI -->
+<div class="mockup" id="mb" onclick="select('B')">
+  <div class="lbl">B — LEAGUE OF LEGENDS TARZI</div>
+  <div class="b-outer">
+    <div class="b-tag">▶ OYUN BİTTİ</div>
+    <div class="b-box">
+      <div class="b-name">Galatasaray</div>
+    </div>
+    <div class="b-score">⚡ 145 PUAN — 11/11</div>
+  </div>
+  <div class="info">Blur'dan açılış + Neon glow + Altın parçacıklar + Blink tag</div>
+</div>
+
+<!-- C: FIFA ULTIMATE TEAM TARZI -->
+<div class="mockup" id="mc" onclick="select('C')">
+  <div class="lbl">C — FIFA ULTIMATE TEAM TARZI</div>
+  <div class="c-cards">
+    <div class="c-card p2"><div class="c-rank">🥈</div><div class="c-cname">Beşiktaş</div></div>
+    <div class="c-card p1"><div class="c-rank">🥇</div><div class="c-cname">Trabzonspor</div></div>
+    <div class="c-card p3"><div class="c-rank">🥉</div><div class="c-cname">Fenerbahçe</div></div>
+    <div class="c-card p4"><div class="c-rank">4️⃣</div><div class="c-cname">Galatasaray</div></div>
+  </div>
+  <div class="c-winner-txt">Trabzonspor KAZANDI!</div>
+  <div class="c-sub">Kart flip + Sıralama kartları yan yana</div>
+  <div class="info">Her takım bir kart olarak açılır · Kazanan zoom'lanır</div>
+</div>
+
+<!-- D: BASIT AMA ETKİLİ -->
+<div class="mockup" id="md" onclick="select('D')">
+  <div class="lbl">D — BRUTALIST + SLIDE-UP</div>
+  <div class="d-glow"></div>
+  <div class="d-box">
+    <div class="d-crown">👑</div>
+    <div class="d-name">Beşiktaş</div>
+    <div class="d-score">⚡ PUAN: 130</div>
+  </div>
+  <div class="d-ranks">
+    <div class="d-rank r1"><div class="dr-nm">🥇 Beşiktaş</div><div class="dr-sc">⚡130</div></div>
+    <div class="d-rank r2"><div class="dr-nm">🥈 G.Saray</div><div class="dr-sc">⚡120</div></div>
+    <div class="d-rank r3"><div class="dr-nm">🥉 F.Bahçe</div><div class="dr-sc">⚡110</div></div>
+    <div class="d-rank r4"><div class="dr-nm">4. Trabzon</div><div class="dr-sc">⚡90</div></div>
+  </div>
+  <div class="info">Slide-up reveal + Pulse glow + Crown spin + Tüm sıralama</div>
+</div>
+
+<div class="sel-bar">
+  <div class="sel-note">Seçmek için tıkla:</div>
+  <button class="sel-btn" id="btnA" onclick="select('A')">A — Overlay</button>
+  <button class="sel-btn" id="btnB" onclick="select('B')">B — LoL Tarzı</button>
+  <button class="sel-btn" id="btnC" onclick="select('C')">C — FIFA Tarzı</button>
+  <button class="sel-btn" id="btnD" onclick="select('D')">D — Brutalist</button>
+</div>
+
+<script>
+function select(opt) {
+  ['A','B','C','D'].forEach(x => {
+    document.getElementById('m'+x.toLowerCase()).classList.remove('selected');
+    document.getElementById('btn'+x).classList.remove('active');
+  });
+  document.getElementById('m'+opt.toLowerCase()).classList.add('selected');
+  document.getElementById('btn'+opt).classList.add('active');
+}
+
+// Confetti for A
+setInterval(() => {
+  const ma = document.getElementById('ma');
+  const p = document.createElement('div');
+  p.className = 'cnf';
+  const colors = ['#ffc72c','#e31c23','#00a651','#fff','#0066cc'];
+  p.style.cssText = 'left:'+Math.random()*100+'%;background:'+colors[Math.floor(Math.random()*colors.length)]+';width:'+(4+Math.random()*8)+'px;height:'+(4+Math.random()*8)+'px;border-radius:'+(Math.random()>.5?'50%':'0')+';animation-duration:'+(1.5+Math.random()*2)+'s;animation-delay:'+Math.random()*.5+'s;top:-20px;position:absolute';
+  ma.appendChild(p);
+  setTimeout(() => p.remove(), 3000);
+}, 120);
+
+// Particles for B
+setInterval(() => {
+  const mb = document.getElementById('mb');
+  const p = document.createElement('div');
+  p.className = 'bpart';
+  const colors = ['#ffc72c','#e31c23','#00a651'];
+  p.style.cssText = 'left:'+Math.random()*100+'%;bottom:0;background:'+colors[Math.floor(Math.random()*colors.length)]+';animation-duration:'+(1+Math.random()*1.5)+'s;animation-delay:'+Math.random()*.3+'s;position:absolute';
+  mb.appendChild(p);
+  setTimeout(() => p.remove(), 2000);
+}, 100);
+</script>
+</body>
+</html>
