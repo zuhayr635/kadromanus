@@ -5,6 +5,7 @@ WORKDIR /app
 
 # Install dependencies
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
 # Copy source code
@@ -31,15 +32,15 @@ ENV NODE_ENV=production
 
 WORKDIR /app
 
-# Install dependencies for production only
-COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile --prod
+# Copy node_modules from builder (faster and includes patches)
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/client/public ./client/public
 COPY --from=builder /app/drizzle ./drizzle
+COPY --from=builder /app/package.json ./package.json
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
