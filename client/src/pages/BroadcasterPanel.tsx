@@ -260,9 +260,9 @@ export default function BroadcasterPanel() {
         });
         // Persist license key for next session
         localStorage.setItem('kadrokur_licenseKey', licenseKey);
-        // Auto-fill TikTok username from license
+        // Auto-fill TikTok username from license (@ prefix olmadan normalize et)
         if (license.ownerTikTok) {
-          setTiktokUsername(license.ownerTikTok);
+          setTiktokUsername(license.ownerTikTok.replace(/^@/, ''));
         }
       } else {
         setLicenseInfo({ isValid: false, expiresAt: null, packageType: null, daysRemaining: null, broadcasterName: null, ownerTikTok: null });
@@ -314,9 +314,8 @@ export default function BroadcasterPanel() {
       showNotification('error', 'Hata', 'Lütfen lisans anahtarı girin');
       return;
     }
-    // TikTok kullanıcı adı lisans varsa opsionel, yoksa gerekli
-    if (!tiktokUsername && !licenseInfo.broadcasterName) {
-      showNotification('error', 'Hata', 'TikTok kullanıcı adı bulunamadı. Lütfen lisansınızı kontrol edin.');
+    if (!tiktokUsername) {
+      showNotification('error', 'Hata', 'TikTok kullanıcı adı gerekli. Lütfen lisansınızı kontrol edin veya manuel girin.');
       return;
     }
 
@@ -325,7 +324,7 @@ export default function BroadcasterPanel() {
     try {
       const result = await createSessionMutation.mutateAsync({
         licenseKey,
-        tiktokUsername: tiktokUsername || licenseInfo.broadcasterName || '',
+        tiktokUsername: tiktokUsername.replace(/^@/, ''),
         teamSelectionMode: 'manual', // Auto mode removed
         teamNames,
       });
@@ -684,27 +683,30 @@ export default function BroadcasterPanel() {
                 <div style={{ position: 'relative' as const }}>
                   <input
                     type="text"
-                    value={tiktokUsername || licenseInfo.broadcasterName || ''}
+                    value={tiktokUsername}
                     onChange={(e) => setTiktokUsername(e.target.value)}
-                    placeholder="Lisans anahtarı girin..."
-                    readOnly
+                    placeholder="@kullaniciadi"
                     style={{
                       width: '100%',
                       padding: '0.55rem 0.8rem 0.55rem 2rem',
                       background: '#0a1a0f',
-                      border: '1px solid #14532d',
+                      border: licenseInfo.ownerTikTok && tiktokUsername && licenseInfo.ownerTikTok.replace(/^@/, '') !== tiktokUsername.replace(/^@/, '') ? '1px solid #ef4444' : '1px solid #14532d',
                       borderRadius: '6px',
-                      color: (tiktokUsername || licenseInfo.broadcasterName) ? '#e2e8f0' : '#4b5563',
+                      color: tiktokUsername ? '#e2e8f0' : '#4b5563',
                       fontSize: '0.82rem',
                       outline: 'none',
-                      cursor: 'not-allowed'
                     }}
                   />
                   <div style={{ position: 'absolute' as const, left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#166534' }}>
                     <AtSign size={11} />
                   </div>
                 </div>
-                {(tiktokUsername || licenseInfo.broadcasterName) && (
+                {licenseInfo.ownerTikTok && tiktokUsername && licenseInfo.ownerTikTok.replace(/^@/, '') !== tiktokUsername.replace(/^@/, '') && (
+                  <div style={{ fontSize: '0.65rem', color: '#f59e0b', marginTop: '0.25rem' }}>
+                    ⚠️ Lisans @{licenseInfo.ownerTikTok.replace(/^@/, '')} için, ama @{tiktokUsername} bağlanıyor
+                  </div>
+                )}
+                {licenseInfo.ownerTikTok && tiktokUsername && licenseInfo.ownerTikTok.replace(/^@/, '') === tiktokUsername.replace(/^@/, '') && (
                   <div style={{ fontSize: '0.65rem', color: '#22c55e', marginTop: '0.25rem' }}>
                     ✓ Lisanstan yüklendi
                   </div>
