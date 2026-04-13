@@ -38,14 +38,6 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .hstat{text-align:center;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--paper);background:rgba(255,255,255,.05);padding:4px 8px;border-left:2px solid var(--accent-red);min-width:56px}
 .hstat strong{display:block;font-size:.85rem;color:var(--accent-yellow);font-family:'Anton',sans-serif;letter-spacing:1px}
 
-/* DEMO BUTTONS — INDUSTRIAL */
-.demo-bar{display:flex;gap:4px;align-items:center}
-.demo-btn{padding:4px 10px;background:transparent;border:1px solid rgba(255,255,255,.2);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--paper);transition:all .15s;position:relative;clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
-.demo-btn:hover:not(:disabled){background:var(--accent-red);border-color:var(--accent-red);transform:translateY(-1px)}
-.demo-btn:disabled{opacity:.3;cursor:not-allowed}
-.demo-btn.elite-demo{border-color:var(--accent-yellow);color:var(--accent-yellow)}
-.demo-btn.elite-demo:hover{background:var(--accent-yellow);color:var(--ink)}
-
 /* FIELD — GRID PAPER AESTHETIC */
 .field{padding:8px;overflow:hidden;height:100%;position:relative}
 .field::before{content:'';position:absolute;inset:8px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px;pointer-events:none;opacity:.3}
@@ -457,7 +449,6 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .tiktok-badge{font-family:'JetBrains Mono',monospace;font-size:.55rem;padding:3px 8px;border-radius:3px;font-weight:600;letter-spacing:.5px;display:none}
 .tiktok-badge.visible{display:block}
 .tiktok-badge.live{background:rgba(227,28,35,.2);color:var(--accent-red);border:1px solid var(--accent-red)}
-.tiktok-badge.demo{background:rgba(255,199,44,.15);color:var(--accent-yellow);border:1px solid var(--accent-yellow)}
 .tiktok-badge.off{background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.1)}
 
 /* LIKE PROGRESS BAR */
@@ -507,12 +498,6 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 <div class="app">
   <div class="hdr">
     <div class="logo"><span>KADRO</span>KUR<span style="font-size:.8em;opacity:.5">LIVE</span></div>
-    <div class="demo-bar">
-      <button class="demo-btn" onclick="openDemo('bronze')">BRONZE</button>
-      <button class="demo-btn" onclick="openDemo('silver')">SILVER</button>
-      <button class="demo-btn" onclick="openDemo('gold')">GOLD</button>
-      <button class="demo-btn elite-demo" onclick="openDemo('elite')">ELITE</button>
-    </div>
     <div class="hdr-right">
       <div class="session-timer" id="sessionTimer">00:00</div>
       <div class="cards-remaining" id="cardsRemaining"><strong id="hCardsLeft">44</strong>&nbsp;KALDI</div>
@@ -957,45 +942,6 @@ async function fetchPlayerDetails(playerId){
     console.error('[API] Player fetch error:',err);
     return null;
   }
-}
-
-let demoPlayersCache={};
-async function openDemo(quality,giftInfo=null){
-  if(GS.busy)return;
-  GS.busy=true;
-  if(!demoPlayersCache[quality]){
-    try{
-      const r=await fetch(`/api/players?cardQuality=${quality}&limit=50&sortOrder=random`);
-      const data=await r.json();
-      demoPlayersCache[quality]=data.players||[];
-    }catch(err){
-      console.error('[Demo] Fetch error:',err);
-      GS.busy=false;
-      return;
-    }
-  }
-  const players=demoPlayersCache[quality];
-  if(!players.length){GS.busy=false;return;}
-  const player=players[Math.floor(Math.random()*players.length)];
-  playerCache[player.id]=player;
-
-  // Hediye bilgisi - galeriden geldiyse kullan, yoksa varsayılan
-  const demoGifts={
-    bronze:{emoji:'🌹',name:'Rose',coins:1},
-    silver:{emoji:'👑',name:'Rosa',coins:10},
-    gold:{emoji:'🦁',name:'Crown',coins:199},
-    elite:{emoji:'🌌',name:'TikTok Universe',coins:44999}
-  };
-  const selectedGift=giftInfo||demoGifts[quality];
-
-  GS.pendingCard={quality,player:{id:player.id,name:player.name,position:player.position},username:'GALERİ',gift:selectedGift};
-  GS.pendingPlayerFull=player;
-  currentPlayerId=player.id;
-  currentQuality=quality;
-  GS.pendingUsername='GALERİ';
-  GS.pendingGift=selectedGift;
-  showWaitingScreen();
-  document.getElementById('ov').classList.add('active');
 }
 
 async function connectSocket(){
@@ -1843,8 +1789,8 @@ function updateLikeProgress(progress,threshold){
 function updateTiktokBadge(connected){
   const badge=document.getElementById('tiktokBadge');
   if(!badge)return;
-  badge.className='tiktok-badge visible '+(connected?'live':'demo');
-  badge.textContent=connected?'● CANLI':'● DEMO';
+  badge.className='tiktok-badge visible '+(connected?'live':'off');
+  badge.textContent=connected?'● CANLI':'● BAĞLI DEĞİL';
 }
 
 let LIKE_MAP=[

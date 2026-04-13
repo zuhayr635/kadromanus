@@ -32,7 +32,7 @@ export const broadcasterRouter = router({
       );
 
       if (result.success && result.sessionId) {
-        // startSession artık TikTok hatası olsa da demo moduna düşer, throw etmez
+        // startSession TikTok bağlantısı zorunlu, başarısız olursa hata fırlatır
         await startSession(result.sessionId, input.tiktokUsername, input.teamNames);
       }
 

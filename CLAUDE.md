@@ -21,7 +21,7 @@
 - `JWT_SECRET` - Admin JWT signing secret (required)
 - `TELEGRAM_BOT_TOKEN` - Telegram bot token (optional)
 - `TELEGRAM_CHAT_ID` - Telegram group/channel ID (optional)
-- `TIKTOK_SESSION_ID` - TikTok session cookie (optional)
+- `TIKTOK_SESSION_ID` - TikTok session cookie (required for TikTok Live)
 
 ## Path Aliases
 `@/*` → client/src/*
@@ -30,8 +30,8 @@
 ## Key Files
 - `server/_core/index.ts` - Main server entry point (Express + tRPC + Socket.io)
 - `server/game-engine.ts` - Game mechanics (4 teams × 11 players)
-- `server/socket-server.ts` - WebSocket + TikTok event handling + Demo mode
-- `server/tiktok-integration.ts` - TikTok Live connector (real + demo mode)
+- `server/socket-server.ts` - WebSocket + TikTok event handling
+- `server/tiktok-integration.ts` - TikTok Live connector
 - `server/gift-manager.ts` - Gift DB queries with filters (search, cost, quality)
 - `server/game-end-workflow.ts` - End-game screenshot + Telegram send flow
 - `server/session-history.ts` - Game session history & replay
@@ -55,7 +55,7 @@
 - ✅ TikTok → Game Pipeline: Complete flow (tiktok-integration → socket-server → game-engine)
 - ✅ Puppeteer Screenshot: Implemented (`screenshot-service.ts` generates HTML, takes screenshot, sends to Telegram)
 - ✅ Admin JWT Auth: Implemented (`admin-auth.ts` with sign/verify + cookie management)
-- ✅ Demo Mode: Auto-fallback when TikTok connection fails (sends mock gifts/likes every 3-5s)
+- ❌ Demo Mode: Removed - TikTok Live connection required, errors are thrown on failure
 - ❌ Auto Mode (!1-!4): Removed - only Manual mode is supported
 - Turkish language preferred in UI/communications
 
@@ -91,7 +91,7 @@
 ## Gotchas
 - `server/` içindeki `.mjs` dosyaları (30+) seed/migration scriptleridir — oyun kodu değil, dokunma
 - `pnpm` zorunlu — npm/yarn kullanma (lockfile uyumsuzluğu yaratır)
-- Demo mode: TikTok bağlantısı başarısız olursa otomatik devreye girer (her 3-5s mock gift/like)
+- TikTok Live bağlantısı **zorunlu** — demo mode kaldırıldı, başarısız olursa hata fırlatılır
 - Auto Mode kaldırıldı — sadece Manual mode destekleniyor
 - `broadcaster-panel.html` artık yok — React sayfası `BroadcasterPanel.tsx` kullanılıyor
 

@@ -337,91 +337,18 @@ class SocketServer {
   async startSession(sessionId: string, tiktokUsername: string, teamNames: string[]) {
     initializeGame(sessionId, teamNames);
 
-    // TikTok bağlantısı — başarısız olursa demo/simülasyon modunda devam et
-    try {
-      await startTikTokConnection(sessionId, tiktokUsername, (event) =>
-        this.handleTikTokEvent(sessionId, event)
-      );
-    } catch (err) {
-      console.warn(`[${sessionId}] ⚠️ TikTok bağlantısı başarısız, demo moduna geçiliyor`);
-      console.warn(`[${sessionId}] Hata:`, err instanceof Error ? err.message : err);
-      this.startDemoMode(sessionId);
-    }
+    // TikTok bağlantısı — başarısız olursa hata fırlat
+    await startTikTokConnection(sessionId, tiktokUsername, (event) =>
+      this.handleTikTokEvent(sessionId, event)
+    );
 
     this.broadcastGameStarted(sessionId, getGameState(sessionId));
   }
-
-  // Demo modu: TikTok erişilemezken simülasyon event'leri gönder
-  private startDemoMode(sessionId: string) {
-    console.log(`[${sessionId}] 🎮 DEMO MODE aktif — Her 5 saniyede simüle edilmiş hediye/beğeni`);
-
-    const mockUsers = [
-      { username: "@demo_ali", displayName: "Ali Yılmaz" },
-      { username: "@demo_veli", displayName: "Veli Kaya" },
-      { username: "@demo_ayse", displayName: "Ayşe Demir" },
-      { username: "@demo_fatma", displayName: "Fatma Şahin" },
-      { username: "@demo_mehmet", displayName: "Mehmet Çelik" },
-    ];
-    const mockGifts: Array<{ name: string; diamonds: number }> = [
-      { name: "Rose", diamonds: 1 },
-      { name: "TikTok", diamonds: 1 },
-      { name: "GG", diamonds: 10 },
-      { name: "Ice Cream Cone", diamonds: 25 },
-      { name: "Drama Queen", diamonds: 200 },
-      { name: "Lion", diamonds: 500 },
-    ];
-
-    const interval = setInterval(() => {
-      const gameState = getGameState(sessionId);
-      if (!gameState) {
-        clearInterval(interval);
-        return;
-      }
-
-      const user = mockUsers[Math.floor(Math.random() * mockUsers.length)];
-      const roll = Math.random();
-
-      if (roll < 0.4) {
-        // Like event (40% chance)
-        const likeCount = Math.floor(Math.random() * 200) + 50;
-        this.handleTikTokEvent(sessionId, {
-          type: "like",
-          data: { username: user.username, displayName: user.displayName, likeCount },
-          timestamp: Date.now(),
-        });
-      } else {
-        // Gift event (60% chance)
-        const gift = mockGifts[Math.floor(Math.random() * mockGifts.length)];
-        this.handleTikTokEvent(sessionId, {
-          type: "gift",
-          data: {
-            username: user.username,
-            displayName: user.displayName,
-            giftName: gift.name,
-            diamondCount: gift.diamonds,
-          },
-          timestamp: Date.now(),
-        });
-      }
-    }, 5000); // Her 5 saniyede bir
-
-    // Cleanup interval when session stops
-    this.demoIntervals = this.demoIntervals || new Map();
-    this.demoIntervals.set(sessionId, interval);
-  }
-
-  private demoIntervals: Map<string, NodeJS.Timeout> | undefined;
 
   // Oturum durdur: TikTok bağlantısını kapat, oyunu bitir, yayınla, temizle
   async stopSession(sessionId: string) {
     this.tiktokConnectedMap.delete(sessionId);
     await stopTikTokConnection(sessionId);
-
-    // Demo mod interval temizle
-    if (this.demoIntervals?.has(sessionId)) {
-      clearInterval(this.demoIntervals.get(sessionId)!);
-      this.demoIntervals.delete(sessionId);
-    }
 
     const result = endGame(sessionId);
 

@@ -805,7 +805,7 @@ export default function BroadcasterPanel() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.75rem', background: '#0a1a0f', border: `1px solid ${stats.tiktokConnected ? '#22c55e' : '#ef4444'}44`, borderRadius: '6px' }}>
                   {stats.tiktokConnected ? <Wifi size={12} color="#22c55e" /> : <WifiOff size={12} color="#ef4444" />}
                   <span style={{ fontSize: '0.72rem', fontWeight: 700, color: stats.tiktokConnected ? '#22c55e' : '#ef4444' }}>
-                    {stats.tiktokConnected ? 'TikTok CANLI' : 'DEMO MOD'}
+                    {stats.tiktokConnected ? 'TikTok CANLI' : 'BAĞLI DEĞİL'}
                   </span>
                 </div>
               )}
