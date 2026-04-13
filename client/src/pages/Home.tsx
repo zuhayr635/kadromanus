@@ -321,57 +321,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section style={{ borderTop: '1px solid rgba(212,175,55,0.07)' }}>
-        <div className="hp-section">
-          <div className="hp-section-eyebrow">Lisans Paketleri</div>
-          <h2 className="hp-section-title">İhtiyacına göre seç,<br />hemen başla</h2>
-          <div className="hp-pricing-grid">
-            <div className="hp-plan-item">
-              <div className="hp-plan-label">Basic</div>
-              <div className="hp-plan-price">Ücretsiz</div>
-              <div className="hp-plan-period">Başlangıç</div>
-              <div className="hp-plan-divider" />
-              <div className="hp-plan-feature on">Oyun Oynama</div>
-              <div className="hp-plan-feature">Telegram Bot</div>
-              <div className="hp-plan-feature">Otomatik Mod</div>
-              <div className="hp-plan-feature">Analytics</div>
-            </div>
-            <div className="hp-plan-item featured">
-              <div className="hp-plan-badge">Popüler</div>
-              <div className="hp-plan-label">Pro</div>
-              <div className="hp-plan-price">$9.99</div>
-              <div className="hp-plan-period">aylık</div>
-              <div className="hp-plan-divider" />
-              <div className="hp-plan-feature on">Oyun Oynama</div>
-              <div className="hp-plan-feature on">Telegram Bot</div>
-              <div className="hp-plan-feature on">Otomatik Mod</div>
-              <div className="hp-plan-feature">Analytics</div>
-            </div>
-            <div className="hp-plan-item">
-              <div className="hp-plan-label">Premium</div>
-              <div className="hp-plan-price">$19.99</div>
-              <div className="hp-plan-period">aylık</div>
-              <div className="hp-plan-divider" />
-              <div className="hp-plan-feature on">Oyun Oynama</div>
-              <div className="hp-plan-feature on">Telegram Bot</div>
-              <div className="hp-plan-feature on">Otomatik Mod</div>
-              <div className="hp-plan-feature on">Analytics</div>
-            </div>
-            <div className="hp-plan-item">
-              <div className="hp-plan-label">Unlimited</div>
-              <div className="hp-plan-price">$49.99</div>
-              <div className="hp-plan-period">aylık</div>
-              <div className="hp-plan-divider" />
-              <div className="hp-plan-feature on">Tüm Özellikler</div>
-              <div className="hp-plan-feature on">Sınırsız Oturum</div>
-              <div className="hp-plan-feature on">Öncelikli Destek</div>
-              <div className="hp-plan-feature on">API Erişimi</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CONTACT */}
       <section style={{ borderTop: '1px solid rgba(212,175,55,0.07)' }}>
         <div className="hp-section">
