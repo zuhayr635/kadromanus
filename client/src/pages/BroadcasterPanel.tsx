@@ -412,7 +412,7 @@ export default function BroadcasterPanel() {
     if (settingsOpen && !giftsLoaded) {
       (async () => {
         try {
-          const response = await fetch('/api/gifts?limit=500');
+          const response = await fetch('/api/gifts/public?limit=500');
           const data = await response.json();
           setGifts(data.gifts || []);
           setGiftsLoaded(true);
