@@ -1821,6 +1821,7 @@ let allDbGifts=[];
 let dbGiftsFilter={search:'',costRange:'all',quality:'all'};
 let giftTriggerMode='diamond'; // 'diamond' | 'specific'
 let activeGiftIds=new Set();
+let customMappings={}; // { giftId: 'bronze' | 'silver' | 'gold' | 'elite' }
 let giftSessionId=null;
 
 async function loadDbGifts(){
@@ -1854,6 +1855,7 @@ async function loadGiftConfig(sessionId){
     const data=await r.json();
     giftTriggerMode=data.giftTriggerMode||'diamond';
     activeGiftIds=new Set(data.activeGiftIds||[]);
+    customMappings=data.customMappings||{};
     updateGiftModeUI();
   }catch(err){
     console.error('[Gifts] Config yükleme hatası:',err);
@@ -1890,7 +1892,7 @@ async function saveGiftConfig(){
     const r=await fetch(`/api/sessions/${giftSessionId}/gifts`,{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({giftTriggerMode,activeGiftIds:Array.from(activeGiftIds)})
+      body:JSON.stringify({giftTriggerMode,activeGiftIds:Array.from(activeGiftIds),customMappings})
     });
     if(r.ok){alert('Hediye ayarları kaydedildi!');}
     else{alert('Kaydetme hatası!');}
@@ -1946,13 +1948,25 @@ function renderDbGiftList(){
     const isActive=giftTriggerMode==='specific'&&activeGiftIds.has(g.id);
     const activeStyle=isActive?'border-color:var(--accent-yellow);background:rgba(255,199,44,.1);':'';
     const check=isActive?'<span style="position:absolute;top:2px;right:2px;font-size:.5rem;color:var(--accent-yellow);line-height:1">✓</span>':'';
+    const customQ=customMappings[g.id]||g.cardQuality;
     return `<div class="gift-item" onclick="selectDbGift(${g.id})" data-gid="${g.id}" style="${activeStyle}position:relative">
       ${check}
       <img class="gift-img" src="${g.image||'/logo.svg'}" alt="${g.giftName}" loading="lazy" onerror="this.src='/logo.svg'">
       <span class="gift-name">${g.giftName}</span>
-      <span class="gift-coins" style="color:${qc}">${g.diamondCost}</span>
+      <select class="gift-quality-select" onclick="event.stopPropagation()" onchange="setGiftQuality(${g.id}, this.value)" style="width:90%;margin-top:4px;padding:2px;font-size:.4rem;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#e2e8f0;border-radius:3px">
+        <option value="bronze" ${customQ==='bronze'?'selected':''}>🥉 Bronze</option>
+        <option value="silver" ${customQ==='silver'?'selected':''}>🥈 Silver</option>
+        <option value="gold" ${customQ==='gold'?'selected':''}>🥇 Gold</option>
+        <option value="elite" ${customQ==='elite'?'selected':''}>💎 Elite</option>
+      </select>
+      <span class="gift-coins" style="color:${qc}">${g.diamondCost} 💎</span>
     </div>`;
   }).join('');
+}
+
+function setGiftQuality(giftId, quality){
+  customMappings[giftId]=quality;
+  console.log('[Gift] Custom mapping:', giftId, '→', quality);
 }
 
 function selectDbGift(id){

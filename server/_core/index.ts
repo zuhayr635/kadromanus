@@ -947,14 +947,17 @@ async function startServer() {
   app.get("/api/sessions/:sessionId/gifts", async (req, res) => {
     try {
       const db = await getDb();
-      if (!db) return res.json({ activeGiftIds: [] });
+      if (!db) return res.json({ activeGiftIds: [], customMappings: {} });
 
       const [session] = await db.select().from(sessions).where(eq(sessions.sessionId, req.params.sessionId)).limit(1);
 
       if (!session) return res.status(404).json({ error: "Session not found" });
 
       const giftConfig = session.giftConfig as any;
-      res.json({ activeGiftIds: giftConfig?.activeGiftIds || [] });
+      res.json({
+        activeGiftIds: giftConfig?.activeGiftIds || [],
+        customMappings: giftConfig?.customMappings || {}
+      });
     } catch (err) {
       console.error("Get session gifts error:", err);
       res.status(500).json({ error: "Failed to get session gifts" });
@@ -969,13 +972,13 @@ async function startServer() {
       const db = await getDb();
       if (!db) return res.status(500).json({ error: "Database unavailable" });
 
-      const { activeGiftIds } = req.body;
+      const { activeGiftIds, giftTriggerMode, customMappings } = req.body;
 
       await db.update(sessions)
-        .set({ giftConfig: { activeGiftIds } })
+        .set({ giftConfig: { activeGiftIds, giftTriggerMode, customMappings } })
         .where(eq(sessions.sessionId, req.params.sessionId));
 
-      res.json({ success: true, activeGiftIds });
+      res.json({ success: true, activeGiftIds, giftTriggerMode, customMappings });
     } catch (err) {
       console.error("Update session gifts error:", err);
       res.status(500).json({ error: "Failed to update session gifts" });

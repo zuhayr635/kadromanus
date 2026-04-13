@@ -444,10 +444,20 @@ export async function processGiftEvent(
               return null;
             }
           }
-          // Tekil modda DB'den kalite kullan
-          quality = giftData ? (giftData.cardQuality as CardQuality) : qualityFromDiamonds(diamondCount);
+          // customMappings varsa önce ona bak, yoksa DB kalitesi, yoksa diamond
+          if (giftConfig.customMappings && giftData && giftConfig.customMappings[giftData.id]) {
+            quality = giftConfig.customMappings[giftData.id];
+          } else {
+            quality = giftData ? (giftData.cardQuality as CardQuality) : qualityFromDiamonds(diamondCount);
+          }
+        } else if (triggerMode === 'diamond') {
+          // Jeton modu: customMappings varsa önce ona bak
+          if (giftConfig.customMappings && giftData && giftConfig.customMappings[giftData.id]) {
+            quality = giftConfig.customMappings[giftData.id];
+          } else {
+            quality = qualityFromDiamonds(diamondCount);
+          }
         } else {
-          // Jeton modu (varsayılan): jeton miktarına göre kalite, activeGiftIds yok sayılır
           quality = qualityFromDiamonds(diamondCount);
         }
       } else {
