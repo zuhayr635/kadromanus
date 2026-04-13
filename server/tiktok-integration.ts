@@ -116,7 +116,7 @@ export async function startTikTokConnection(
 
   function createConnection(): WebcastPushConnection {
     const options: Record<string, unknown> = {
-      enableExtendedGiftInfo: true,
+      enableExtendedGiftInfo: false, // true yapılırsa TikTok API'si 403 verebilir (session ID gerektirir)
     };
 
     if (process.env.TIKTOK_SESSION_ID) {
