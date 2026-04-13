@@ -60,6 +60,12 @@ export interface PendingCard {
   source?: 'like' | 'gift';
   player: { id: number; name: string; position: string; overall?: number; faceImageUrl?: string; nation?: string; team?: string };
   timestamp: number;
+  gift?: {
+    name: string;
+    amount: number;
+    image?: string;
+    emoji?: string;
+  };
 }
 
 export type CardQuality = "bronze" | "silver" | "gold" | "elite";
@@ -377,7 +383,8 @@ export async function processGiftEvent(
   diamondCount: number,
   username: string,
   profilePic?: string,
-  displayName?: string
+  displayName?: string,
+  giftImage?: string
 ): Promise<PendingCard | null> {
   console.log(`[${sessionId}] DEBUG processGiftEvent: profilePic="${profilePic}" displayName="${displayName}" username="${username}"`);
   const gameState = gameStates.get(sessionId);
@@ -458,6 +465,23 @@ export async function processGiftEvent(
   const player = await getRandomPlayer();
   if (!player) return null;
 
+  // Gift resim URL'sini DB'den al (parametre yoksa)
+  let resolvedGiftImage = giftImage;
+  if (!resolvedGiftImage && db) {
+    try {
+      const [giftData] = await db
+        .select()
+        .from(giftTiers)
+        .where(eq(giftTiers.giftName, giftName))
+        .limit(1);
+      if (giftData) {
+        resolvedGiftImage = giftData.image ?? undefined;
+      }
+    } catch (error) {
+      console.error(`[${sessionId}] Gift resim fetching hatası:`, error);
+    }
+  }
+
   const pending: PendingCard = {
     username,
     displayName,
@@ -466,6 +490,11 @@ export async function processGiftEvent(
     source: "gift",
     player: { id: player.id, name: player.name, position: player.position, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team },
     timestamp: Date.now(),
+    gift: {
+      name: giftName,
+      amount: diamondCount,
+      image: resolvedGiftImage,
+    },
   };
   // Queue the card; show immediately if nothing is pending
   gameState.cardQueue.push(pending);

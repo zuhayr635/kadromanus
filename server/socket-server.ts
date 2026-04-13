@@ -395,7 +395,8 @@ class SocketServer {
           event.data.diamondCount as number,
           event.data.username as string,
           (event.data.profilePicBase64 as string) || (event.data.profilePic as string) || undefined,
-          event.data.displayName as string | undefined
+          event.data.displayName as string | undefined,
+          event.data.giftImage as string | undefined
         );
         if (pending) {
           this.broadcastPendingCard(sessionId, pending, gameState.teams.map(t => ({ id: t.id, name: t.name })));

@@ -233,6 +233,9 @@ export async function startTikTokConnection(
       const giftName = data.giftDetails?.giftName ?? data.gift?.giftName ?? data.giftName ?? "Unknown";
       const repeatCount = data.repeatCount ?? data.comboCount ?? 1;
 
+      // Gift resim URL'sini al (TikTok'tan gelen icon_url veya benzer)
+      const giftImage = data.giftDetails?.icon_url ?? data.gift?.icon_url ?? data.giftDetails?.icon ?? data.gift?.icon ?? undefined;
+
       const userId = data.userId ?? data.user?.userId ?? data.uniqueId ?? "";
       const username = data.uniqueId ?? data.user?.uniqueId ?? "";
 
@@ -261,6 +264,7 @@ export async function startTikTokConnection(
           totalValue: diamondCount * repeatCount,
           profilePic: profilePicUrl,
           profilePicBase64,
+          giftImage,
         },
         timestamp: Date.now(),
       });
