@@ -1105,9 +1105,12 @@ async function handlePendingCard(data){
     addFeed(username,`${giftName} (${coins} 💎) gönderdi → ${qualityEmoji} ${quality.toUpperCase()} kart kazandı`,'🎁');
   }
 
-  // Animasyonlu toast bildirim göster
+  // Önce animasyonlu toast göster, 3 saniye sonra kuyruğa ekle
   showCardToast(pending);
+  setTimeout(()=>queuePendingCard(data, pending), 3000);
+}
 
+function queuePendingCard(data, pending){
   // Eğer overlay açıkken yeni kart gelirse, saklanmış karta ekle
   if(GS.busy){
     stashedCards.push({
