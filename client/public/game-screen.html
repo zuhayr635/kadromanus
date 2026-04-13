@@ -187,9 +187,18 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .waiting{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:left;z-index:101;display:none;width:90%;max-width:700px}
 .waiting.on{display:block}
 
+/* KART KAZANILDI TOAST WRAPPER - Sürüklenebilir */
+#cardToastsWrapper{position:fixed;top:60px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;width:340px;opacity:1;transition:opacity .3s, transform .3s;cursor:move}
+#cardToastsWrapper.minimized{opacity:.3;transform:translateX(300px);cursor:pointer}
+#cardToastsWrapper.minimized:hover{opacity:.6}
+#cardToastsDragHandle{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:rgba(5,5,10,.8);border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:move;user-select:none}
+#cardToastsDragHandle span{font-size:.6rem;color:rgba(255,255,255,.5);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px}
+#cardToastsDragHandle button{background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:1.1rem;padding:0;line-height:1;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:4px}
+#cardToastsDragHandle button:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.5)}
+#cardToasts{display:flex;flex-direction:column;gap:8px;pointer-events:none}
+
 /* KART KAZANILDI TOAST */
-#cardToasts{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;width:340px}
-.card-toast{background:linear-gradient(135deg,rgba(5,10,20,.97) 0%,rgba(15,8,3,.95) 100%);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.8);pointer-events:none;animation:toastIn .4s cubic-bezier(.2,.8,.2,1) forwards;overflow:hidden;position:relative}
+.card-toast{background:linear-gradient(135deg,rgba(5,10,20,.97) 0%,rgba(15,8,3,.95) 100%);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.8);pointer-events:all;animation:toastIn .4s cubic-bezier(.2,.8,.2,1) forwards;overflow:hidden;position:relative;cursor:default}
 .card-toast::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--toast-color,#D4AF37)}
 .card-toast.bronze::before{background:#CD7F32}
 .card-toast.silver::before{background:#A8A9AD}
@@ -555,8 +564,14 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
     </div>
   </div>
 
-<!-- KART KAZANILDI TOAST LİSTESİ -->
-<div id="cardToasts"></div>
+<!-- KART KAZANILDI TOAST LİSTESİ - Sürüklenebilir -->
+<div id="cardToastsWrapper">
+  <div id="cardToastsDragHandle">
+    <span>🎴 Kazanılan Kartlar</span>
+    <button onclick="event.stopPropagation();clearAllToasts()" title="Temizle">×</button>
+  </div>
+  <div id="cardToasts"></div>
+</div>
 
   <div class="side-toggle" id="sideToggle" onclick="toggleSide()">◀</div>
 
@@ -2002,9 +2017,52 @@ function setGiftQuality(giftId, quality){
   console.log('[Gift] Custom mapping:', giftId, '→', quality);
 }
 
+// TOAST SÜRÜKLEME ve KÜÇÜLTme
+let dragState={isDragging:false,offsetX:0,offsetY:0};
+function initToastDrag(){
+  const wrapper=document.getElementById('cardToastsWrapper');
+  const handle=document.getElementById('cardToastsDragHandle');
+  if(!wrapper||!handle)return;
+
+  handle.addEventListener('mousedown',(e)=>{
+    dragState.isDragging=true;
+    dragState.offsetX=e.clientX-wrapper.offsetLeft;
+    dragState.offsetY=e.clientY-wrapper.offsetTop;
+  });
+
+  document.addEventListener('mousemove',(e)=>{
+    if(!dragState.isDragging)return;
+    wrapper.style.left=(e.clientX-dragState.offsetX)+'px';
+    wrapper.style.right='auto';
+    wrapper.style.top=(e.clientY-dragState.offsetY)+'px';
+  });
+
+  document.addEventListener('mouseup',()=>{
+    dragState.isDragging=false;
+  });
+
+  // Minimize butonuna tıkla
+  handle.addEventListener('dblclick',()=>{
+    wrapper.classList.toggle('minimized');
+  });
+}
+
+function toggleToastsMinimize(){
+  const wrapper=document.getElementById('cardToastsWrapper');
+  wrapper?.classList.toggle('minimized');
+}
+
+function clearAllToasts(){
+  const container=document.getElementById('cardToasts');
+  container.innerHTML='';
+}
+
 function showCardToast(pending){
   const container=document.getElementById('cardToasts');
-  if(!container)return;
+  if(!container){
+    console.warn('[Toast] cardToasts container not found');
+    return;
+  }
 
   const quality=pending.quality||'bronze';
   const username=pending.displayName||pending.username||'?';
@@ -2299,6 +2357,7 @@ if(new URLSearchParams(location.search).has('demo_end')){
 }
 
 connectSocket();
+initToastDrag();
 </script>
 </body>
 </html>
