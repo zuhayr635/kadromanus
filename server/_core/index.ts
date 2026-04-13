@@ -50,18 +50,156 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  // Create tables if not exists using raw SQL
   try {
-    // Run migrations on startup
-    console.log("[Server] Running database migrations...");
-    const { getDb } = await import("../db");
-    const db = await getDb();
-    if (db) {
-      const migrationsFolder = path.resolve(import.meta.dirname, "..", "..", "drizzle");
-      await migrate(db, { migrationsFolder });
-      console.log("[Server] ✓ Migrations completed");
-    }
+    console.log("[Server] Initializing database tables...");
+    const mysql = await import("mysql2/promise");
+    const url = new URL(process.env.DATABASE_URL!);
+    const conn = await mysql.default.createConnection({
+      host: url.hostname,
+      port: parseInt(url.port || "3306"),
+      user: url.username,
+      password: url.password,
+      database: url.pathname.slice(1),
+      multipleStatements: true,
+    });
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS \`users\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`openId\` varchar(64) NOT NULL,
+        \`name\` text,
+        \`email\` varchar(320),
+        \`loginMethod\` varchar(64),
+        \`role\` enum('user','admin') NOT NULL DEFAULT 'user',
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        \`updatedAt\` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+        \`lastSignedIn\` timestamp NOT NULL DEFAULT (now()),
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`users_openId_unique\` (\`openId\`)
+      )
+    `);
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS \`licenses\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`licenseKey\` varchar(64) NOT NULL,
+        \`ownerName\` text NOT NULL,
+        \`ownerEmail\` varchar(320),
+        \`ownerTikTok\` varchar(64),
+        \`planType\` enum('basic','pro','premium','unlimited') NOT NULL DEFAULT 'basic',
+        \`status\` enum('active','suspended','expired','revoked') NOT NULL DEFAULT 'active',
+        \`maxSessions\` int NOT NULL DEFAULT 1,
+        \`allowedFeatures\` json,
+        \`totalUsageCount\` int DEFAULT 0,
+        \`lastUsedAt\` timestamp NULL,
+        \`lastUsedIp\` varchar(45),
+        \`activatedAt\` timestamp NULL,
+        \`expiresAt\` timestamp NULL,
+        \`notes\` text,
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        \`updatedAt\` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`licenses_licenseKey_unique\` (\`licenseKey\`)
+      )
+    `);
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS \`licenseLogs\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`licenseId\` int NOT NULL,
+        \`action\` varchar(64) NOT NULL,
+        \`details\` text,
+        \`ipAddress\` varchar(45),
+        \`userAgent\` text,
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        PRIMARY KEY (\`id\`)
+      )
+    `);
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS \`sessions\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`sessionId\` varchar(64) NOT NULL,
+        \`licenseId\` int NOT NULL,
+        \`tiktokUsername\` varchar(64) NOT NULL,
+        \`status\` enum('active','paused','ended','error') NOT NULL DEFAULT 'active',
+        \`pythonPid\` int,
+        \`gameState\` json,
+        \`teamSettings\` json,
+        \`gameSettings\` json,
+        \`giftConfig\` json,
+        \`startedAt\` timestamp NOT NULL DEFAULT (now()),
+        \`endedAt\` timestamp NULL,
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`sessions_sessionId_unique\` (\`sessionId\`)
+      )
+    `);
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS \`gameHistory\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`sessionId\` varchar(64) NOT NULL,
+        \`licenseId\` int NOT NULL,
+        \`tiktokUsername\` varchar(64) NOT NULL,
+        \`finalScores\` json NOT NULL,
+        \`statistics\` json NOT NULL,
+        \`durationSeconds\` int,
+        \`totalCardsOpened\` int DEFAULT 0,
+        \`totalParticipants\` int DEFAULT 0,
+        \`screenshotUrl\` text,
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        PRIMARY KEY (\`id\`)
+      )
+    `);
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS \`appSettings\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`key\` varchar(128) NOT NULL,
+        \`value\` text NOT NULL,
+        \`category\` varchar(64) NOT NULL DEFAULT 'general',
+        \`licenseId\` int,
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        \`updatedAt\` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`appSettings_key_unique\` (\`key\`)
+      )
+    `);
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS \`webhooks\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`name\` varchar(128) NOT NULL,
+        \`eventType\` varchar(64) NOT NULL,
+        \`url\` text NOT NULL,
+        \`secret\` varchar(256),
+        \`headers\` text,
+        \`licenseId\` int,
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        PRIMARY KEY (\`id\`)
+      )
+    `);
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS \`notificationLog\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`webhookId\` int NOT NULL,
+        \`licenseId\` int NOT NULL,
+        \`eventType\` varchar(64) NOT NULL,
+        \`payload\` text,
+        \`responseCode\` int,
+        \`responseBody\` text,
+        \`sentAt\` timestamp NOT NULL DEFAULT (now()),
+        \`success\` boolean NOT NULL DEFAULT false,
+        PRIMARY KEY (\`id\`)
+      )
+    `);
+
+    await conn.end();
+    console.log("[Server] ✓ Database tables ready");
   } catch (err) {
-    console.error("[Server] Migration warning (non-fatal):", err);
+    console.error("[Server] DB init warning (non-fatal):", err);
   }
 
   const app = express();
