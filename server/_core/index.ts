@@ -231,8 +231,8 @@ async function startServer() {
       return res.redirect("/admin-login.html");
     }
 
-    // import.meta.dirname = /app/dist in production → go up one level to /app
-    const filePath = path.resolve(import.meta.dirname, "..", "client", "public", "license-panel.html");
+    // import.meta.dirname = /app/dist in production → go up two levels to project root
+    const filePath = path.resolve(import.meta.dirname, "../..", "client", "public", "license-panel.html");
     if (fs.existsSync(filePath)) {
       res.sendFile(filePath);
     } else {
