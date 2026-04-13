@@ -1062,9 +1062,24 @@ async function handlePendingCard(data){
   }
   // Kuyruk sayacını güncelle
   GS.cardQueueLength=data.queueLength||0;
+
+  // Feed mesajı oluştur
+  const pending=data.pending;
+  const source=pending.source||'gift';
+  const username=pending.username||'?';
+  const quality=pending.quality||'bronze';
+  const qualityEmoji={bronze:'🥉',silver:'🥈',gold:'🥇',elite:'💎'}[quality]||'🎴';
+  if(source==='like'){
+    const likeCount=pending.likeCount||GS.likeThreshold||100;
+    addFeed(username,`${likeCount} beğeni gönderdi → ${qualityEmoji} ${quality.toUpperCase()} kart kazandı`,'❤️');
+  } else if(source==='gift'){
+    const giftName=pending.gift?.name||'Hediye';
+    const coins=pending.gift?.amount||pending.gift?.coins||0;
+    addFeed(username,`${giftName} (${coins} 💎) gönderdi → ${qualityEmoji} ${quality.toUpperCase()} kart kazandı`,'🎁');
+  }
+
   // Eğer overlay açıkken yeni kart gelirse, saklanmış karta ekle
   if(GS.busy){
-    const pending=data.pending;
     stashedCards.push({
       pending,
       playerFull:null,
@@ -1078,7 +1093,6 @@ async function handlePendingCard(data){
     return;
   }
   GS.busy=true;
-  const pending=data.pending;
   GS.pendingCard=pending;
   currentPlayerId=pending.player?.id;
   currentQuality=pending.quality;

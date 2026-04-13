@@ -66,6 +66,7 @@ export interface PendingCard {
     image?: string;
     emoji?: string;
   };
+  likeCount?: number;
 }
 
 export type CardQuality = "bronze" | "silver" | "gold" | "elite";
@@ -359,6 +360,7 @@ export async function processLikeEvent(
       profilePic,
       quality: "bronze",
       source: "like",
+      likeCount: likeCount,
       player: { id: player.id, name: player.name, position: player.position, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team },
       timestamp: Date.now(),
     };
