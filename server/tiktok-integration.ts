@@ -205,14 +205,21 @@ export async function startTikTokConnection(
       // Profil resmini Base64 olarak indir
       const profilePicBase64 = await getProfileImage(userId, profilePicUrl);
 
+      // DÜZELTME: TikTok'tan gelen like sayısı
+      // - data.likeCount: Bu paketteki like sayısı (genellikle 15 veya 1)
+      // - data.totalLikeCount: Yayının başından bu yana toplam like sayısı
+      // Doğru hesap için DELTA gerekli (bu paket kaç like getirdi?), ancak
+      // TikTok API bunu sağlamıyor. Fallback: likeCount kullan (default 1)
+      const likeCountForCard = data.likeCount ?? 1;
+
       onEvent({
         type: "like",
         data: {
           userId,
           username,
           displayName: data.user?.nickname ?? data.nickname,
-          likeCount: data.likeCount ?? 1,
-          totalLikeCount: data.totalLikeCount ?? data.likeCount ?? 1,
+          likeCount: likeCountForCard,  // Bu pakette kaç like? (genellikle 15)
+          totalLikeCount: data.totalLikeCount ?? data.likeCount ?? 1,  // Yayın toplam like (info amaçlı)
           profilePic: profilePicUrl,
           profilePicBase64,
         },
@@ -223,11 +230,24 @@ export async function startTikTokConnection(
     // === GIFT ===
     // Only fire when streak ends (repeatEnd=1) or gift is non-streakable (giftType=1)
     conn.on("gift" as any, async (data: any) => {
+      console.log('[TikTok Gift] RAW DATA:', JSON.stringify({
+        giftId: data.giftId,
+        giftName: data.giftDetails?.giftName || data.gift?.giftName,
+        giftType: data.giftDetails?.giftType ?? data.gift?.giftType,
+        repeatEnd: data.repeatEnd,
+        repeatCount: data.repeatCount
+      }).substring(0, 500));
+
       const giftType = data.giftDetails?.giftType ?? data.gift?.giftType ?? 1;
       const repeatEnd = data.repeatEnd; // number: 1 = streak ended
 
+      console.log(`[TikTok Gift] giftType=${giftType}, repeatEnd=${repeatEnd}`);
+
       // Skip mid-streak events (repeatable gifts streaming)
-      if (giftType !== 1 && repeatEnd !== 1) return;
+      if (giftType !== 1 && repeatEnd !== 1) {
+        console.log('[TikTok Gift] SKIPPED: mid-stream event');
+        return;
+      }
 
       const diamondCount = data.giftDetails?.diamondCount ?? data.gift?.diamondCount ?? data.diamondCount ?? 0;
       const giftName = data.giftDetails?.giftName ?? data.gift?.giftName ?? data.giftName ?? "Unknown";
@@ -301,16 +321,24 @@ export async function startTikTokConnection(
 
       let message: string;
       const name = error?.constructor?.name ?? "";
-      if (name === "FetchIsLiveError") {
+      const errorMsg = error?.message ?? String(error) ?? "";
+
+      if (errorMsg.includes("ENOTFOUND") || errorMsg.includes("getaddrinfo")) {
+        message = "TikTok sunucusuna ulaşılamadı (DNS hatası). VPN kullan veya DNS'ini değiştir (8.8.8.8).";
+      } else if (errorMsg.includes("ECONNREFUSED")) {
+        message = "TikTok sunucusu bağlantıyı reddetti. Ağ bağlantısını kontrol et.";
+      } else if (errorMsg.includes("ETIMEDOUT") || errorMsg.includes("timeout")) {
+        message = "TikTok bağlantısı zaman aşımına uğradı. Ağ hızınızı kontrol edin.";
+      } else if (name === "FetchIsLiveError") {
         const subErrors: Error[] = error.errors ?? [];
         const details = subErrors.map((e: any) => e.message).filter(Boolean).join(" | ");
         message = details || "Kullanıcı canlı yayında değil veya TikTok'a erişilemiyor";
       } else if (name === "UserOfflineError") {
         message = "Kullanıcı şu anda canlı yayında değil";
-      } else if (error?.message?.includes("Websocket connection failed")) {
+      } else if (errorMsg.includes("Websocket connection failed")) {
         message = "WebSocket bağlantısı başarısız. TikTok yayını aktif olmalıdır.";
       } else {
-        message = error?.message ?? String(error) ?? "TikTok bağlantısı kurulamadı";
+        message = errorMsg || "TikTok bağlantısı kurulamadı";
       }
 
       onEvent({ type: "error", data: { message }, timestamp: Date.now() });

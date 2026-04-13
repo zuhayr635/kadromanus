@@ -947,41 +947,51 @@ async function startServer() {
   app.get("/api/sessions/:sessionId/gifts", async (req, res) => {
     try {
       const db = await getDb();
-      if (!db) return res.json({ activeGiftIds: [], customMappings: {} });
+      if (!db) return res.json({ giftTriggerMode: 'diamond', activeGiftIds: [], customMappings: {} });
 
-      const [session] = await db.select().from(sessions).where(eq(sessions.sessionId, req.params.sessionId)).limit(1);
+      const result = await db.execute(
+        sql`SELECT giftConfig FROM sessions WHERE sessionId = ${req.params.sessionId} LIMIT 1`
+      );
+      const row = (result as any)[0]?.[0];
+      if (!row) return res.status(404).json({ error: "Session not found" });
 
-      if (!session) return res.status(404).json({ error: "Session not found" });
+      let giftConfig: any = { giftTriggerMode: 'diamond', activeGiftIds: [], customMappings: {} };
+      if (row.giftConfig) {
+        try {
+          giftConfig = typeof row.giftConfig === 'string' ? JSON.parse(row.giftConfig) : row.giftConfig;
+        } catch(e) { console.error("giftConfig parse error:", e); }
+      }
 
-      const giftConfig = session.giftConfig as any;
       res.json({
-        activeGiftIds: giftConfig?.activeGiftIds || [],
-        customMappings: giftConfig?.customMappings || {}
+        giftTriggerMode: giftConfig.giftTriggerMode || 'diamond',
+        activeGiftIds: giftConfig.activeGiftIds || [],
+        customMappings: giftConfig.customMappings || {}
       });
     } catch (err) {
-      console.error("Get session gifts error:", err);
+      console.error("Get session gifts error:", (err as Error)?.message, String(err));
       res.status(500).json({ error: "Failed to get session gifts" });
     }
   });
 
-  /**
-   * PUT /api/sessions/:sessionId/gifts - Update session's active gift config
-   */
   app.put("/api/sessions/:sessionId/gifts", async (req, res) => {
     try {
       const db = await getDb();
       if (!db) return res.status(500).json({ error: "Database unavailable" });
 
       const { activeGiftIds, giftTriggerMode, customMappings } = req.body;
+      const jsonStr = JSON.stringify({ activeGiftIds, giftTriggerMode, customMappings });
 
-      await db.update(sessions)
-        .set({ giftConfig: { activeGiftIds, giftTriggerMode, customMappings } })
-        .where(eq(sessions.sessionId, req.params.sessionId));
+      console.log(`[Gifts] Saving for session ${req.params.sessionId}:`, jsonStr);
 
-      res.json({ success: true, activeGiftIds, giftTriggerMode, customMappings });
+      await db.execute(
+        sql`UPDATE sessions SET giftConfig = ${jsonStr} WHERE sessionId = ${req.params.sessionId}`
+      );
+
+      console.log(`[Gifts] Saved successfully`);
+      res.json({ success: true });
     } catch (err) {
-      console.error("Update session gifts error:", err);
-      res.status(500).json({ error: "Failed to update session gifts" });
+      console.error("Update session gifts error:", (err as Error)?.message, String(err));
+      res.status(500).json({ error: (err as Error)?.message || "Failed to update session gifts" });
     }
   });
 

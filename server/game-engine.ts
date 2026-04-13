@@ -56,6 +56,7 @@ export interface PendingCard {
   username: string;
   displayName?: string;
   profilePic?: string;
+  profilePicBase64?: string;
   quality: CardQuality;
   source?: 'like' | 'gift';
   player: { id: number; name: string; position: string; overall?: number; faceImageUrl?: string; nation?: string; team?: string };
@@ -326,6 +327,7 @@ export async function processLikeEvent(
   username: string,
   likeCount: number,
   profilePic?: string,
+  profilePicBase64?: string,
   displayName?: string
 ): Promise<PendingCard | null> {
   const gameState = gameStates.get(sessionId);
@@ -335,6 +337,9 @@ export async function processLikeEvent(
 
   gameState.totalLikes += likeCount;
   gameState.participants.add(username);
+
+  // DEBUG: Beğeni hesaplaması logla
+  console.log(`[Like Event] sessionId=${sessionId}, likeCount=${likeCount}, totalLikes=${gameState.totalLikes}, likeThreshold=${likeThreshold}, likeCardCount=${gameState.likeCardCount}, cardsToOpenHesap=${Math.floor(gameState.totalLikes / likeThreshold)}`);
 
   // Update top viewers
   const existing = gameState.topViewers.get(username);
@@ -358,6 +363,7 @@ export async function processLikeEvent(
       username,
       displayName,
       profilePic,
+      profilePicBase64,
       quality: "bronze",
       source: "like",
       likeCount: likeCount,
@@ -385,10 +391,12 @@ export async function processGiftEvent(
   diamondCount: number,
   username: string,
   profilePic?: string,
+  profilePicBase64?: string,
   displayName?: string,
-  giftImage?: string
+  giftImage?: string,
+  tiktokGiftId?: number  // ← TikTok'tan gelen gerçek gift ID
 ): Promise<PendingCard | null> {
-  console.log(`[${sessionId}] DEBUG processGiftEvent: profilePic="${profilePic}" displayName="${displayName}" username="${username}"`);
+  console.log(`[${sessionId}] DEBUG processGiftEvent: giftName="${giftName}" tiktokGiftId=${tiktokGiftId} diamondCount=${diamondCount} username="${username}"`);
   const gameState = gameStates.get(sessionId);
   if (!gameState) return null;
 
@@ -420,15 +428,44 @@ export async function processGiftEvent(
         .limit(1);
 
       if (sessionData?.giftConfig) {
-        const giftConfig = sessionData.giftConfig as { activeGiftIds?: number[]; giftTriggerMode?: string; customMappings?: Record<number, CardQuality> };
+        // Parse giftConfig from JSON string if needed
+        let giftConfig: { activeGiftIds?: number[]; giftTriggerMode?: string; customMappings?: Record<number, CardQuality> };
+        try {
+          if (typeof sessionData.giftConfig === 'string') {
+            giftConfig = JSON.parse(sessionData.giftConfig);
+          } else {
+            giftConfig = sessionData.giftConfig as { activeGiftIds?: number[]; giftTriggerMode?: string; customMappings?: Record<number, CardQuality> };
+          }
+        } catch (err) {
+          console.error(`[${sessionId}] giftConfig parse hatası:`, err);
+          giftConfig = {};
+        }
         const triggerMode = giftConfig.giftTriggerMode ?? 'diamond';
 
-        // Gift'i DB'den bul
-        const [giftData] = await db
-          .select()
-          .from(giftTiers)
-          .where(eq(giftTiers.giftName, giftName))
-          .limit(1);
+        // Gift'i DB'den bul — önce TikTok giftId ile, yoksa isme göre
+        let [giftData] = tiktokGiftId
+          ? await db.select().from(giftTiers).where(eq(giftTiers.giftId, tiktokGiftId)).limit(1)
+          : await db.select().from(giftTiers).where(eq(giftTiers.giftName, giftName)).limit(1);
+
+        console.log(`[${sessionId}] DEBUG giftData for "${giftName}" (tiktokGiftId=${tiktokGiftId}): id=${giftData?.id}, giftId=${giftData?.giftId}, quality=${giftData?.cardQuality}, triggerMode=${triggerMode}`);
+
+        // ❌ Gift DB'de yoksa — otomatik ekle (TikTok'tan gelen ilk kez görülen hediye)
+        if (!giftData && tiktokGiftId) {
+          const newQuality = qualityFromDiamonds(diamondCount);
+          console.log(`[${sessionId}] ⚠️ Gift "${giftName}" (ID: ${tiktokGiftId}) DB'de yok, otomatik ekleniyor → ${newQuality}`);
+
+          const [inserted] = await db.insert(giftTiers).values({
+            giftName,
+            giftId: tiktokGiftId,
+            diamondCost: diamondCount,
+            tierLevel: newQuality === 'elite' ? '3' : newQuality === 'gold' ? '2' : newQuality === 'silver' ? '2' : '1',
+            cardQuality: newQuality,
+          }).$returningInsertedId();
+
+          // Yeni eklenen kaydı tekrar çek
+          [giftData] = await db.select().from(giftTiers).where(eq(giftTiers.giftId, tiktokGiftId)).limit(1);
+          console.log(`[${sessionId}] ✅ Yeni gift kaydı oluşturuldu: ${giftData?.id}`);
+        }
 
         if (triggerMode === 'disabled') {
           console.log(`[${sessionId}] Gift "${giftName}" → hediye sistemi devre dışı, yok sayılıyor`);
@@ -439,21 +476,42 @@ export async function processGiftEvent(
           // Tekil mod: sadece seçili hediyeler kart tetikler
           const activeIds = giftConfig.activeGiftIds;
           if (Array.isArray(activeIds) && activeIds.length > 0) {
-            if (!giftData || !activeIds.includes(giftData.id)) {
-              console.log(`[${sessionId}] Gift "${giftName}" tekil hediye listesinde değil, yok sayılıyor`);
+            if (!giftData) {
+              console.log(`[${sessionId}] Gift "${giftName}" DB'de bulunamadı, yok sayılıyor`);
+              return null;
+            }
+            // Type-safe includes: convert both to number for comparison
+            const giftIdNum = Number(giftData.id);
+            const activeIdsNum = activeIds.map(id => Number(id));
+            if (!activeIdsNum.includes(giftIdNum)) {
+              console.log(`[${sessionId}] Gift "${giftName}" (ID: ${giftIdNum}) tekil hediye listesinde değil [${activeIdsNum.join(', ')}], yok sayılıyor`);
               return null;
             }
           }
           // customMappings varsa önce ona bak, yoksa DB kalitesi, yoksa diamond
-          if (giftConfig.customMappings && giftData && giftConfig.customMappings[giftData.id]) {
-            quality = giftConfig.customMappings[giftData.id];
+          console.log(`[${sessionId}] DEBUG specific mode: giftData.id=${giftData?.id}, customMappings=${JSON.stringify(giftConfig.customMappings)}`);
+          if (giftConfig.customMappings && giftData) {
+            // Always compare as string since JSON keys are always strings
+            const mapping = (giftConfig.customMappings as Record<string, CardQuality>)[String(giftData.id)];
+            console.log(`[${sessionId}] DEBUG: mapping for gift ${giftData.id} = ${mapping}`);
+            if (mapping) {
+              quality = mapping;
+              console.log(`[${sessionId}] Gift ${giftData.id} (${giftName}): customMapping kullanılıyor → ${quality}`);
+            } else {
+              quality = giftData.cardQuality as CardQuality;
+            }
           } else {
             quality = giftData ? (giftData.cardQuality as CardQuality) : qualityFromDiamonds(diamondCount);
           }
         } else if (triggerMode === 'diamond') {
           // Jeton modu: customMappings varsa önce ona bak
-          if (giftConfig.customMappings && giftData && giftConfig.customMappings[giftData.id]) {
-            quality = giftConfig.customMappings[giftData.id];
+          if (giftConfig.customMappings && giftData) {
+            const mapping = (giftConfig.customMappings as Record<string, CardQuality>)[String(giftData.id)];
+            if (mapping) {
+              quality = mapping;
+            } else {
+              quality = qualityFromDiamonds(diamondCount);
+            }
           } else {
             quality = qualityFromDiamonds(diamondCount);
           }
@@ -498,6 +556,7 @@ export async function processGiftEvent(
     username,
     displayName,
     profilePic,
+    profilePicBase64,
     quality,
     source: "gift",
     player: { id: player.id, name: player.name, position: player.position, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team },
@@ -540,15 +599,97 @@ export async function confirmPendingCard(
   if (teamId < 0 || teamId >= gameState.teams.length) return null;
 
   const team = gameState.teams[teamId];
-  team.players.push({ playerId: player.id, name: player.name, position: player.position, quality, openedBy: username, overall: player.overall, faceImageUrl: player.faceImageUrl, nation: player.nation, team: player.team });
 
+  // Takım doluysa (11 oyuncu), en zayıf oyuncuyu bul ve değiştir
+  const currentPlayers = team.players.filter(p => p !== null && p !== undefined);
+  const isFull = currentPlayers.length >= 11;
+
+  // Dizide null slotları biriktirmemek için temizle
+  if (team.players.length !== currentPlayers.length) {
+    team.players = currentPlayers;
+    console.log(`[${sessionId}] DEBUG: Cleaned null slots from team.players, new length=${team.players.length}`);
+  }
+
+  let ejectedPlayer: TeamPlayer | null = null;
+  let weakestIdx = -1;
   const qualityFallback: Record<CardQuality, number> = { bronze: 10, silver: 25, gold: 50, elite: 100 };
-  team.score += player.overall ?? qualityFallback[quality];
+
+  if (isFull) {
+    // En düşük overall'lı oyuncuyu bul
+    let weakestOverall = Infinity;
+    for (let i = 0; i < team.players.length; i++) {
+      const p = team.players[i];
+      if (!p) continue;
+      const ov = p.overall ?? qualityFallback[p.quality] ?? 0;
+      if (ov < weakestOverall) {
+        weakestOverall = ov;
+        weakestIdx = i;
+        ejectedPlayer = p;
+      }
+    }
+
+    console.log(`[${sessionId}] DEBUG confirmPendingCard: isFull=true, weakestIdx=${weakestIdx}, ejectedPlayer=${ejectedPlayer?.name}, oldScore=${team.score}`);
+
+    if (weakestIdx >= 0 && ejectedPlayer) {
+      // Eski oyuncuyu çıkar ve skorunu düşür
+      const oldScore = ejectedPlayer.overall ?? qualityFallback[ejectedPlayer.quality] ?? 0;
+      console.log(`[${sessionId}] DEBUG confirmPendingCard: Removing ${ejectedPlayer.name} (overall=${ejectedPlayer.overall}, oldScoreValue=${oldScore}), current team.score before=${team.score}`);
+      team.score = (team.score ?? 0) - oldScore;
+      console.log(`[${sessionId}] DEBUG confirmPendingCard: team.score after removal=${team.score}`);
+      // Eski oyuncuyu takımdan sil
+      team.players[weakestIdx] = null as any;
+      console.log(`[${sessionId}] ${ejectedPlayer.name} (${oldScore}) kovuldu, yeni skor: ${team.score}`);
+    }
+  } else {
+    console.log(`[${sessionId}] DEBUG confirmPendingCard: isFull=false, team.players.length=${team.players.length}, current team.score=${team.score}`);
+  }
+
+  // Yeni oyuncuyu ekle
+  const teamPlayer: TeamPlayer = {
+    playerId: player.id,
+    name: player.name,
+    position: player.position,
+    quality,
+    openedBy: username,
+    overall: player.overall,
+    faceImageUrl: player.faceImageUrl,
+    nation: player.nation,
+    team: player.team,
+  };
+
+  // Boş slot bul
+  if (!isFull) {
+    const emptySlotIdx = team.players.findIndex(p => p === null || p === undefined);
+    if (emptySlotIdx >= 0) {
+      team.players[emptySlotIdx] = teamPlayer;
+    } else {
+      team.players.push(teamPlayer);
+    }
+  } else {
+    // Dolu takımda en zayıf slot (yukarıda bulduğumuz weakestIdx)
+    if (weakestIdx >= 0) {
+      team.players[weakestIdx] = teamPlayer;
+    }
+  }
+
+  // Skor artır
+  const newPlayerScore = player.overall ?? qualityFallback[quality];
+  console.log(`[${sessionId}] DEBUG confirmPendingCard: FINAL - Adding new player ${player.name} (overall=${player.overall}, newPlayerScore=${newPlayerScore}), team.score before=${team.score}`);
+  team.score += newPlayerScore;
+  console.log(`[${sessionId}] DEBUG confirmPendingCard: FINAL - team.score after=${team.score}`);
 
   const openedCard: OpenedCard = { playerId: player.id, quality, teamId, openedBy: username, timestamp: Date.now() };
   gameState.openedCards.push(openedCard);
+  gameState.participants.add(username);
 
-  console.log(`[${sessionId}] Kart onaylandı: ${player.name} (${quality}) → ${team.name} (${username})`);
+  // Null slotları her operasyonda temizle (dizide null birikmesini önlemek için)
+  const realPlayers = team.players.filter(p => p !== null && p !== undefined);
+  if (team.players.length !== realPlayers.length) {
+    console.log(`[${sessionId}] POST-OP: Cleaning null slots from ${team.name}, array length ${team.players.length} -> ${realPlayers.length}`);
+    team.players = realPlayers;
+  }
+
+  console.log(`[${sessionId}] Kart onaylandı: ${player.name} (${player.overall}) → ${team.name}, yeni skor: ${team.score}, gerçek oyuncu sayısı: ${realPlayers.length}`);
   return openedCard;
 }
 
@@ -564,8 +705,22 @@ export function isGameComplete(sessionId: string): boolean {
   const settings = gameState.winSettings || { mode: 'cards' as const, cardsTarget: 44, scoreTarget: 500 };
 
   if (settings.mode === 'cards') {
-    const totalCards = gameState.teams.reduce((sum, team) => sum + team.players.length, 0);
-    return totalCards >= settings.cardsTarget;
+    // Null slotları filtrele, sadece gerçek oyuncuları say
+    const totalCards = gameState.teams.reduce((sum, team) => {
+      const realPlayers = team.players.filter(p => p !== null && p !== undefined);
+      return sum + realPlayers.length;
+    }, 0);
+
+    console.log(`[${sessionId}] 🎮 Kart ilerlemesi: ${totalCards}/${settings.cardsTarget} (${gameState.teams.map((t, i) => {
+      const realPlayers = t.players.filter(p => p !== null && p !== undefined);
+      return `T${i + 1}=${realPlayers.length}`;
+    }).join(', ')})`);
+
+    if (totalCards >= settings.cardsTarget) {
+      console.log(`[${sessionId}] 🏆 Kart hedefine ulaşıldı: ${totalCards} >= ${settings.cardsTarget}`);
+      return true;
+    }
+    return false;
   } else {
     // score mode: any team reaches target score
     const winner = gameState.teams.find(team => team.score >= settings.scoreTarget);
@@ -595,11 +750,15 @@ export function endGame(
 
   gameState.endedAt = Date.now();
 
-  const finalScores = gameState.teams.map((team) => ({
-    teamName: team.name,
-    score: team.score,
-    players: team.players.length,
-  }));
+  const finalScores = gameState.teams.map((team) => {
+    // Null slotları filtrele
+    const realPlayers = team.players.filter(p => p !== null && p !== undefined);
+    return {
+      teamName: team.name,
+      score: team.score,
+      players: realPlayers.length,
+    };
+  });
 
   // Kazanan: en yüksek puana sahip takım
   const sorted = [...finalScores].sort((a, b) => b.score - a.score);

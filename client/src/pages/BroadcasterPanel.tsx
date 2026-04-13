@@ -83,6 +83,9 @@ export default function BroadcasterPanel() {
   const [startingStep, setStartingStep] = useState(0);
   const [pendingCard, setPendingCard] = useState<{
     username: string;
+    displayName?: string;
+    profilePic?: string;
+    profilePicBase64?: string;
     quality: string;
     teams: { id: number; name: string }[];
   } | null>(null);
@@ -120,6 +123,7 @@ export default function BroadcasterPanel() {
   // Gift selection state
   const [gifts, setGifts] = useState<any[]>([]);
   const [activeGiftIds, setActiveGiftIds] = useState<number[]>([]);
+  const [customMappings, setCustomMappings] = useState<Record<number, 'bronze' | 'silver' | 'gold' | 'elite'>>({});
   const [giftSearchQuery, setGiftSearchQuery] = useState('');
   const [giftFilters, setGiftFilters] = useState({ costRange: 'all', quality: 'all' });
   const [giftsLoaded, setGiftsLoaded] = useState(false);
@@ -163,6 +167,9 @@ export default function BroadcasterPanel() {
         case "pendingCard":
           setPendingCard({
             username: event.data.pending.username,
+            displayName: event.data.pending.displayName,
+            profilePic: event.data.pending.profilePic,
+            profilePicBase64: event.data.pending.profilePicBase64,
             quality: event.data.pending.quality,
             teams: event.data.teams,
           });
@@ -283,6 +290,9 @@ export default function BroadcasterPanel() {
     if (gs.pendingCard) {
       setPendingCard({
         username: gs.pendingCard.username,
+        displayName: gs.pendingCard.displayName,
+        profilePic: gs.pendingCard.profilePic,
+        profilePicBase64: gs.pendingCard.profilePicBase64,
         quality: gs.pendingCard.quality,
         teams: gs.teams.map((t: any) => ({ id: t.id, name: t.name })),
       });
@@ -340,7 +350,22 @@ export default function BroadcasterPanel() {
         showNotification('error', 'Hata', result.message || 'Oturum başlatılamadı');
       }
     } catch (error) {
-      showNotification('error', 'Hata', 'Oturum başlatılamadı: ' + (error as Error).message);
+      const errorMsg = (error as Error).message;
+      let userMessage = 'Oturum başlatılamadı';
+
+      // TikTok bağlantı hatası — DNS veya network sorunu
+      if (errorMsg?.includes('ENOTFOUND') || errorMsg?.includes('getaddrinfo')) {
+        userMessage = 'TikTok Live\u2019a bağlanılamadı. VPN aç veya DNS değiştir (8.8.8.8), sonra tekrar dene.';
+      } else if (errorMsg?.includes('ECONNREFUSED')) {
+        userMessage = 'TikTok Live sunucusuna bağlanılamadı. Ağ bağlantını kontrol et.';
+      } else if (errorMsg?.includes('timeout')) {
+        userMessage = 'TikTok Live bağlantı zaman aşımı. Ağ hızını kontrol et, tekrar dene.';
+      } else if (errorMsg) {
+        userMessage = errorMsg;
+      }
+
+      showNotification('error', 'TikTok Bağlantı Hatası', userMessage);
+      console.error('[TikTok Connection Error]', errorMsg);
     } finally {
       setIsStartingSession(false);
     }
@@ -432,6 +457,7 @@ export default function BroadcasterPanel() {
         const data = await response.json();
         setActiveGiftIds(data.activeGiftIds || []);
         setGiftTriggerMode(data.giftTriggerMode || 'diamond');
+        setCustomMappings(data.customMappings || {});
       } catch (err) {
         console.error('Failed to load gift config:', err);
       }
@@ -475,7 +501,7 @@ export default function BroadcasterPanel() {
       await fetch(`/api/sessions/${sessionId}/gifts`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activeGiftIds, giftTriggerMode })
+        body: JSON.stringify({ activeGiftIds, giftTriggerMode, customMappings })
       });
       const modeLabel = giftTriggerMode === 'disabled' ? 'Devre dışı modu' : giftTriggerMode === 'specific' ? 'Tekil hediye modu' : 'Jeton aralığı modu';
       showNotification('success', 'Başarılı', `${modeLabel} kaydedildi`);
@@ -1271,50 +1297,74 @@ export default function BroadcasterPanel() {
                         gold: { bg: '#ffd70022', border: '#ffd700', text: '#ffd700' },
                         elite: { bg: '#a855f722', border: '#a855f7', text: '#a855f7' }
                       };
-                      const qc = qualityColors[gift.cardQuality as keyof typeof qualityColors] || qualityColors.bronze;
+                      // Effective quality = customMapping override OR DB quality
+                      const effectiveQuality = (customMappings[gift.id] || gift.cardQuality) as keyof typeof qualityColors;
+                      const qc = qualityColors[effectiveQuality] || qualityColors.bronze;
 
                       return (
                         <div
                           key={gift.id}
-                          onClick={() => toggleGift(gift.id)}
                           style={{
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
+                            flexDirection: 'column',
+                            gap: '0.25rem',
                             padding: '0.4rem',
                             background: isActive ? qc.bg : 'transparent',
                             border: `1px solid ${isActive ? qc.border : '#14532d44'}`,
                             borderRadius: '5px',
-                            cursor: 'pointer',
                             transition: 'all 0.15s'
                           }}
                         >
-                          <img
-                            src={gift.image || '/logo.svg'}
-                            alt={gift.giftName}
-                            style={{ width: '20px', height: '20px', objectFit: 'contain' }}
-                            onError={(e) => { (e.target as HTMLImageElement).src = '/logo.svg'; }}
-                          />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: '0.65rem', color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {gift.giftName}
-                            </div>
-                            <div style={{ fontSize: '0.6rem', color: '#6b7280' }}>
-                              {gift.diamondCost} 💎
+                          <div
+                            onClick={() => toggleGift(gift.id)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}
+                          >
+                            <img
+                              src={gift.image || '/logo.svg'}
+                              alt={gift.giftName}
+                              style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/logo.svg'; }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '0.65rem', color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {gift.giftName}
+                              </div>
+                              <div style={{ fontSize: '0.6rem', color: '#6b7280' }}>
+                                {gift.diamondCost} 💎
+                              </div>
                             </div>
                           </div>
-                          <div style={{
-                            fontSize: '0.55rem',
-                            fontWeight: 700,
-                            color: qc.text,
-                            padding: '0.1rem 0.3rem',
-                            background: qc.bg,
-                            borderRadius: '3px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                          }}>
-                            {gift.cardQuality.slice(0, 3)}
-                          </div>
+                          {/* Quality selector — always visible */}
+                          <select
+                            value={customMappings[gift.id] || gift.cardQuality}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              const val = e.target.value as 'bronze' | 'silver' | 'gold' | 'elite';
+                              setCustomMappings(prev => ({ ...prev, [gift.id]: val }));
+                              // Auto-activate if not already active
+                              if (!activeGiftIds.includes(gift.id)) {
+                                setActiveGiftIds(prev => [...prev, gift.id]);
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              width: '100%',
+                              padding: '0.15rem 0.25rem',
+                              background: '#0a1a0f',
+                              border: `1px solid ${qc.border}`,
+                              borderRadius: '3px',
+                              color: qc.text,
+                              fontSize: '0.6rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              textTransform: 'uppercase'
+                            }}
+                          >
+                            <option value="bronze" style={{ color: '#cd7f32' }}>BRONZE</option>
+                            <option value="silver" style={{ color: '#a8a9ad' }}>SILVER</option>
+                            <option value="gold" style={{ color: '#ffd700' }}>GOLD</option>
+                            <option value="elite" style={{ color: '#a855f7' }}>ELITE</option>
+                          </select>
                         </div>
                       );
                     })}

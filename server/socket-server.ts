@@ -192,11 +192,38 @@ class SocketServer {
         const ok = setWinSettings(sessionId, { mode, cardsTarget, scoreTarget });
         if (ok) {
           // Session'daki tüm client'lara broadcast et
-          this.io.to(`session:${sessionId}`).emit("win-settings-updated", { mode, cardsTarget, scoreTarget });
-          console.log(`[${sessionId}] Win settings güncellendi: mode=${mode}, cardsTarget=${cardsTarget}, scoreTarget=${scoreTarget}`);
-        } else {
-          console.warn(`[${sessionId}] Win settings güncellenemedi: session bulunamadı`);
+          this.io.to(`session:${sessionId}`).emit("winSettingsUpdated", { mode, cardsTarget, scoreTarget });
+          this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
         }
+      });
+
+      // Oyunu sıfırla (yeni oyun başlat)
+      socket.on("resetGame", (data: { sessionId: string }) => {
+        const { sessionId } = data;
+        const gameState = getGameState(sessionId);
+
+        if (!gameState) {
+          console.warn(`[${sessionId}] resetGame: Oyun durumu bulunamadı`);
+          return;
+        }
+
+        // Takım isimlerini koru, geri kalan her şeyi sıfırla
+        const teamNames = gameState.teams.map(t => t.name);
+
+        // Yeni oyun başlat (aynı session ID ile)
+        initializeGame(sessionId, teamNames);
+
+        console.log(`[${sessionId}] Oyun sıfırlandı: ${teamNames.join(", ")}`);
+
+        // Tüm client'lara broadcast et
+        this.io.to(`session:${sessionId}`).emit("gameReset", {
+          sessionId,
+          teams: teamNames.map((name, i) => ({ id: i, name, players: [], score: 0 })),
+          timestamp: Date.now(),
+        });
+
+        // Stats güncelle
+        this.broadcastStatsUpdated(sessionId, this.serializeStats(sessionId));
       });
     });
   }
@@ -335,14 +362,21 @@ class SocketServer {
 
   // Oturum başlat: game-engine'i hazırla, TikTok bağlantısı aç, gameStarted yayınla
   async startSession(sessionId: string, tiktokUsername: string, teamNames: string[]) {
-    initializeGame(sessionId, teamNames);
+    try {
+      initializeGame(sessionId, teamNames);
 
-    // TikTok bağlantısı — başarısız olursa hata fırlat
-    await startTikTokConnection(sessionId, tiktokUsername, (event) =>
-      this.handleTikTokEvent(sessionId, event)
-    );
+      // TikTok bağlantısı — başarısız olursa hata fırlat ve oyun durumunu temizle
+      await startTikTokConnection(sessionId, tiktokUsername, (event) =>
+        this.handleTikTokEvent(sessionId, event)
+      );
 
-    this.broadcastGameStarted(sessionId, getGameState(sessionId));
+      this.broadcastGameStarted(sessionId, getGameState(sessionId));
+    } catch (error: any) {
+      // TikTok bağlantı hatası — oyun durumunu temizle
+      console.error(`[startSession] TikTok bağlantı hatası:`, error?.message);
+      cleanupGame(sessionId);
+      throw error; // Hatayı yukarı fırlat (broadcaster panelinde gösterilecek)
+    }
   }
 
   // Oturum durdur: TikTok bağlantısını kapat, oyunu bitir, yayınla, temizle
@@ -395,8 +429,10 @@ class SocketServer {
           event.data.diamondCount as number,
           event.data.username as string,
           (event.data.profilePicBase64 as string) || (event.data.profilePic as string) || undefined,
+          (event.data.profilePicBase64 as string) || undefined,
           event.data.displayName as string | undefined,
-          event.data.giftImage as string | undefined
+          event.data.giftImage as string | undefined,
+          event.data.giftId as number | undefined  // ← giftId parametresi eklendi!
         );
         if (pending) {
           this.broadcastPendingCard(sessionId, pending, gameState.teams.map(t => ({ id: t.id, name: t.name })));
@@ -410,6 +446,7 @@ class SocketServer {
           event.data.username as string,
           event.data.likeCount as number,
           (event.data.profilePicBase64 as string) || (event.data.profilePic as string) || undefined,
+          (event.data.profilePicBase64 as string) || undefined,
           event.data.displayName as string | undefined
         );
         if (pending) {

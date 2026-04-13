@@ -162,9 +162,9 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .live-feed::-webkit-scrollbar{width:2px}
 .live-feed::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
 
-.feed-item{padding:8px;background:rgba(255,255,255,.02);border-left:2px solid var(--accent-red);margin-bottom:6px;font-family:'JetBrains Mono',monospace}
-.feed-user{font-size:.65rem;color:var(--paper);font-weight:700;text-transform:uppercase}
-.feed-act{font-size:.6rem;color:rgba(255,255,255,.5);margin-top:2px}
+.feed-item{padding:8px;background:rgba(255,255,255,.02);border-left:2px solid var(--accent-red);margin-bottom:6px;font-family:'JetBrains Mono',monospace;display:flex;gap:6px;align-items:center}
+.feed-user{font-size:.65rem;color:var(--paper);font-weight:700;text-transform:uppercase;flex-shrink:0}
+.feed-act{font-size:.6rem;color:rgba(255,255,255,.5);flex:1;line-height:1.2}
 
 .top-list{padding:8px;border-top:1px solid rgba(255,255,255,.05)}
 .top-item{display:flex;align-items:center;gap:8px;padding:6px;background:rgba(255,255,255,.02);margin-bottom:4px}
@@ -363,6 +363,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .go-btns{display:flex;gap:10px;justify-content:center}
 .go-btn{padding:12px 32px;background:transparent;border:2px solid var(--paper);color:var(--paper);font-family:'Anton',sans-serif;font-size:.8rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .15s}
 .go-btn:hover{background:var(--paper);color:var(--ink)}
+.go-btn:first-child{background:var(--accent-red);border-color:var(--accent-red);color:var(--paper)}
+.go-btn:first-child:hover{background:var(--paper);color:var(--accent-red);border-color:var(--paper)}
 
 /* AYARLAR BUTONU */
 .settings-btn{width:36px;height:36px;background:transparent;border:1px solid rgba(255,255,255,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--paper);transition:all .15s;font-size:1rem;z-index:150;position:relative}
@@ -393,6 +395,21 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .toggle::after{content:'';position:absolute;width:18px;height:18px;background:var(--paper);border-radius:50%;top:3px;left:3px;transition:all .2s}
 .toggle.on::after{left:23px;background:var(--ink)}
 
+/* LIDER DEĞİŞİM OVERLAY - hırs yaptırıcı mesaj */
+.leader-change-ov{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;pointer-events:none}
+.leader-change-ov.on{display:flex}
+.leader-change-box{text-align:center;position:relative;pointer-events:auto}
+.leader-change-title{font-family:'Anton',sans-serif;font-size:2.8rem;color:var(--accent-red);letter-spacing:5px;text-transform:uppercase;-webkit-text-stroke:2px rgba(0,0,0,.5);text-shadow:0 0 40px rgba(227,28,35,.6);opacity:0;animation:lcTitleIn .5s cubic-bezier(.2,.8,.2,1) forwards;white-space:nowrap;line-height:1}
+@keyframes lcTitleIn{0%{opacity:0;transform:scale(.5) rotate(-3deg)}50%{transform:scale(1.1) rotate(1deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.leader-change-sub{font-family:'Oswald',sans-serif;font-size:1.4rem;color:var(--accent-yellow);letter-spacing:3px;text-transform:uppercase;margin-top:16px;opacity:0;animation:lcSubIn .4s ease-out .3s forwards;text-shadow:0 2px 10px rgba(0,0,0,.8)}
+@keyframes lcSubIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.leader-change-team{font-family:'Anton',sans-serif;font-size:3.5rem;margin-top:20px;opacity:0;animation:lcTeamIn .6s cubic-bezier(.34,1.56,.64,1) .5s forwards;padding:8px 24px;border-radius:8px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);display:inline-block}
+@keyframes lcTeamIn{from{opacity:0;transform:scale(0) rotate(-10deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+.leader-change-taunt{font-family:'Oswald',sans-serif;font-size:.95rem;color:var(--paper);letter-spacing:2px;margin-top:24px;opacity:0;animation:lcTauntIn .5s ease-out 1s forwards;max-width:600px;line-height:1.4;background:rgba(0,0,0,.3);padding:12px 20px;border-radius:6px;border-left:4px solid var(--accent-red)}
+@keyframes lcTauntIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.leader-change-trophy{position:absolute;top:-60px;left:50%;transform:translateX(-50%);opacity:0;animation:lcTrophyIn .8s cubic-bezier(.34,1.56,.64,1) .2s forwards}
+@keyframes lcTrophyIn{0%{opacity:0;transform:translateX(-50%) scale(0) rotate(-20deg)}60%{transform:translateX(-50%) scale(1.2) rotate(5deg)}100%{opacity:1;transform:translateX(-50%) scale(1) rotate(0)}}
+
 /* SLIDER */
 .slider{width:120px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;appearance:none;cursor:pointer}
 .slider::-webkit-slider-thumb{appearance:none;width:16px;height:16px;background:var(--paper);border-radius:50%;cursor:pointer}
@@ -417,15 +434,15 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 /* GIFT GALLERY */
 .gift-layout{display:grid;grid-template-columns:1fr 260px;gap:16px}
-.gift-list{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-height:320px;overflow-y:auto;padding:4px}
+.gift-list{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-height:320px;overflow-y:auto;padding:4px}
 .gift-list::-webkit-scrollbar{width:4px}
 .gift-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
-.gift-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:4px;text-align:center;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.gift-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:6px 4px;text-align:center;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:3px}
 .gift-item:hover{background:rgba(255,255,255,.08)}
 .gift-item.selected{border-color:var(--accent-yellow);background:rgba(255,199,44,.15);box-shadow:0 0 8px rgba(255,199,44,.3)}
-.gift-img{width:40px;height:40px;object-fit:contain;border-radius:4px}
-.gift-name{font-size:.45rem;color:var(--paper);text-transform:uppercase;letter-spacing:.3px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gift-coins{font-size:.4rem;color:rgba(255,255,255,.3);font-family:'JetBrains Mono',monospace}
+.gift-img{width:36px;height:36px;object-fit:contain;border-radius:4px}
+.gift-name{font-size:.6rem;color:var(--paper);text-transform:uppercase;letter-spacing:.3px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+.gift-coins{font-size:.58rem;color:rgba(255,255,255,.65);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;gap:2px}
 
 .gift-preview{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:16px}
 .gift-preview-empty{color:rgba(255,255,255,.3);font-size:.8rem;text-align:center;padding:40px 20px}
@@ -507,6 +524,21 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 </style>
 </head>
 <body>
+<!-- LİDER DEĞİŞİM OVERLAY -->
+<div class="leader-change-ov" id="leaderChangeOv" onclick="this.classList.remove('on')">
+  <div class="leader-change-box" onclick="event.stopPropagation()">
+    <div class="leader-change-trophy">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ffc72c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" filter="drop-shadow(0 0 12px rgba(255,199,44,.7))">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+      </svg>
+    </div>
+    <div class="leader-change-title" id="lcTitle">LİDER DEĞİŞTİ!</div>
+    <div class="leader-change-sub" id="lcSub">YENİ ZİRVE</div>
+    <div class="leader-change-team" id="lcTeam" style="color:#fff">TAKIM</div>
+    <div class="leader-change-taunt" id="lcTaunt">Bu savaş henüz bitmedi.</div>
+  </div>
+</div>
+
 <div class="bg"></div><div class="cnf-w" id="cnfW"></div><div class="epic" id="epic"><div class="rays" id="rays"></div></div>
 
 <!-- BEĞENI İLERLEME ÇUBUĞU -->
@@ -515,11 +547,28 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 </div>
 
 <!-- DURAKLAMA BANNER -->
-<div class="paused-banner" id="pausedBanner">⏸ DURAKLATILDI</div>
+<div class="paused-banner" id="pausedBanner">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:8px">
+    <rect x="6" y="4" width="4" height="16" rx="1"/>
+    <rect x="14" y="4" width="4" height="16" rx="1"/>
+  </svg>
+  DURAKLATILDI
+</div>
 
 <!-- KUYRUK SAYACI -->
 <div class="queue-badge" id="queueBadge" onclick="showNextCardFromQueue()">
-  <span class="qb-icon">⏳</span>
+  <span class="qb-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2v6"/>
+      <path d="M12 18v4"/>
+      <path d="M4.93 4.93l4.24 4.24"/>
+      <path d="M14.83 14.83l4.24 4.24"/>
+      <path d="M2 12h6"/>
+      <path d="M18 12h4"/>
+      <path d="M4.93 19.07l4.24-4.24"/>
+      <path d="M14.83 9.17l4.24-4.24"/>
+    </svg>
+  </span>
   <div class="qb-info">
     <span class="qb-label">BEKLEYEN KART</span>
     <span class="qb-count" id="queueCount">0</span>
@@ -537,7 +586,12 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
       <div class="hstat">KART<strong id="hCards">0</strong></div>
       <div class="hstat">HEDİYE<strong id="hGifts">0</strong></div>
       <div class="tiktok-badge off" id="tiktokBadge">● TİKTOK</div>
-      <button class="settings-btn" onclick="openSettings()">⚙</button>
+      <button class="settings-btn" onclick="openSettings()" title="Ayarlar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -567,22 +621,38 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 <!-- KART KAZANILDI TOAST LİSTESİ - Sürüklenebilir -->
 <div id="cardToastsWrapper">
   <div id="cardToastsDragHandle">
-    <span>🎴 Kazanılan Kartlar</span>
-    <button onclick="event.stopPropagation();clearAllToasts()" title="Temizle">×</button>
+    <span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+        <line x1="9" y1="21" x2="9" y2="9"/>
+      </svg>
+      Kazanılan Kartlar
+    </span>
+    <button onclick="event.stopPropagation();clearAllToasts()" title="Temizle">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
   </div>
   <div id="cardToasts"></div>
 </div>
 
-  <div class="side-toggle" id="sideToggle" onclick="toggleSide()">◀</div>
+  <div class="side-toggle" id="sideToggle" onclick="toggleSide()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="sideToggleIcon">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  </div>
 
   <div class="ticker">
     <div class="ticker-content" id="tickerContent">
-      <span class="ticker-item">KADROKUR CANLI <span>●</span> TİKTOK LİNK BURAYA</span>
-      <span class="ticker-item">HEDİYELER İLE KART AÇ <span>●</span> TAKIMINI SEÇ</span>
-      <span class="ticker-item">EN İYİ 11 OYUNCUYU TOPLA <span>●</span> YARIŞI KAZAN</span>
-      <span class="ticker-item">KADROKUR CANLI <span>●</span> TİKTOK LİNK BURAYA</span>
-      <span class="ticker-item">HEDİYELER İLE KART AÇ <span>●</span> TAKIMINI SEÇ</span>
-      <span class="ticker-item">EN İYİ 11 OYUNCUYU TOPLA <span>●</span> YARIŞI KAZAN</span>
+      <span class="ticker-item">KADROKUR CANLI <span>●</span> LUANAWORK.COM</span>
+      <span class="ticker-item">HEDİYELER İLE KART AÇ <span>●</span> LUANAWORK.COM</span>
+      <span class="ticker-item">EN İYİ 11 OYUNCUYU TOPLA <span>●</span> LUANAWORK.COM</span>
+      <span class="ticker-item">KADROKUR CANLI <span>●</span> LUANAWORK.COM</span>
+      <span class="ticker-item">HEDİYELER İLE KART AÇ <span>●</span> LUANAWORK.COM</span>
+      <span class="ticker-item">EN İYİ 11 OYUNCUYU TOPLA <span>●</span> LUANAWORK.COM</span>
     </div>
   </div>
 </div>
@@ -651,9 +721,16 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
     </div>
 
     <div class="ranks" id="ranksEl"></div>
-    <div class="best-title">⭐ EN İYİ 5 KART</div>
+    <div class="best-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+      EN İYİ 5 KART
+    </div>
     <div class="best-grid" id="bestEl"></div>
     <div class="go-btns">
+      <button class="go-btn" onclick="resetGame()">YENİ OYUN</button>
+      <button class="go-btn" onclick="closeGameOver()">KAPAT</button>
       <button class="go-btn" onclick="shareRes()">PAYLAŞ</button>
     </div>
     </div>
@@ -680,10 +757,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
         Tüm hediyeler kart açar. Kalite jeton miktarına göre belirlenir.
       </div>
       <!-- Filtreler -->
-      <div class="settings-row" style="margin-bottom:8px">
+      <div class="settings-row" style="margin-bottom:8px" id="giftSearchRow">
         <input type="text" id="giftSearch" placeholder="Hediye ara..." style="flex:1;padding:8px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:.65rem" oninput="filterGiftsFromDB()">
       </div>
-      <div class="settings-row" style="margin-bottom:8px;flex-wrap:wrap;gap:4px">
+      <div class="settings-row" style="margin-bottom:8px;flex-wrap:wrap;gap:4px" id="giftCostFilterRow">
         <button class="gift-filter-btn active" data-filter="all" onclick="setGiftCostFilter('all')">TÜMÜ</button>
         <button class="gift-filter-btn" data-filter="1-5" onclick="setGiftCostFilter('1-5')">1-5</button>
         <button class="gift-filter-btn" data-filter="5-10" onclick="setGiftCostFilter('5-10')">5-10</button>
@@ -692,7 +769,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
         <button class="gift-filter-btn" data-filter="100-500" onclick="setGiftCostFilter('100-500')">100-500</button>
         <button class="gift-filter-btn" data-filter="500+" onclick="setGiftCostFilter('500+')">500+</button>
       </div>
-      <div class="settings-row" style="margin-bottom:8px;flex-wrap:wrap;gap:4px">
+      <div class="settings-row" style="margin-bottom:8px;flex-wrap:wrap;gap:4px" id="giftQualFilterRow">
         <button class="gift-filter-btn gq-filter active" data-qfilter="all" onclick="setGiftQualFilter('all')">TÜMÜ</button>
         <button class="gift-filter-btn gq-filter" data-qfilter="bronze" onclick="setGiftQualFilter('bronze')" style="border-color:#8B7355;color:#8B7355">BRONZE</button>
         <button class="gift-filter-btn gq-filter" data-qfilter="silver" onclick="setGiftQualFilter('silver')" style="border-color:#A8A9AD;color:#A8A9AD">SILVER</button>
@@ -812,9 +889,9 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
       </div>
       <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:6px">
         <span class="settings-label">Yazılar (satır satır)</span>
-        <textarea id="setTickerText" style="width:100%;height:60px;padding:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:.65rem;resize:vertical">KADROKUR CANLI ● TİKTOK LİNK BURAYA
-HEDİYELER İLE KART AÇ ● TAKIMINI SEÇ
-EN İYİ 11 OYUNCUYU TOPLA ● YARIŞI KAZAN</textarea>
+        <textarea id="setTickerText" style="width:100%;height:60px;padding:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:.65rem;resize:vertical">KADROKUR CANLI
+HEDİYELER İLE KART AÇ
+EN İYİ 11 OYUNCUYU TOPLA</textarea>
       </div>
       <div class="settings-btn-group">
         <button class="settings-action-btn" onclick="applyTicker()">UYGULA</button>
@@ -895,11 +972,49 @@ EN İYİ 11 OYUNCUYU TOPLA ● YARIŞI KAZAN</textarea>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const TEAM_COLORS=['#e31c23','#0066cc','#00a651','#ffc72c'];
-const TEAM_EMOJI=['🔴','🔵','🟢','🟡'];
+const TEAM_ICONS=[
+  '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>',
+  '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>',
+  '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>',
+  '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>'
+];
 const QUALITY_LABEL={bronze:'BRONZE',silver:'SILVER',gold:'GOLD',elite:'ELITE'};
+
+// ICON SİSTEMİ - SVG iconlar
+const ICONS={
+  // Quality/Rank icons
+  bronze:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="6" fill="#cd7f32"/><path d="M6 20c0-4 6-6 6-6s6 2 6 6v2H6v-2z" fill="#cd7f32"/></svg>',
+  silver:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="6" fill="#c0c0c0"/><path d="M6 20c0-4 6-6 6-6s6 2 6 6v2H6v-2z" fill="#c0c0c0"/></svg>',
+  gold:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="6" fill="#D4AF37"/><path d="M6 20c0-4 6-6 6-6s6 2 6 6v2H6v-2z" fill="#D4AF37"/></svg>',
+  elite:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 8 22 8 17 13 19 20 12 16 5 20 7 13 2 8 9 8 12 2" fill="#c026d3"/></svg>',
+
+  // Action icons
+  heart:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" color="#e31c23"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  gift:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>',
+  diamond:'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12l4 6-10 13L2 9z"/></svg>',
+
+  // Position icons
+  gk:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-4 7-6 7-6s7 2 7 6"/></svg>',
+  defender:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
+  midfielder:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/></svg>',
+  forward:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
+
+  // Other icons
+  lightning:'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" color="#ffc72c"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  trophy:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+  crown:'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" color="#ffc72c"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5v-2z"/></svg>',
+  card:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+  star:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" color="#ffc72c"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  rank1:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5 4 2 7-7-5-7 5 2-7-5-4h7z" fill="#D4AF37"/></svg>',
+  rank2:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5 4 2 7-7-5-7 5 2-7-5-4h7z" fill="#c0c0c0"/></svg>',
+  rank3:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5 4 2 7-7-5-7 5 2-7-5-4h7z" fill="#cd7f32"/></svg>',
+  rank4:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>',
+  rank5:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>',
+  upgrade:'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" color="#ffc72c"><path d="M12 2v20M5 9l7-7 7 7"/></svg>'
+};
 const QUALITY_SCORE={bronze:10,silver:25,gold:50,elite:100};
 
-let GS={teams:[],pendingCard:null,pendingPlayerFull:null,pendingUsername:null,pendingGift:null,selectedTeamIndex:-1,totalCards:0,totalGifts:0,topDonors:[],busy:false,locallyConfirmed:false,cardQueueLength:0,startedAt:null};
+let GS={sessionId:null,teams:[],pendingCard:null,pendingPlayerFull:null,pendingUsername:null,pendingGift:null,selectedTeamIndex:-1,totalCards:0,totalGifts:0,topDonors:[],busy:false,locallyConfirmed:false,cardQueueLength:0,startedAt:null};
 let pendingCardBuffer=[];
 let stashedCards=[];  // Saklanan kartlar (gizlenmiş)
 
@@ -989,9 +1104,10 @@ async function fetchPlayerDetails(playerId){
 async function connectSocket(){
   const SESSION_ID=new URLSearchParams(location.search).get('sessionId')||localStorage.getItem('kadrokur_sessionId');
   if(!SESSION_ID){
-    document.getElementById('connStatus').innerHTML='<span style="color:var(--accent-red)">⚠ SESSION YOK</span>';
+    document.getElementById('connStatus').innerHTML='<span style="color:var(--accent-red)"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> SESSION YOK</span>';
     return;
   }
+  GS.sessionId=SESSION_ID;
   socket=io(location.origin,{transports:['websocket','polling']});
   window.gameSocket=socket;
   socket.on('connect',()=>{
@@ -1005,10 +1121,10 @@ async function connectSocket(){
     GS_winSettings={mode:data.mode||'cards',cardsTarget:data.cardsTarget||44,scoreTarget:data.scoreTarget||500};
     updateHeader();
     buildTeams();
-    addFeed('AYAR','Oyun bitirme koşulu güncellendi: '+(data.mode==='cards'?data.cardsTarget+' kart':data.scoreTarget+' puan'),'⚙️');
+    addFeed('AYAR','Oyun bitirme koşulu güncellendi: '+(data.mode==='cards'?data.cardsTarget+' kart':data.scoreTarget+' puan'),ICONS.lightning);
   });
   socket.on('gameStateUpdate',(state)=>{
-    GS.teams=(state.teams||[]).map((t,i)=>({...t,color:TEAM_COLORS[i]||'#888',emoji:TEAM_EMOJI[i]||'⚪'}));
+    GS.teams=(state.teams||[]).map((t,i)=>({...t,color:TEAM_COLORS[i]||'#888'}));
     GS.totalCards=(state.openedCards||[]).length;
     GS.totalGifts=state.totalGifts||0;
     GS.pendingCard=state.pendingCard;
@@ -1082,15 +1198,35 @@ async function connectSocket(){
         handleGameEnd(data);
         break;
       case 'gameStarted':
-        GS.teams=(data.teams||[]).map((t,i)=>({...t,color:TEAM_COLORS[i]||'#888',emoji:TEAM_EMOJI[i]||'⚪'}));
+        GS.teams=(data.teams||[]).map((t,i)=>({...t,color:TEAM_COLORS[i]||'#888'}));
         GS.startedAt=data.startedAt||new Date().toISOString();
+        currentLeaderIdx=-1;  // Lider takip değişkenini sıfırla
         buildTeams();
-        addFeed('SİSTEM','Oyun başladı','🎮');
+        addFeed('SİSTEM','Oyun başladı',ICONS.trophy);
         startSessionTimer(GS.startedAt);
         break;
       case 'winSettingsUpdated':
         GS_winSettings={mode:data.mode||'cards',cardsTarget:data.cardsTarget||44,scoreTarget:data.scoreTarget||500};
-        addFeed('AYAR','Oyun bitirme koşulu güncellendi: '+(data.mode==='cards'?data.cardsTarget+' kart':data.scoreTarget+' puan'),'⚙️');
+        addFeed('AYAR','Oyun bitirme koşulu güncellendi: '+(data.mode==='cards'?data.cardsTarget+' kart':data.scoreTarget+' puan'),ICONS.lightning);
+        break;
+      case 'gameReset':
+        // Oyun sıfırlandı, tüm durumu temizle
+        GS.teams=(data.teams||[]).map((t,i)=>({...t,color:TEAM_COLORS[i]||'#888'}));
+        GS.totalCards=0;
+        GS.totalGifts=0;
+        GS.topDonors=[];
+        GS.cardQueueLength=0;
+        GS.pendingCard=null;
+        stashedCards=[];
+        pendingCardBuffer=[];
+        currentLeaderIdx=-1;  // Lider değişim takibini sıfırla
+        teamsBuilt=false;
+        buildTeams();
+        updateHeader();
+        // Overlay'leri kapat
+        document.getElementById('goOv').classList.remove('on');
+        document.getElementById('ov').classList.remove('active');
+        addFeed('SİSTEM','Oyun sıfırlandı, yeni oyun başlamaya hazır',ICONS.trophy);
         break;
     }
   });
@@ -1110,14 +1246,17 @@ async function handlePendingCard(data){
   const source=pending.source||'gift';
   const username=pending.username||'?';
   const quality=pending.quality||'bronze';
-  const qualityEmoji={bronze:'🥉',silver:'🥈',gold:'🥇',elite:'💎'}[quality]||'🎴';
+  const qualityEmoji=ICONS[quality]||ICONS.card;
   if(source==='like'){
     const likeCount=pending.likeCount||GS.likeThreshold||100;
-    addFeed(username,`${likeCount} beğeni gönderdi → ${qualityEmoji} ${quality.toUpperCase()} kart kazandı`,'❤️');
+    addFeed(username,`${likeCount} beğeni gönderdi → ${qualityEmoji} ${quality.toUpperCase()} kart kazandı`,ICONS.heart,null);
   } else if(source==='gift'){
     const giftName=pending.gift?.name||'Hediye';
     const coins=pending.gift?.amount||pending.gift?.coins||0;
-    addFeed(username,`${giftName} (${coins} 💎) gönderdi → ${qualityEmoji} ${quality.toUpperCase()} kart kazandı`,'🎁');
+    // Hediye görselini pending'den veya allDbGifts'ten bul
+    const giftImg=pending.gift?.image||pending.gift?.img
+      ||(allDbGifts.find(g=>g.giftName===giftName)?.image)||null;
+    addFeed(username,`${giftName} (${coins} ${ICONS.diamond}) gönderdi → ${qualityEmoji} ${quality.toUpperCase()} kart kazandı`,ICONS.gift,giftImg);
   }
 
   // Önce animasyonlu toast göster, 3 saniye sonra kuyruğa ekle
@@ -1204,15 +1343,16 @@ function showWaitingScreen(){
   if(GS.pendingGift){
     giftBox.style.display='grid';
     const giftIcon=document.getElementById('wGiftIcon');
-    if(GS.pendingGift.img){
-      giftIcon.src=GS.pendingGift.img;
+    const giftImg=GS.pendingGift.image||GS.pendingGift.img;
+    if(giftImg){
+      giftIcon.src=giftImg;
       giftIcon.style.display='block';
     }else{
       giftIcon.src='';
       giftIcon.style.display='none';
     }
     document.getElementById('wGiftName').textContent=GS.pendingGift.name||'HEDİYE';
-    document.getElementById('wGiftAmount').textContent=(GS.pendingGift.coins||GS.pendingGift.amount||0)+' 💎';
+    document.getElementById('wGiftAmount').innerHTML=(GS.pendingGift.coins||GS.pendingGift.amount||0)+' '+ICONS.diamond;
   }else{
     giftBox.style.display='none';
   }
@@ -1250,8 +1390,10 @@ function showWaitingScreen(){
     const b=document.createElement('button');
     b.className='tsel-btn'+(full?' full':'');
     b.dataset.team=ti;
-    const nameHtml='<span class="tsel-name">'+t.name+(full?'<span class="tsel-upgrade">⚡ EN ZAYIFI DEĞİŞTİR</span>':'')+'</span>';
-    b.innerHTML='<span class="tsel-logo">'+t.emoji+'</span>'+nameHtml+'<span class="tsel-meta"><span class="tsel-info">'+filled+'/11</span><span class="tsel-pow">'+(t.score||0)+'</span></span>';
+    const color=t.color||TEAM_COLORS[ti]||'#888';
+    const logoSvg=`<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><circle cx="12" cy="12" r="10"/></svg>`;
+    const nameHtml='<span class="tsel-name">'+t.name+(full?'<span class="tsel-upgrade">'+ICONS.upgrade+' EN ZAYIFI DEĞİŞTİR</span>':'')+'</span>';
+    b.innerHTML='<span class="tsel-logo">'+logoSvg+'</span>'+nameHtml+'<span class="tsel-meta"><span class="tsel-info">'+filled+'/11</span><span class="tsel-pow">'+(t.score||0)+'</span></span>';
     b.onclick=()=>selectTeam(ti);
     grid.appendChild(b);
   });
@@ -1407,16 +1549,14 @@ function placeCardDirect(player,quality,team){
     if(ejectedPlayer){
       const oldSlot=document.getElementById('sl'+teamIndex+'_'+slotIndex);
       if(oldSlot)oldSlot.classList.add('slot-burn');
-      const oldQ=ejectedPlayer.cardQuality||ejectedPlayer.quality||'bronze';
-      team.score=(team.score||0)-(ejectedPlayer.overall||QUALITY_SCORE[oldQ]);
+      // Skor güncellemesi yapma — server'dan gelecek
     }
 
     const placeDelay=ejectedPlayer?680:0;
     setTimeout(()=>{
       team.players[slotIndex]=player;
-      const q=player.cardQuality||player.quality||'bronze';
-      team.score=(team.score||0)+(player.overall||QUALITY_SCORE[q]);
       GS.totalCards++;
+      // Skor'u güncelleme — server'dan statsUpdated eventi gelecek
       updateHeader();
       const cardHTML=renderFutCard(player,slotIndex,teamIndex);
       const freshSlot=document.getElementById('sl'+teamIndex+'_'+slotIndex);
@@ -1474,7 +1614,7 @@ function getBestOpener(players){
 function renderBestBadge(players){
   const best=getBestOpener(players);
   if(!best)return '<span class="bb-label">EN İYİ AÇAN</span><span style="opacity:.3">—</span>';
-  return '<span class="bb-label">👑 EN İYİ</span><span class="bq '+best.quality+'">'+best.quality.toUpperCase()+'</span><span class="bn">'+best.name+'</span>';
+  return '<span class="bb-label">'+ICONS.crown+' EN İYİ</span><span class="bq '+best.quality+'">'+best.quality.toUpperCase()+'</span><span class="bn">'+best.name+'</span>';
 }
 
 function makeTrophySvg(ti){
@@ -1497,12 +1637,119 @@ function makeTrophySvg(ti){
     '</svg>';
 }
 
+let currentLeaderIdx=-1;
+let leaderChangeTimeout=null;
 function updateLeader(){
   const teamEls=document.getElementById('teamsEl').children;
   if(!teamEls.length)return;
+
   let maxScore=-1,leadIdx=-1;
-  GS.teams.forEach((t,i)=>{if((t.score||0)>maxScore){maxScore=t.score||0;leadIdx=i;}});
-  Array.from(teamEls).forEach((el,i)=>{el.classList.toggle('leading',i===leadIdx&&maxScore>0);});
+  let sharedLead=false;
+  GS.teams.forEach((t,i)=>{
+    const s=t.score||0;
+    if(s>maxScore){maxScore=s;leadIdx=i;sharedLead=false;}
+    else if(s===maxScore&&maxScore>0){sharedLead=true;} // beraberlik
+  });
+
+  // Beraberlikte kuppa kimseye ait değil
+  const effectiveLeader=sharedLead?-1:leadIdx;
+  Array.from(teamEls).forEach((el,i)=>{
+    el.classList.toggle('leading',i===effectiveLeader&&maxScore>0);
+  });
+
+  // Kuppa gerçekten BAŞKA BİR TAKIMA geçti mi?
+  // Beraberlik durumunda kuppa havada — değişim sayılmaz
+  if(!sharedLead && effectiveLeader!==-1 && effectiveLeader!==currentLeaderIdx){
+    const prevLeader=currentLeaderIdx;
+    currentLeaderIdx=effectiveLeader;
+
+    // İlk lider atama (oyun başında kimin puanı sıfırdan açılıyorsa) gösterme
+    // Sadece mevcut bir lider devrilince göster
+    if(prevLeader!==-1){
+      showLeaderChange(effectiveLeader,prevLeader);
+    }
+  } else if(sharedLead){
+    // Beraberlikte mevcut lideri sıfırla — sıradaki aşma gerçek geçiş sayılsın
+    currentLeaderIdx=-1;
+  } else if(maxScore===0){
+    currentLeaderIdx=-1;
+  }
+}
+
+const LEADER_TAUNTS=[
+  "Bu savaş henüz bitmedi. İşte gerçek şampiyon adayı!",
+  "Rakiplerin titredi! Yeni lider sahnede!",
+  "Oyunun kuralı değişti. Artık onlar koynuyor!",
+  "Dikkat! Bu takım altın madalyayı kaptırmaya yakın!",
+  "İzleyiciler ayağa kalksın! Yeni hakimiyet başlıyor!",
+  "Kartlar yeniden dağıtıldı. Lider değişti!",
+  "Tofaş tutanlar, kasap olsun! Yeni güç!",
+  "Bu takım yok mu deseydin? Yanıldın!",
+  "Oyunun kuralı: En güçlü, en zayıfı ezer!",
+  "Gözlerinizi dört açın! Yeni sultan!",
+  "Bırakın altın gümüş olsun, bu takım rekorları altüst!",
+  "Kim demiş zayıfın şansı yok? Lider değişti!",
+  "Efsanevi dönüş! Yeni takım zirveye oynuyor!",
+  "Kötümserler şokta! Lider değişti!",
+  "Oyun bitti demeyin, ta ki kupa kaldırılana kadar!",
+  "Bu takım karanlıktan çıktı ve zirveye tırmandı!"
+];
+
+function showLeaderChange(newLeaderIdx,prevLeaderIdx){
+  const ov=document.getElementById('leaderChangeOv');
+  const titleEl=document.getElementById('lcTitle');
+  const subEl=document.getElementById('lcSub');
+  const teamEl=document.getElementById('lcTeam');
+  const tauntEl=document.getElementById('lcTaunt');
+
+  if(!GS.teams[newLeaderIdx])return;
+
+  const newTeam=GS.teams[newLeaderIdx];
+  const newColor=TEAM_COLORS[newLeaderIdx]||'#fff';
+
+  // Lider değişim mesajı
+  const prevTeam=prevLeaderIdx>=0?GS.teams[prevLeaderIdx]:null;
+  const prevName=prevTeam?prevTeam.name:null;
+
+  let title='LİDER DEĞİŞTİ!';
+  let sub='YENİ ZİRVE';
+
+  if(prevName){
+    if(Math.random()>.5){
+      title=`${prevName.toUpperCase()} DEVİRİLDİ!`;
+    }else{
+      title='TAHT SALLANIYOR!';
+    }
+    sub=`${newTeam.name.toUpperCase()} ÖNE GEÇTİ`;
+  }else{
+    title='İLK LİDER';
+    sub=`${newTeam.name.toUpperCase()} BAŞLANGIÇ`;
+  }
+
+  // Random taunt seç
+  const taunt=LEADER_TAUNTS[Math.floor(Math.random()*LEADER_TAUNTS.length)];
+
+  titleEl.textContent=title;
+  subEl.textContent=sub;
+  teamEl.textContent=newTeam.name.toUpperCase();
+  teamEl.style.color=newColor;
+  teamEl.style.borderColor=newColor;
+  tauntEl.textContent=taunt;
+  tauntEl.style.borderLeftColor=newColor;
+
+  // Önceki timeout'u iptal et (üst üste tetiklenme durumu için)
+  if(leaderChangeTimeout) clearTimeout(leaderChangeTimeout);
+
+  // Animasyonları yeniden başlat
+  ov.classList.remove('on');
+  void ov.offsetWidth; // reflow — animasyonu sıfırla
+  ov.classList.add('on');
+
+  // 3.5 saniye sonra gizle
+  leaderChangeTimeout=setTimeout(()=>{
+    ov.classList.remove('on');
+    leaderChangeTimeout=null;
+  },3500);
 }
 
 let teamsBuilt=false;
@@ -1514,7 +1761,7 @@ function buildTeams(forceRebuild=false){
       const players=t.players||[];
       const cnt=players.length;
       const color=t.color||TEAM_COLORS[ti]||'#888';
-      const emoji=t.emoji||TEAM_EMOJI[ti]||'⚪';
+      const teamIconHtml=`<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><circle cx="12" cy="12" r="10"/></svg>`;
       const slots=[];
       for(let i=0;i<11;i++){
         const pl=players[i];
@@ -1522,14 +1769,31 @@ function buildTeams(forceRebuild=false){
           slots.push(renderFutCard(pl,i,ti));
         }else{
           const labels=['GK','RB','CB','CB','LB','CM','CAM','CM','LW','ST','RW'];
-          const emojis=['🧤','🛡️','🛡️','🛡️','🛡️','⚙️','⚙️','⚡','⚽','⚡'];
-          slots.push('<div class="slot" id="sl'+ti+'_'+i+'"><span class="slot-lbl">'+labels[i]+'</span><span class="slot-emo">'+emojis[i]+'</span></div>');
+          // Position SVG icons
+          const posIcons=[
+            // GK - goal
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+            // RB/LB/CB - shield
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+            // CM/CAM - grid/settings
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>',
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>',
+            // Wing - lightning
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" color="rgba(255,255,255,.25)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+            // ST/Forward - target
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>',
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" color="rgba(255,255,255,.25)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>'
+          ];
+          slots.push('<div class="slot" id="sl'+ti+'_'+i+'"><span class="slot-lbl">'+labels[i]+'</span><span class="slot-emo">'+posIcons[i]+'</span></div>');
         }
       }
       const d=document.createElement('div');
       d.className='team';
       d.style.setProperty('--team-color',color);
-      d.innerHTML='<div class="trophy-bg">'+makeTrophySvg(ti)+'</div><div class="team-top"><div class="team-left"><div class="team-logo-ph" style="color:'+color+'">'+emoji+'</div><div class="team-name" style="color:'+color+'">'+t.name+'</div></div><div class="team-right"><div class="team-cnt" id="tc'+ti+'">'+cnt+'/11</div><div class="team-pow" id="tp'+ti+'">⚡ '+(t.score||0)+'</div></div></div><div class="team-best" id="tbest'+ti+'">'+renderBestBadge(players)+'</div><div class="team-score-progress" id="tsp'+ti+'" style="display:none;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:4px;overflow:hidden"><div class="team-score-bar" style="height:100%;background:var(--accent-yellow);width:0%;transition:width .3s"></div></div><div class="pos-rows">'+
+      d.innerHTML='<div class="trophy-bg">'+makeTrophySvg(ti)+'</div><div class="team-top"><div class="team-left"><div class="team-logo-ph" style="color:'+color+'">'+teamIconHtml+'</div><div class="team-name" style="color:'+color+'">'+t.name+'</div></div><div class="team-right"><div class="team-cnt" id="tc'+ti+'">'+cnt+'/11</div><div class="team-pow" id="tp'+ti+'">'+ICONS.lightning+' '+(t.score||0)+'</div></div></div><div class="team-best" id="tbest'+ti+'">'+renderBestBadge(players)+'</div><div class="team-score-progress" id="tsp'+ti+'" style="display:none;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:4px;overflow:hidden"><div class="team-score-bar" style="height:100%;background:var(--accent-yellow);width:0%;transition:width .3s"></div></div><div class="pos-rows">'+
         '<div class="pos-row">'+slots[0]+'</div>'+
         '<div class="pos-row">'+slots.slice(1,5).join('')+'</div>'+
         '<div class="pos-row">'+slots.slice(5,8).join('')+'</div>'+
@@ -1558,7 +1822,7 @@ function buildTeams(forceRebuild=false){
     const bestEl=document.getElementById('tbest'+ti);
     const progEl=document.getElementById('tsp'+ti);
     if(cntEl)cntEl.textContent=(t.players||[]).length+'/11';
-    if(powEl)powEl.textContent='⚡ '+(t.score||0);
+    if(powEl)powEl.innerHTML=ICONS.lightning+' '+(t.score||0);
     if(bestEl)bestEl.innerHTML=renderBestBadge(t.players);
     // Score modunda progress bar göster
     if(progEl){
@@ -1605,7 +1869,6 @@ function handleGameEnd(data){
   const teamRanksEl=document.getElementById('teamRanksEl');
   teamRanksEl.innerHTML='';
 
-  const rankIcons=['🥇','🥈','🥉','4️⃣'];
   const svgIcons=[
     // Gold Medal
     '<svg viewBox="0 0 24 24" class="icon-crown"><path fill="#ffc72c" d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>',
@@ -1623,7 +1886,7 @@ function handleGameEnd(data){
     d.innerHTML=`
       <div class="team-icon">${svgIcons[i]}</div>
       <div class="team-name">${tp.teamName.substring(0,10)}</div>
-      <div class="team-score">⚡${tp.score}</div>
+      <div class="team-score">${ICONS.lightning}${tp.score}</div>
       ${i===0?'<div class="winner-highlight">KAZANAN</div>':''}
     `;
     teamRanksEl.appendChild(d);
@@ -1633,7 +1896,7 @@ function handleGameEnd(data){
   const rEl=document.getElementById('ranksEl');rEl.innerHTML='';
   sorted.forEach((tp,i)=>{
     const d=document.createElement('div');d.className='rk r'+(i+1);
-    d.innerHTML='<span class="rk-em">'+rankIcons[i]+'</span><div class="rk-nm">'+tp.teamName+'</div><div class="rk-pw">⚡'+tp.score+'</div><div class="rk-cnt">'+tp.players+'/11</div>';
+    d.innerHTML='<span class="rk-em">'+svgIcons[i]+'</span><div class="rk-nm">'+tp.teamName+'</div><div class="rk-pw">'+ICONS.lightning+tp.score+'</div><div class="rk-cnt">'+tp.players+'/11</div>';
     rEl.appendChild(d);
   });
 
@@ -1714,7 +1977,7 @@ function renderTop(){
   wrap.innerHTML='<div class="side-title">En Çok Katkı</div>';
   const top=GS.topDonors.slice(0,5);
   if(!top.length){wrap.innerHTML+='<div style="font-size:.6rem;color:rgba(255,255,255,.2);text-align:center;padding:12px">HENÜZ YOK</div>';return;}
-  const em=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const em=[ICONS.rank1,ICONS.rank2,ICONS.rank3,ICONS.rank4,ICONS.rank5];
   top.forEach((d,i)=>{
     const el=document.createElement('div');el.className='top-item';
     el.innerHTML='<span class="top-rank">'+em[i]+'</span><span class="top-name">'+d.name+'</span><span class="top-amt">'+d.total+'</span>';
@@ -1731,22 +1994,31 @@ function showLikeToast(username,displayName,likeCount,profilePic){
   const picHtml=profilePic
     ?`<img src="${profilePic}" referrerpolicy="no-referrer">`
     :name[0].toUpperCase();
-  toast.innerHTML=`<div class="like-toast-pic">${picHtml}</div><div style="display:flex;flex-direction:column;gap:1px;overflow:hidden"><span class="like-toast-name">${name}</span><span class="like-toast-count">×${likeCount} ❤️</span></div>`;
+  toast.innerHTML=`<div class="like-toast-pic">${picHtml}</div><div style="display:flex;flex-direction:column;gap:1px;overflow:hidden"><span class="like-toast-name">${name}</span><span class="like-toast-count">×${likeCount} ${ICONS.heart}</span></div>`;
   container.appendChild(toast);
   setTimeout(()=>toast.remove(),2700);
 }
 
-function addFeed(user,act,card){
+function addFeed(user,act,card,giftImage=null){
   const feed=document.getElementById('liveFeed');
   const el=document.createElement('div');el.className='feed-item';
-  el.innerHTML='<div class="feed-user">'+user+'</div><div class="feed-act">'+act+'</div>';
+  let imgHtml='';
+  if(giftImage){
+    imgHtml=`<img src="${giftImage}" alt="" style="width:24px;height:24px;object-fit:contain;border-radius:3px;flex-shrink:0" onerror="this.style.display='none'">`;
+  }
+  el.innerHTML=imgHtml+
+    `<div style="flex:1">
+      <div class="feed-user">${user}</div>
+      <div class="feed-act">${act}</div>
+    </div>`;
   feed.insertBefore(el,feed.firstChild);
   while(feed.children.length>20)feed.removeChild(feed.lastChild);
 }
 
 function shareRes(){
   const sorted=[...GS.teams].sort((a,b)=>(b.score||0)-(a.score||0));
-  const txt='🏆 KADROKUR\n\n'+sorted.map((x,i)=>['🥇','🥈','🥉','4️⃣'][i]+' '+x.name+': ⚡'+(x.score||0)).join('\n')+'\n\n#Kadrokur';
+  const rankTxt=['1.','2.','3.','4.'];
+  const txt='KADROKUR\n\n'+sorted.map((x,i)=>rankTxt[i]+' '+x.name+': '+(x.score||0)+' puan').join('\n')+'\n\n#Kadrokur';
   if(navigator.share)navigator.share({title:'Kadrokur',text:txt});
   else navigator.clipboard.writeText(txt).then(()=>alert('Kopyalandı!'));
 }
@@ -1759,11 +2031,11 @@ function toggleSide(){
   const app=document.querySelector('.app');
   if(side.classList.contains('collapsed')){
     side.classList.remove('collapsed');
-    toggle.textContent='◀';
+    toggle.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
     app.style.gridTemplateColumns='1fr 280px';
   }else{
     side.classList.add('collapsed');
-    toggle.textContent='◁';
+    toggle.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
     app.style.gridTemplateColumns='1fr 0px';
   }
 }
@@ -1835,7 +2107,7 @@ function updateTopViewers(viewers){
   if(!wrap)return;
   wrap.innerHTML='<div class="side-title">En Çok Katkı</div>';
   if(!viewers||!viewers.length){wrap.innerHTML+='<div style="font-size:.6rem;color:rgba(255,255,255,.2);text-align:center;padding:12px">HENÜZ YOK</div>';return;}
-  const em=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const em=[ICONS.rank1,ICONS.rank2,ICONS.rank3,ICONS.rank4,ICONS.rank5];
   viewers.slice(0,5).forEach((v,i)=>{
     const el=document.createElement('div');el.className='top-item';
     el.innerHTML='<span class="top-rank">'+em[i]+'</span><span class="top-name">'+(v.displayName||v.username)+'</span><span class="top-amt">'+v.total+'</span>';
@@ -1904,7 +2176,14 @@ async function loadGiftConfig(sessionId){
     giftTriggerMode=data.giftTriggerMode||'diamond';
     activeGiftIds=new Set(data.activeGiftIds||[]);
     customMappings=data.customMappings||{};
+
+    // LocalStorage'a da kaydet (F5 sonrası korumak için)
+    localStorage.setItem('kadrokur_giftTriggerMode', giftTriggerMode);
+    localStorage.setItem('kadrokur_activeGiftIds', JSON.stringify(Array.from(activeGiftIds)));
+    localStorage.setItem('kadrokur_customMappings', JSON.stringify(customMappings));
+
     updateGiftModeUI();
+    console.log('[Gifts] Config DB\'den yüklendi - mode:', giftTriggerMode, 'activeIds:', activeGiftIds.size, 'mappings:', Object.keys(customMappings).length);
   }catch(err){
     console.error('[Gifts] Config yükleme hatası:',err);
   }
@@ -1912,6 +2191,7 @@ async function loadGiftConfig(sessionId){
 
 function setGiftMode(mode){
   giftTriggerMode=mode;
+  localStorage.setItem('kadrokur_giftTriggerMode', mode);
   updateGiftModeUI();
   renderDbGiftList();
 }
@@ -1920,6 +2200,7 @@ function updateGiftModeUI(){
   document.getElementById('modeBtnDisabled')?.classList.toggle('active',giftTriggerMode==='disabled');
   document.getElementById('modeBtnDiamond')?.classList.toggle('active',giftTriggerMode==='diamond');
   document.getElementById('modeBtnSpecific')?.classList.toggle('active',giftTriggerMode==='specific');
+
   const descs={
     disabled:'Hediyeler kart açmaz. Sadece beğeni sistemi çalışır.',
     diamond:'Tüm hediyeler kart açar. Kalite jeton miktarına göre belirlenir.',
@@ -1927,25 +2208,70 @@ function updateGiftModeUI(){
   };
   const desc=document.getElementById('giftModeDesc');
   if(desc)desc.textContent=descs[giftTriggerMode]||descs.diamond;
+
   const ac=document.getElementById('giftActiveCount');
   if(ac){
     ac.style.display=giftTriggerMode==='specific'?'':'none';
     ac.textContent=activeGiftIds.size+' seçili';
   }
+
+  // Specific modda jeton filtrelerini gizle
+  const costFilterRow=document.getElementById('giftCostFilterRow');
+  const qualFilterRow=document.getElementById('giftQualFilterRow');
+  const searchRow=document.getElementById('giftSearchRow');
+
+  if(giftTriggerMode==='specific'){
+    costFilterRow?.setAttribute('hidden','');
+    qualFilterRow?.setAttribute('hidden','');
+    searchRow?.setAttribute('hidden','');
+  } else {
+    costFilterRow?.removeAttribute('hidden');
+    qualFilterRow?.removeAttribute('hidden');
+    searchRow?.removeAttribute('hidden');
+  }
 }
 
 async function saveGiftConfig(){
-  if(!giftSessionId){alert('Oturum ID bulunamadı.');return;}
+  if(!giftSessionId){
+    console.error('[Gifts] Oturum ID bulunamadı. GS.sessionId:', GS.sessionId);
+    const sid=new URLSearchParams(location.search).get('sessionId')||localStorage.getItem('kadrokur_sessionId')||GS.sessionId;
+    if(!sid){alert('Oturum ID bulunamadı. Lütfen sayfayı yenileyin.');return;}
+    giftSessionId=sid;
+    console.log('[Gifts] giftSessionId set edildi:', giftSessionId);
+  }
   try{
+    const payload = {giftTriggerMode,activeGiftIds:Array.from(activeGiftIds),customMappings};
+    console.log('[Gifts] Kaydediliyor:', payload);
+    console.log('[Gifts] giftSessionId:', giftSessionId);
+    console.log('[Gifts] Request URL:', `/api/sessions/${giftSessionId}/gifts`);
+
     const r=await fetch(`/api/sessions/${giftSessionId}/gifts`,{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({giftTriggerMode,activeGiftIds:Array.from(activeGiftIds),customMappings})
+      body:JSON.stringify(payload)
     });
-    if(r.ok){alert('Hediye ayarları kaydedildi!');}
-    else{alert('Kaydetme hatası!');}
+
+    console.log('[Gifts] Response status:', r.status, 'ok:', r.ok);
+
+    const data=await r.json().catch(()=>({}));
+    console.log('[Gifts] Response data:', data);
+
+    if(r.ok){
+      // LocalStorage'a da kaydet (F5 sonrası korumak için)
+      localStorage.setItem('kadrokur_giftTriggerMode', giftTriggerMode);
+      localStorage.setItem('kadrokur_activeGiftIds', JSON.stringify(Array.from(activeGiftIds)));
+      localStorage.setItem('kadrokur_customMappings', JSON.stringify(customMappings));
+      console.log('[Gifts] Config kaydedildi - mode:', giftTriggerMode, 'activeIds:', activeGiftIds.size, 'mappings:', Object.keys(customMappings).length);
+
+      // Görsel geri bildirim - buton flash
+      const btn=document.querySelector('.settings-action-btn');
+      if(btn){const orig=btn.textContent;btn.textContent='KAYDEDILDI';btn.style.background='#00a651';setTimeout(()=>{btn.textContent=orig;btn.style.background='';},1500);}
+    } else {
+      console.error('[Gifts] Kaydetme hatası:', r.status, data);
+      alert('Kaydetme hatası: '+(data.error||r.status));
+    }
   }catch(err){
-    console.error('[Gifts] Kaydetme hatası:',err);
+    console.error('[Gifts] Kaydetme hatası:', err);
     alert('Kaydetme hatası: '+err.message);
   }
 }
@@ -1991,30 +2317,44 @@ function renderDbGiftList(){
     return;
   }
   const qualColors={bronze:'#8B7355',silver:'#A8A9AD',gold:'#D4AF37',elite:'#e31c23'};
+  const qualSelectColors={bronze:'#cd7f32',silver:'#c0c0c0',gold:'#ffd700',elite:'#a855f7'};
   w.innerHTML=filtered.slice(0,120).map(g=>{
     const qc=qualColors[g.cardQuality]||'#8B7355';
     const isActive=giftTriggerMode==='specific'&&activeGiftIds.has(g.id);
     const activeStyle=isActive?'border-color:var(--accent-yellow);background:rgba(255,199,44,.1);':'';
-    const check=isActive?'<span style="position:absolute;top:2px;right:2px;font-size:.5rem;color:var(--accent-yellow);line-height:1">✓</span>':'';
-    const customQ=customMappings[g.id]||g.cardQuality;
-    return `<div class="gift-item" onclick="selectDbGift(${g.id})" data-gid="${g.id}" style="${activeStyle}position:relative">
-      ${check}
-      <img class="gift-img" src="${g.image||'/logo.svg'}" alt="${g.giftName}" loading="lazy" onerror="this.src='/logo.svg'">
-      <span class="gift-name">${g.giftName}</span>
-      <select class="gift-quality-select" onclick="event.stopPropagation()" onchange="setGiftQuality(${g.id}, this.value)" style="width:90%;margin-top:4px;padding:2px;font-size:.4rem;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#e2e8f0;border-radius:3px">
-        <option value="bronze" ${customQ==='bronze'?'selected':''}>🥉 Bronze</option>
-        <option value="silver" ${customQ==='silver'?'selected':''}>🥈 Silver</option>
-        <option value="gold" ${customQ==='gold'?'selected':''}>🥇 Gold</option>
-        <option value="elite" ${customQ==='elite'?'selected':''}>💎 Elite</option>
-      </select>
-      <span class="gift-coins" style="color:${qc}">${g.diamondCost} 💎</span>
-    </div>`;
+    const check=isActive?'<span style="position:absolute;top:2px;right:2px;line-height:1;color:var(--accent-yellow);z-index:2;pointer-events:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>':'';
+    const customQ=customMappings[Number(g.id)]||g.cardQuality;
+    const selectColor=qualSelectColors[customQ]||'#e2e8f0';
+    return '<div class="gift-item" onclick="selectDbGift('+g.id+')" data-gid="'+g.id+'" style="'+activeStyle+'position:relative;cursor:pointer;">'+
+      check+
+      '<img class="gift-img" src="'+(g.image||'/logo.svg')+'" alt="'+g.giftName+'" loading="lazy" onerror="this.src=\'/logo.svg\'">'+
+      '<span class="gift-name">'+g.giftName+'</span>'+
+      '<select class="gift-quality-select" onclick="event.stopPropagation()" data-gift-id="'+g.id+'" onchange="setGiftQuality('+g.id+', this.value)" style="width:90%;margin-top:5px;padding:4px 6px;font-size:.65rem;font-weight:700;background:#1a1a2e;border:1px solid '+selectColor+';color:'+selectColor+';border-radius:4px;cursor:pointer;appearance:auto">'+
+        '<option value="bronze" '+(customQ==='bronze'?'selected':'')+' style="color:#cd7f32">Bronze</option>'+
+        '<option value="silver" '+(customQ==='silver'?'selected':'')+' style="color:#c0c0c0">Silver</option>'+
+        '<option value="gold" '+(customQ==='gold'?'selected':'')+' style="color:#ffd700">Gold</option>'+
+        '<option value="elite" '+(customQ==='elite'?'selected':'')+' style="color:#a855f7">Elite</option>'+
+      '</select>'+
+      '<span class="gift-coins" style="color:'+qc+'">'+g.diamondCost+' '+ICONS.diamond+'</span>'+
+    '</div>';
   }).join('');
 }
 
 function setGiftQuality(giftId, quality){
-  customMappings[giftId]=quality;
-  console.log('[Gift] Custom mapping:', giftId, '→', quality);
+  // Key'i her zaman number olarak sakla
+  customMappings[Number(giftId)] = quality;
+  console.log('[Gift] Custom mapping:', giftId, '→', quality, '| Tüm mappings:', customMappings);
+
+  // LocalStorage'a da kaydet (F5 sonrası korumak için)
+  localStorage.setItem('kadrokur_customMappings', JSON.stringify(customMappings));
+
+  // Select'in görsel rengini anında güncelle
+  const select = document.querySelector(`.gift-quality-select[data-gift-id="${giftId}"]`);
+  if(select){
+    const qualColors = {bronze:'#cd7f32', silver:'#c0c0c0', gold:'#ffd700', elite:'#a855f7'};
+    select.style.color = qualColors[quality] || '#e2e8f0';
+    select.style.borderColor = qualColors[quality] || 'rgba(255,255,255,.25)';
+  }
 }
 
 // TOAST SÜRÜKLEME ve KÜÇÜLTme
@@ -2075,19 +2415,19 @@ function showCardToast(pending){
   if(source==='like'){
     const count=pending.likeCount||100;
     reasonText=`${count} beğeni gönderdi → kart kazandı`;
-    giftImgHtml=`<span class="toast-icon">❤️</span>`;
+    giftImgHtml=`<span class="toast-icon">${ICONS.heart}</span>`;
   } else {
     const giftName=pending.gift?.name||'Hediye';
     const coins=pending.gift?.amount||pending.gift?.coins||0;
     const img=pending.gift?.image;
-    reasonText=`${giftName} (${coins} 💎) gönderdi → kart kazandı`;
+    reasonText=`${giftName} (${coins} ${ICONS.diamond}) gönderdi → kart kazandı`;
     giftImgHtml=img
       ? `<img class="toast-gift-img" src="${img}" onerror="this.src='/logo.svg'">`
-      : `<span class="toast-icon">🎁</span>`;
+      : `<span class="toast-icon">${ICONS.gift}</span>`;
   }
 
-  // Kalite emoji
-  const qualEmoji={bronze:'🥉',silver:'🥈',gold:'🥇',elite:'💎'}[quality]||'🎴';
+  // Kalite icon
+  const qualIcon=ICONS[quality]||ICONS.card;
 
   // Avatar
   const avatarHtml=profilePic
@@ -2104,7 +2444,7 @@ function showCardToast(pending){
     </div>
     ${giftImgHtml}
     <div class="toast-badge">
-      <span class="toast-icon">${qualEmoji}</span>
+      <span class="toast-icon">${qualIcon}</span>
       <span class="toast-quality ${quality}">${quality.toUpperCase()}</span>
     </div>`;
 
@@ -2123,11 +2463,20 @@ function showCardToast(pending){
 }
 
 function selectDbGift(id){
+  console.log('[Gift] Clicked gift ID:', id, 'Mode:', giftTriggerMode);
   if(giftTriggerMode==='specific'){
-    if(activeGiftIds.has(id))activeGiftIds.delete(id);
-    else activeGiftIds.add(id);
+    if(activeGiftIds.has(id)){
+      activeGiftIds.delete(id);
+      console.log('[Gift] Deselected:', id, 'Active count:', activeGiftIds.size);
+    } else {
+      activeGiftIds.add(id);
+      console.log('[Gift] Selected:', id, 'Active count:', activeGiftIds.size);
+    }
+    localStorage.setItem('kadrokur_activeGiftIds', JSON.stringify(Array.from(activeGiftIds)));
     renderDbGiftList();
     updateGiftModeUI();
+  } else {
+    console.log('[Gift] Not in specific mode, selection ignored');
   }
 }
 
@@ -2145,9 +2494,16 @@ function openSettings(){
   const currentDuration=parseFloat(tickerEl.style.animationDuration)||20;
   document.getElementById('tickerSpeed').value=currentDuration;
   document.getElementById('tickerSpeedVal').textContent=currentDuration+'s';
-  const SESSION_ID=new URLSearchParams(location.search).get('sessionId')||localStorage.getItem('kadrokur_sessionId');
+
+  // SESSION_ID'yi öğren ve kaydet
+  const SESSION_ID=new URLSearchParams(location.search).get('sessionId')||localStorage.getItem('kadrokur_sessionId')||GS.sessionId;
+  if(SESSION_ID){
+    giftSessionId=SESSION_ID;
+    localStorage.setItem('kadrokur_sessionId', SESSION_ID);
+  }
+
   loadDbGifts().then(()=>renderDbGiftList());
-  if(SESSION_ID)loadGiftConfig(SESSION_ID);
+  if(giftSessionId)loadGiftConfig(giftSessionId);
   document.getElementById('settingsOv').classList.add('on');
 }
 function closeSettings(){document.getElementById('settingsOv').classList.remove('on');}
@@ -2158,7 +2514,7 @@ function buildTeamSettings(){
   GS.teams.forEach((t,i)=>{
     const d=document.createElement('div');
     d.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05)';
-    d.innerHTML=`<span style="font-size:.8rem">${t.emoji||TEAM_EMOJI[i]}</span>
+    d.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="${t.color||TEAM_COLORS[i]}"><circle cx="12" cy="12" r="10"/></svg>
       <input class="settings-input" id="stn${i}" value="${t.name}" style="flex:1;text-align:left;width:auto">
       <input type="color" class="color-input" id="stc${i}" value="${t.color||TEAM_COLORS[i]}" style="width:32px;height:28px">`;
     w.appendChild(d);
@@ -2296,26 +2652,46 @@ function applyTicker(){
   const lines=text.split('\n').filter(l=>l.trim());
   const w=document.getElementById('tickerContent');
   w.innerHTML='';
+
+  // Site adı sabiti — her satırın yanına eklenir, silinemez
+  const SITE='LUANAWORK.COM';
+
   // Duplicate for seamless scroll
   [...lines,...lines].forEach(line=>{
     const s=document.createElement('span');
     s.className='ticker-item';
-    s.innerHTML=line.replace(/●/g,'<span>●</span>');
+    s.innerHTML=line.replace(/●/g,'<span>●</span>')+' <span style="color:var(--accent-red);font-weight:900">● '+SITE+'</span>';
     w.appendChild(s);
   });
+
+  localStorage.setItem('kadrokur_tickerText', text);
 }
 
 function resetGame(){
   GS.teams.forEach(t=>{t.players=[];t.score=0;});
   GS.totalCards=0;GS.totalGifts=0;GS.topDonors=[];
+  GS.cardQueueLength=0;
+  GS.pendingCard=null;
+  stashedCards=[];  // Saklanan kartları temizle
+  pendingCardBuffer=[];  // Bekleyen kart buffer'ını temizle
+  currentLeaderIdx=-1;  // Lider takibini sıfırla
   teamsBuilt=false;
   buildTeams();
   updateHeader();
+  // Tüm overlay'leri kapat
+  document.getElementById('goOv').classList.remove('on');
+  document.getElementById('ov').classList.remove('active');
+  document.getElementById('leaderChangeOv').classList.remove('on');
   const SESSION_ID=new URLSearchParams(location.search).get('sessionId')||localStorage.getItem('kadrokur_sessionId');
   if(socket&&SESSION_ID){
     socket.emit('resetGame',{sessionId:SESSION_ID});
   }
   closeSettings();
+}
+
+function closeGameOver(){
+  // Sadece oyun sonu ekranını kapat, yeni oyun başlatma
+  document.getElementById('goOv').classList.remove('on');
 }
 
 function endGameManual(){
@@ -2358,6 +2734,33 @@ if(new URLSearchParams(location.search).has('demo_end')){
 
 connectSocket();
 initToastDrag();
+
+// Ticker başlangıç metni: localStorage veya varsayılan
+(function initTicker(){
+  const saved = localStorage.getItem('kadrokur_tickerText');
+  if(saved){
+    document.getElementById('setTickerText').value = saved;
+  }
+  applyTicker();
+})();
+
+// CustomMappings, activeGiftIds ve giftTriggerMode'u localStorage'dan restore et (F5 sonrası)
+(function restoreGiftSettings(){
+  try {
+    const savedMappings = localStorage.getItem('kadrokur_customMappings');
+    if(savedMappings) customMappings = JSON.parse(savedMappings);
+
+    const savedIds = localStorage.getItem('kadrokur_activeGiftIds');
+    if(savedIds) activeGiftIds = new Set(JSON.parse(savedIds));
+
+    const savedMode = localStorage.getItem('kadrokur_giftTriggerMode');
+    if(savedMode) giftTriggerMode = savedMode;
+
+    console.log('[Gift] Settings restored — mode:', giftTriggerMode, 'activeIds:', activeGiftIds.size, 'mappings:', Object.keys(customMappings).length);
+  } catch(e) {
+    console.error('[Gift] Failed to restore gift settings:', e);
+  }
+})();
 </script>
 </body>
 </html>
