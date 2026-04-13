@@ -180,9 +180,9 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .ticker-item span{color:var(--paper)}
 
 /* OVERLAY */
-.ov{position:fixed;inset:0;z-index:100;display:none;pointer-events:none}
+.ov{position:fixed;inset:0;z-index:100;display:none;pointer-events:none;background:transparent}
 .ov.active{display:block;pointer-events:all}
-.ov-bg{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(3px)}
+.ov-bg{display:none}
 
 .waiting{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:left;z-index:101;display:none;width:90%;max-width:700px}
 .waiting.on{display:block}
@@ -212,7 +212,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(60px) scale(.9)}}
 
 /* BROADCAST CARD REVEAL */
-.wait-box{background:var(--ink);border:1px solid rgba(255,255,255,.1);display:grid;grid-template-columns:1fr 200px;gap:0;position:relative;overflow:hidden}
+.wait-box{background:linear-gradient(135deg,rgba(15,10,5,.95) 0%,rgba(30,20,10,.92) 100%);border:2px solid rgba(212,175,55,.5);display:grid;grid-template-columns:1fr 200px;gap:0;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.7)}
 .wait-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent-red) 0%,var(--accent-red) 33%,var(--ink) 33%,var(--ink) 66%,var(--accent-red) 66%,var(--accent-red) 100%)}
 
 /* SOL TARAF — KART BİLGİSİ */
