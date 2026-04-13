@@ -187,6 +187,30 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .waiting{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:left;z-index:101;display:none;width:90%;max-width:700px}
 .waiting.on{display:block}
 
+/* KART KAZANILDI TOAST */
+#cardToasts{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;width:340px}
+.card-toast{background:linear-gradient(135deg,rgba(5,10,20,.97) 0%,rgba(15,8,3,.95) 100%);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.8);pointer-events:none;animation:toastIn .4s cubic-bezier(.2,.8,.2,1) forwards;overflow:hidden;position:relative}
+.card-toast::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--toast-color,#D4AF37)}
+.card-toast.bronze::before{background:#CD7F32}
+.card-toast.silver::before{background:#A8A9AD}
+.card-toast.gold::before{background:#D4AF37}
+.card-toast.elite::before{background:linear-gradient(90deg,#e31c23,#ff6b35,#D4AF37)}
+.card-toast.out{animation:toastOut .4s ease forwards}
+.toast-avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.15);flex-shrink:0;background:rgba(255,255,255,.05)}
+.toast-body{flex:1;min-width:0}
+.toast-user{font-family:'Anton',sans-serif;font-size:.85rem;color:#fff;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast-reason{font-size:.6rem;color:rgba(255,255,255,.5);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast-badge{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px}
+.toast-quality{font-family:'Anton',sans-serif;font-size:.9rem;letter-spacing:1px;text-transform:uppercase}
+.toast-quality.bronze{color:#CD7F32}
+.toast-quality.silver{color:#A8A9AD}
+.toast-quality.gold{color:#D4AF37}
+.toast-quality.elite{background:linear-gradient(135deg,#e31c23,#D4AF37);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.toast-icon{font-size:1rem;line-height:1}
+.toast-gift-img{width:32px;height:32px;object-fit:contain;flex-shrink:0;border-radius:4px}
+@keyframes toastIn{from{opacity:0;transform:translateX(60px) scale(.9)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(60px) scale(.9)}}
+
 /* BROADCAST CARD REVEAL */
 .wait-box{background:var(--ink);border:1px solid rgba(255,255,255,.1);display:grid;grid-template-columns:1fr 200px;gap:0;position:relative;overflow:hidden}
 .wait-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent-red) 0%,var(--accent-red) 33%,var(--ink) 33%,var(--ink) 66%,var(--accent-red) 66%,var(--accent-red) 100%)}
@@ -530,6 +554,9 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
       <div style="font-size:.6rem;color:rgba(255,255,255,.2);text-align:center;padding:12px">HENÜZ YOK</div>
     </div>
   </div>
+
+<!-- KART KAZANILDI TOAST LİSTESİ -->
+<div id="cardToasts"></div>
 
   <div class="side-toggle" id="sideToggle" onclick="toggleSide()">◀</div>
 
@@ -1077,6 +1104,9 @@ async function handlePendingCard(data){
     const coins=pending.gift?.amount||pending.gift?.coins||0;
     addFeed(username,`${giftName} (${coins} 💎) gönderdi → ${qualityEmoji} ${quality.toUpperCase()} kart kazandı`,'🎁');
   }
+
+  // Animasyonlu toast bildirim göster
+  showCardToast(pending);
 
   // Eğer overlay açıkken yeni kart gelirse, saklanmış karta ekle
   if(GS.busy){
@@ -1967,6 +1997,68 @@ function renderDbGiftList(){
 function setGiftQuality(giftId, quality){
   customMappings[giftId]=quality;
   console.log('[Gift] Custom mapping:', giftId, '→', quality);
+}
+
+function showCardToast(pending){
+  const container=document.getElementById('cardToasts');
+  if(!container)return;
+
+  const quality=pending.quality||'bronze';
+  const username=pending.displayName||pending.username||'?';
+  const source=pending.source||'gift';
+  const profilePic=pending.profilePicBase64||pending.profilePic||'';
+
+  // Sebep metni
+  let reasonText='';
+  let giftImgHtml='';
+  if(source==='like'){
+    const count=pending.likeCount||100;
+    reasonText=`${count} beğeni gönderdi → kart kazandı`;
+    giftImgHtml=`<span class="toast-icon">❤️</span>`;
+  } else {
+    const giftName=pending.gift?.name||'Hediye';
+    const coins=pending.gift?.amount||pending.gift?.coins||0;
+    const img=pending.gift?.image;
+    reasonText=`${giftName} (${coins} 💎) gönderdi → kart kazandı`;
+    giftImgHtml=img
+      ? `<img class="toast-gift-img" src="${img}" onerror="this.src='/logo.svg'">`
+      : `<span class="toast-icon">🎁</span>`;
+  }
+
+  // Kalite emoji
+  const qualEmoji={bronze:'🥉',silver:'🥈',gold:'🥇',elite:'💎'}[quality]||'🎴';
+
+  // Avatar
+  const avatarHtml=profilePic
+    ? `<img class="toast-avatar" src="${profilePic}" onerror="this.src='/logo.svg'">`
+    : `<div class="toast-avatar" style="display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:1.1rem;background:rgba(212,175,55,.15);color:#D4AF37">${(username[0]||'?').toUpperCase()}</div>`;
+
+  const toast=document.createElement('div');
+  toast.className=`card-toast ${quality}`;
+  toast.innerHTML=`
+    ${avatarHtml}
+    <div class="toast-body">
+      <div class="toast-user">${username}</div>
+      <div class="toast-reason">${reasonText}</div>
+    </div>
+    ${giftImgHtml}
+    <div class="toast-badge">
+      <span class="toast-icon">${qualEmoji}</span>
+      <span class="toast-quality ${quality}">${quality.toUpperCase()}</span>
+    </div>`;
+
+  container.appendChild(toast);
+
+  // 5 saniye sonra kaldır
+  setTimeout(()=>{
+    toast.classList.add('out');
+    setTimeout(()=>toast.remove(), 400);
+  }, 5000);
+
+  // Max 5 toast göster
+  while(container.children.length>5){
+    container.firstChild?.remove();
+  }
 }
 
 function selectDbGift(id){
