@@ -116,9 +116,10 @@ export async function startTikTokConnection(
 
   function createConnection(): WebcastPushConnection {
     const options: Record<string, unknown> = {
-      enableExtendedGiftInfo: false,  // gift fetch API'si 403 verir, kapalı tut
-      fetchRoomInfoOnConnect: false,  // ek API çağrısını atla
-      connectWithUniqueId: true,      // username ile direkt bağlan, room ID fetch etme
+      enableExtendedGiftInfo: false,   // gift fetch API'si 403 verir, kapalı tut
+      fetchRoomInfoOnConnect: false,   // ek API çağrısını atla
+      connectWithUniqueId: false,      // room ID ile bağlan (Euler Pro gerektirmez)
+      disableEulerFallbacks: false,    // Euler WebSocket signing kullan (ücretsiz)
     };
 
     if (process.env.TIKTOK_SESSION_ID) {
