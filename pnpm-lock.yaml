@@ -212,8 +212,8 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.1.14)
       tiktok-live-connector:
-        specifier: 2.1.1-beta1
-        version: 2.1.1-beta1
+        specifier: 2.1.0
+        version: 2.1.0
       vaul:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.2.1(@types/react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -1046,8 +1046,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@eulerstream/euler-api-sdk@0.1.7':
-    resolution: {integrity: sha512-nahq6cTun0XClhpjFqSDOA79GpJXa5wgEEQIRE/q8G5sM83BzkJcRkQPaI0SP1AUgovCuAiXNdhEhqtvdAVf5g==}
+  '@eulerstream/euler-api-sdk@0.1.5':
+    resolution: {integrity: sha512-BdEitFq3bIPsY673Ap+/yfP80JhHQJKzEFTQJRMCt6GkX3guSKPHqdygRX4Rur7c9XmbDhBEG3Msj+ZM6uDIjw==}
     engines: {node: '>=10.0.0'}
 
   '@floating-ui/core@1.7.3':
@@ -4943,8 +4943,8 @@ packages:
   text-decoder@1.2.7:
     resolution: {integrity: sha512-vlLytXkeP4xvEq2otHeJfSQIRyWxo/oZGEbXrtEEF9Hnmrdly59sUbzZ/QgyWuLYHctCHxFF4tRQZNQ9k60ExQ==}
 
-  tiktok-live-connector@2.1.1-beta1:
-    resolution: {integrity: sha512-K//OhuyMqq9EAb/2S5jHlW14fsFtO2cXQmRG5ZGQe6Cykb89h4qnkZMdMarzujYxb1jaadzfWKlB2dlz6OmCTA==}
+  tiktok-live-connector@2.1.0:
+    resolution: {integrity: sha512-HOhUu90XXdF4FlD88LUHIWpeytXzA5vBIigaU9gGYjUI2YhFhRXJ4R5imbnpJdFVmeSRKehIXMWzLkN/peRjGg==}
     engines: {node: '>=20.0.0'}
 
   tiny-invariant@1.3.3:
@@ -6309,7 +6309,7 @@ snapshots:
   '@esbuild/win32-x64@0.25.10':
     optional: true
 
-  '@eulerstream/euler-api-sdk@0.1.7':
+  '@eulerstream/euler-api-sdk@0.1.5':
     dependencies:
       axios: 1.12.2
     transitivePeerDependencies:
@@ -11026,10 +11026,10 @@ snapshots:
     transitivePeerDependencies:
       - react-native-b4a
 
-  tiktok-live-connector@2.1.1-beta1:
+  tiktok-live-connector@2.1.0:
     dependencies:
       '@bufbuild/protobuf': 2.11.0
-      '@eulerstream/euler-api-sdk': 0.1.7
+      '@eulerstream/euler-api-sdk': 0.1.5
       axios: 1.12.2
       callable-instance: 2.0.0
       protobufjs: 6.11.4

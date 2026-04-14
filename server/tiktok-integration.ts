@@ -1,11 +1,40 @@
-import { WebcastPushConnection, SignConfig } from "tiktok-live-connector";
+import { WebcastPushConnection } from "tiktok-live-connector";
 import { EventEmitter } from "events";
 import https from "https";
 import http from "http";
 
-// Optional sign API key for better reliability
-if (process.env.TIKTOK_SIGN_API_KEY) {
-  SignConfig.apiKey = process.env.TIKTOK_SIGN_API_KEY;
+// Custom signing function (fallback if needed)
+async function customSignWebSocket(
+  roomUrl: string,
+  sessionId?: string
+): Promise<{ url: string; cursor: string } | null> {
+  try {
+    // Try to use external sign server if available
+    const signServer = process.env.TIKTOK_SIGN_SERVER_URL;
+    if (signServer) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      try {
+        const response = await fetch(signServer, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomUrl, sessionId }),
+          signal: controller.signal,
+        });
+        if (response.ok) {
+          return response.json();
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+  } catch (err) {
+    console.warn(
+      "[TikTok] Custom sign server failed, using default:",
+      (err as Error)?.message
+    );
+  }
+  return null;
 }
 
 // ═══════════════════════════════════════════
@@ -118,12 +147,20 @@ export async function startTikTokConnection(
     const options: Record<string, unknown> = {
       enableExtendedGiftInfo: false,   // gift fetch API'si 403 verir, kapalı tut
       fetchRoomInfoOnConnect: false,   // ek API çağrısını atla
-      connectWithUniqueId: false,      // room ID ile bağlan (Euler Pro gerektirmez)
-      disableEulerFallbacks: false,    // Euler WebSocket signing kullan (ücretsiz)
     };
 
     if (process.env.TIKTOK_SESSION_ID) {
       options.sessionId = process.env.TIKTOK_SESSION_ID;
+    }
+
+    // Euler API key varsa kullan
+    if (process.env.TIKTOK_SIGN_API_KEY) {
+      options.signApiKey = process.env.TIKTOK_SIGN_API_KEY;
+    }
+
+    // Custom sign server varsa kullan (Euler'e bağımlılığı kaldırır)
+    if (process.env.TIKTOK_SIGN_SERVER_URL) {
+      options.signedWebSocketProvider = customSignWebSocket;
     }
 
     return new WebcastPushConnection(tiktokUsername, options as any);

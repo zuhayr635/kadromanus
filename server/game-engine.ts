@@ -460,9 +460,9 @@ export async function processGiftEvent(
             diamondCost: diamondCount,
             tierLevel: newQuality === 'elite' ? '3' : newQuality === 'gold' ? '2' : newQuality === 'silver' ? '2' : '1',
             cardQuality: newQuality,
-          }).$returningInsertedId();
+          });
 
-          // Yeni eklenen kaydı tekrar çek
+          // MySQL auto-return desteklemez, ID'yi tekrar çekerek al
           [giftData] = await db.select().from(giftTiers).where(eq(giftTiers.giftId, tiktokGiftId)).limit(1);
           console.log(`[${sessionId}] ✅ Yeni gift kaydı oluşturuldu: ${giftData?.id}`);
         }
